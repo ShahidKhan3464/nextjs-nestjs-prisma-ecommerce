@@ -1,7 +1,6 @@
-import { Repository } from 'typeorm';
-import { User } from '../entities/user.entity';
-import { InjectRepository } from '@nestjs/typeorm';
+import { User } from 'src/generated/prisma/client';
 import { CreateUserDto } from '../dto/create-user.dto';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { MailService } from 'src/mail/providers/mail.service';
 import { HashingProvider } from 'src/auth/providers/hashing.provider';
 import {
@@ -18,15 +17,13 @@ export class CreateUserProvider {
 
   constructor(
     private readonly mailService: MailService,
-    @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
-
+    private readonly prisma: PrismaService,
     @Inject(forwardRef(() => HashingProvider))
     private readonly hashingProvider: HashingProvider,
   ) {}
 
   public async createUser(dto: CreateUserDto): Promise<User> {
-    const existingUser = await this.userRepository.findOne({
+    const existingUser = await this.prisma.user.findUnique({
       where: { email: dto.email },
     });
 
@@ -34,13 +31,13 @@ export class CreateUserProvider {
       throw new BadRequestException('User already exists');
     }
 
-    const newUser = this.userRepository.create({
-      ...dto,
-      password: await this.hashingProvider.hash(dto.password),
-      confirmPassword: await this.hashingProvider.hash(dto.confirmPassword),
+    const savedUser = await this.prisma.user.create({
+      data: {
+        ...dto,
+        password: await this.hashingProvider.hash(dto.password),
+        confirmPassword: await this.hashingProvider.hash(dto.confirmPassword),
+      },
     });
-
-    const savedUser = await this.userRepository.save(newUser);
 
     try {
       await this.mailService.sendWelcomeEmail(

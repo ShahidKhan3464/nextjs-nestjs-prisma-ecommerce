@@ -1,6 +1,6 @@
 import { LoginDto } from './dto/login.dto';
 import { Injectable } from '@nestjs/common';
-import { User } from 'src/users/entities/user.entity';
+import { User } from 'src/generated/prisma/client';
 import { UsersService } from 'src/users/users.service';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';

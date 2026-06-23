@@ -1,6 +1,6 @@
 import { LoginDto } from '../dto/login.dto';
+import { User } from 'src/generated/prisma/client';
 import { HashingProvider } from './hashing.provider';
-import { User } from '../../users/entities/user.entity';
 import { UsersService } from '../../users/users.service';
 import { GenerateTokensProvider } from './generate-tokens.provider';
 import {

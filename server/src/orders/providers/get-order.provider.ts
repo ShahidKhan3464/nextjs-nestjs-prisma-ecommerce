@@ -1,9 +1,7 @@
-import { Repository } from 'typeorm';
-import { Order } from '../entities/order.entity';
-import { InjectRepository } from '@nestjs/typeorm';
 import { UsersService } from 'src/users/users.service';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { UserRole } from 'src/users/constants/user.constants';
-import { joinProductImages } from 'src/common/files/file-query.util';
+import { findOrderWithImages } from 'src/common/files/file-query.util';
 import { OrderResponse, mapOrderToResponse } from '../utils/map-order.util';
 import {
   Injectable,
@@ -14,8 +12,7 @@ import {
 @Injectable()
 export class GetOrderProvider {
   constructor(
-    @InjectRepository(Order)
-    private readonly orderRepository: Repository<Order>,
+    private readonly prisma: PrismaService,
     private readonly usersService: UsersService,
   ) {}
 
@@ -23,16 +20,7 @@ export class GetOrderProvider {
     orderId: number,
     userId: number,
   ): Promise<{ order: OrderResponse; customerUserId: string }> {
-    const order = await joinProductImages(
-      this.orderRepository
-        .createQueryBuilder('order')
-        .leftJoinAndSelect('order.items', 'items')
-        .leftJoinAndSelect('items.variant', 'variant')
-        .leftJoinAndSelect('variant.product', 'product')
-        .withDeleted()
-        .where('order.id = :orderId', { orderId }),
-      'product',
-    ).getOne();
+    const order = await findOrderWithImages(this.prisma, { id: orderId });
 
     if (!order) {
       throw new NotFoundException('Order not found');

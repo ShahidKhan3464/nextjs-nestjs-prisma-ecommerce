@@ -1,10 +1,6 @@
-import { Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Order } from 'src/orders/entities/order.entity';
-import { CartItem } from 'src/cart/entities/cart-item.entity';
-import { joinProductImages } from 'src/common/files/file-query.util';
-import { WishlistItem } from 'src/wishlist/entities/wishlist-item.entity';
+import { PrismaService } from 'src/prisma/prisma.service';
+import { findOrdersWithImages } from 'src/common/files/file-query.util';
 import {
   OrderStatus,
   PaymentStatus,
@@ -24,14 +20,7 @@ const RECENT_ORDERS_LIMIT = 5;
 
 @Injectable()
 export class GetCustomerDashboardProvider {
-  constructor(
-    @InjectRepository(Order)
-    private readonly orderRepository: Repository<Order>,
-    @InjectRepository(CartItem)
-    private readonly cartRepository: Repository<CartItem>,
-    @InjectRepository(WishlistItem)
-    private readonly wishlistRepository: Repository<WishlistItem>,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   async getOverview(userId: number): Promise<CustomerDashboardResponse> {
     const [
@@ -44,9 +33,9 @@ export class GetCustomerDashboardProvider {
       recentOrders,
     ] = await Promise.all([
       this.getTotalSpending(userId),
-      this.orderRepository.count({ where: { userId } }),
-      this.wishlistRepository.count({ where: { userId } }),
-      this.cartRepository.count({ where: { userId } }),
+      this.prisma.order.count({ where: { userId } }),
+      this.prisma.wishlistItem.count({ where: { userId } }),
+      this.prisma.cartItem.count({ where: { userId } }),
       this.getOrdersByStatus(userId),
       this.getSpendingByMonth(userId),
       this.getRecentOrders(userId),
@@ -66,31 +55,29 @@ export class GetCustomerDashboardProvider {
   private async getTotalSpending(
     userId: number,
   ): Promise<{ amount: string } | undefined> {
-    return this.orderRepository
-      .createQueryBuilder('order')
-      .select('COALESCE(SUM(order.totalAmount), 0)', 'amount')
-      .where('order.userId = :userId', { userId })
-      .andWhere('order.paymentStatus = :paid', { paid: PaymentStatus.PAID })
-      .andWhere('order.status != :cancelled', {
-        cancelled: OrderStatus.CANCELLED,
-      })
-      .getRawOne();
+    const result = await this.prisma.order.aggregate({
+      where: {
+        userId,
+        paymentStatus: PaymentStatus.PAID,
+        status: { not: OrderStatus.CANCELLED },
+      },
+      _sum: { totalAmount: true },
+    });
+    return { amount: String(result._sum.totalAmount ?? 0) };
   }
 
   private async getOrdersByStatus(
     userId: number,
   ): Promise<DashboardStatusCount[]> {
-    const rows = await this.orderRepository
-      .createQueryBuilder('order')
-      .select('order.status', 'status')
-      .addSelect('COUNT(*)', 'count')
-      .where('order.userId = :userId', { userId })
-      .groupBy('order.status')
-      .getRawMany<{ status: string; count: string }>();
+    const rows = await this.prisma.order.groupBy({
+      by: ['status'],
+      where: { userId },
+      _count: { _all: true },
+    });
 
     return rows.map((row) => ({
       status: row.status,
-      count: Number(row.count),
+      count: row._count._all,
     }));
   }
 
@@ -99,18 +86,18 @@ export class GetCustomerDashboardProvider {
   ): Promise<DashboardSpendingPoint[]> {
     const { start, keys } = this.buildLastNMonthsRange(SPENDING_MONTHS);
 
-    const rows = await this.orderRepository
-      .createQueryBuilder('order')
-      .select("TO_CHAR(order.createdAt, 'YYYY-MM')", 'month')
-      .addSelect('COALESCE(SUM(order.totalAmount), 0)', 'amount')
-      .where('order.userId = :userId', { userId })
-      .andWhere('order.createdAt >= :start', { start })
-      .andWhere('order.paymentStatus = :paid', { paid: PaymentStatus.PAID })
-      .andWhere('order.status != :cancelled', {
-        cancelled: OrderStatus.CANCELLED,
-      })
-      .groupBy("TO_CHAR(order.createdAt, 'YYYY-MM')")
-      .getRawMany<{ month: string; amount: string }>();
+    const rows = await this.prisma.$queryRaw<
+      { month: string; amount: string }[]
+    >`
+      SELECT TO_CHAR("createdAt", 'YYYY-MM') AS month,
+             COALESCE(SUM("totalAmount"), 0) AS amount
+      FROM orders
+      WHERE "userId" = ${userId}
+        AND "createdAt" >= ${start}
+        AND "paymentStatus" = ${PaymentStatus.PAID}::orders_paymentstatus_enum
+        AND status != ${OrderStatus.CANCELLED}::orders_status_enum
+      GROUP BY TO_CHAR("createdAt", 'YYYY-MM')
+    `;
 
     const byMonth = new Map(rows.map((row) => [row.month, Number(row.amount)]));
 
@@ -121,18 +108,11 @@ export class GetCustomerDashboardProvider {
   }
 
   private async getRecentOrders(userId: number): Promise<OrderResponse[]> {
-    const orders = await joinProductImages(
-      this.orderRepository
-        .createQueryBuilder('order')
-        .leftJoinAndSelect('order.items', 'items')
-        .leftJoinAndSelect('items.variant', 'variant')
-        .leftJoinAndSelect('variant.product', 'product')
-        .withDeleted()
-        .where('order.userId = :userId', { userId })
-        .orderBy('order.createdAt', 'DESC')
-        .take(RECENT_ORDERS_LIMIT),
-      'product',
-    ).getMany();
+    const orders = await findOrdersWithImages(this.prisma, {
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+      take: RECENT_ORDERS_LIMIT,
+    });
 
     return orders.map(mapOrderToResponse);
   }

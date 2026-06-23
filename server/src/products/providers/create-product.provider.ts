@@ -1,11 +1,9 @@
-import { DataSource } from 'typeorm';
-import { Product } from '../entities/product.entity';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateProductDto } from '../dto/create-product.dto';
 import { ProductStatus } from '../constants/product.constants';
 import { FileOwnerModule } from 'src/common/files/file.constants';
-import { Category } from 'src/categories/entities/category.entity';
-import { ProductVariant } from '../entities/product-variant.entity';
-import { StoredFile } from 'src/common/files/entities/stored-file.entity';
+import { ProductWithRelations } from 'src/common/types/domain.types';
+import { generateProductSlug } from '../utils/generate-product-slug.util';
 import {
   Injectable,
   ConflictException,
@@ -14,15 +12,15 @@ import {
 
 @Injectable()
 export class CreateProductProvider {
-  constructor(private readonly dataSource: DataSource) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   public async create(
     dto: CreateProductDto,
     files: Express.Multer.File[],
-  ): Promise<Product> {
-    return await this.dataSource.transaction(async (manager) => {
-      const category = await manager.findOne(Category, {
-        where: { id: dto.categoryId },
+  ): Promise<ProductWithRelations> {
+    return await this.prisma.$transaction(async (tx) => {
+      const category = await tx.category.findFirst({
+        where: { id: dto.categoryId, deletedAt: null },
       });
 
       if (!category) {
@@ -30,7 +28,7 @@ export class CreateProductProvider {
       }
 
       for (const variant of dto.variants) {
-        const skuExists = await manager.exists(ProductVariant, {
+        const skuExists = await tx.productVariant.findUnique({
           where: { sku: variant.sku },
         });
 
@@ -39,43 +37,44 @@ export class CreateProductProvider {
         }
       }
 
-      const product = manager.create(Product, {
-        category,
-        name: dto.name,
-        status: dto.status ?? ProductStatus.ACTIVE,
-        description: dto.description?.trim() || null,
-        basePrice: Math.min(...dto.variants.map((v) => v.price)),
+      const product = await tx.product.create({
+        data: {
+          name: dto.name,
+          categoryId: dto.categoryId,
+          slug: generateProductSlug(dto.name),
+          status: dto.status ?? ProductStatus.ACTIVE,
+          description: dto.description?.trim() || null,
+          basePrice: Math.min(...dto.variants.map((v) => v.price)),
+        },
       });
 
-      await manager.save(product);
-
-      const variantEntities = dto.variants.map((variant) =>
-        manager.create(ProductVariant, {
-          product,
+      await tx.productVariant.createMany({
+        data: dto.variants.map((variant) => ({
           sku: variant.sku,
           size: variant.size,
           color: variant.color,
           stock: variant.stock,
           price: variant.price,
-        }),
+          productId: product.id,
+        })),
+      });
+
+      const imageEntities = await Promise.all(
+        files.map((file, index) =>
+          tx.storedFile.create({
+            data: {
+              urlPath: `/uploads/products/${file.filename}`,
+              sortOrder: index,
+              ownerModule: FileOwnerModule.PRODUCT,
+              ownerId: product.id,
+            },
+          }),
+        ),
       );
 
-      await manager.save(variantEntities);
-
-      const imageEntities = files.map((file, index) =>
-        manager.create(StoredFile, {
-          urlPath: `/uploads/products/${file.filename}`,
-          sortOrder: index,
-          ownerModule: FileOwnerModule.PRODUCT,
-          ownerId: product.id,
-        }),
-      );
-
-      await manager.save(imageEntities);
-
-      const createdProduct = await manager.findOne(Product, {
+      const createdProduct = await tx.product.findUnique({
         where: { id: product.id },
-        relations: {
+        include: {
           category: true,
           variants: true,
         },
@@ -85,8 +84,16 @@ export class CreateProductProvider {
         throw new NotFoundException('Product not found');
       }
 
-      createdProduct.images = imageEntities;
-      return createdProduct;
+      return {
+        ...createdProduct,
+        basePrice: Number(createdProduct.basePrice),
+        status: createdProduct.status as ProductStatus,
+        variants: createdProduct.variants.map((variant) => ({
+          ...variant,
+          price: Number(variant.price),
+        })),
+        images: imageEntities,
+      };
     });
   }
 }

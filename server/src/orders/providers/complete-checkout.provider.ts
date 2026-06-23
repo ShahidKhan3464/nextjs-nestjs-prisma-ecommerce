@@ -1,19 +1,12 @@
 import Stripe from 'stripe';
 import type { ConfigType } from '@nestjs/config';
-import { Order } from '../entities/order.entity';
-import { DataSource, Repository } from 'typeorm';
-import { InjectRepository } from '@nestjs/typeorm';
 import stripeConfig from 'src/config/stripe.config';
 import type { Stripe as StripeTypes } from 'stripe';
 import { UsersService } from 'src/users/users.service';
-import { OrderItem } from '../entities/order-item.entity';
-import { CartItem } from 'src/cart/entities/cart-item.entity';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { MailService } from 'src/mail/providers/mail.service';
 import { CompleteCheckoutDto } from '../dto/complete-checkout.dto';
-import { joinProductImages } from 'src/common/files/file-query.util';
-import { CheckoutSession } from '../entities/checkout-session.entity';
 import { OrderStatus, PaymentStatus } from '../constants/order.constants';
-import { ProductVariant } from 'src/products/entities/product-variant.entity';
 import {
   Inject,
   Injectable,
@@ -21,6 +14,10 @@ import {
   ForbiddenException,
   BadRequestException,
 } from '@nestjs/common';
+import {
+  findCheckoutSessionWithImages,
+  findOrderWithImages,
+} from 'src/common/files/file-query.util';
 import {
   OrderResponse,
   mapOrderToResponse,
@@ -32,11 +29,7 @@ export class CompleteCheckoutProvider {
   private stripe: StripeTypes;
 
   constructor(
-    @InjectRepository(Order)
-    private readonly orderRepository: Repository<Order>,
-    @InjectRepository(CheckoutSession)
-    private readonly sessionRepository: Repository<CheckoutSession>,
-    private readonly dataSource: DataSource,
+    private readonly prisma: PrismaService,
     private readonly mailService: MailService,
     private readonly usersService: UsersService,
     @Inject(stripeConfig.KEY)
@@ -71,7 +64,7 @@ export class CompleteCheckoutProvider {
       throw new BadRequestException('Invalid checkout session');
     }
 
-    const existingOrder = await this.orderRepository.findOne({
+    const existingOrder = await this.prisma.order.findFirst({
       where: { stripePaymentIntentId: paymentIntent.id },
     });
     if (existingOrder) {
@@ -81,17 +74,10 @@ export class CompleteCheckoutProvider {
       return response;
     }
 
-    const session = await joinProductImages(
-      this.sessionRepository
-        .createQueryBuilder('session')
-        .leftJoinAndSelect('session.items', 'items')
-        .leftJoinAndSelect('items.variant', 'variant')
-        .leftJoinAndSelect('variant.product', 'product')
-        .withDeleted()
-        .where('session.id = :sessionId', { sessionId })
-        .andWhere('session.userId = :userId', { userId }),
-      'product',
-    ).getOne();
+    const session = await findCheckoutSessionWithImages(this.prisma, {
+      id: sessionId,
+      userId,
+    });
 
     if (!session) {
       throw new NotFoundException('Checkout session not found or expired');
@@ -109,59 +95,54 @@ export class CompleteCheckoutProvider {
     const paymentSummary = this.formatPaymentSummary(paymentIntent);
     const orderNumber = generateOrderNumber();
 
-    const orderId = await this.dataSource.transaction(async (manager) => {
-      const orderRepo = manager.getRepository(Order);
-      const itemRepo = manager.getRepository(OrderItem);
-      const variantRepo = manager.getRepository(ProductVariant);
-      const cartRepo = manager.getRepository(CartItem);
-      const sessionRepo = manager.getRepository(CheckoutSession);
-
+    const orderId = await this.prisma.$transaction(async (tx) => {
       for (const item of session.items) {
-        const variant = await variantRepo
-          .createQueryBuilder('variant')
-          .setLock('pessimistic_write')
-          .where('variant.id = :id', { id: item.variantId })
-          .getOne();
+        await tx.$executeRaw`
+          SELECT id FROM product_variants WHERE id = ${item.variantId} FOR UPDATE
+        `;
+        const variant = await tx.productVariant.findUnique({
+          where: { id: item.variantId },
+        });
 
         if (!variant || variant.stock < item.quantity) {
           throw new BadRequestException(
             `Insufficient stock for variant ${item.variantId}`,
           );
         }
-        variant.stock -= item.quantity;
-        await variantRepo.save(variant);
+
+        await tx.productVariant.update({
+          where: { id: item.variantId },
+          data: { stock: variant.stock - item.quantity },
+        });
       }
 
-      const order = orderRepo.create({
-        userId,
-        orderNumber,
-        tax: session.tax,
-        subtotal: session.subtotal,
-        status: OrderStatus.PENDING,
-        totalAmount: session.totalAmount,
-        paymentStatus: PaymentStatus.PAID,
-        paymentMethodSummary: paymentSummary,
-        stripePaymentIntentId: paymentIntent.id,
-        shippingAddress: session.shippingAddress,
+      const savedOrder = await tx.order.create({
+        data: {
+          userId,
+          orderNumber,
+          tax: session.tax,
+          subtotal: session.subtotal,
+          status: OrderStatus.PENDING,
+          totalAmount: session.totalAmount,
+          paymentStatus: PaymentStatus.PAID,
+          paymentMethodSummary: paymentSummary,
+          stripePaymentIntentId: paymentIntent.id,
+          shippingAddress: session.shippingAddress,
+        },
       });
 
-      const savedOrder = await orderRepo.save(order);
-
-      const orderItems = session.items.map((sessionItem) => {
-        const imageUrl =
-          sessionItem.variant?.product?.images?.[0]?.urlPath ?? null;
-        return itemRepo.create({
+      await tx.orderItem.createMany({
+        data: session.items.map((sessionItem) => ({
           orderId: savedOrder.id,
           variantId: sessionItem.variantId,
           quantity: sessionItem.quantity,
           priceAtPurchase: sessionItem.priceAtPurchase,
-          imageUrl,
-        });
+          imageUrl: sessionItem.variant?.product?.images?.[0]?.urlPath ?? null,
+        })),
       });
 
-      await itemRepo.save(orderItems);
-      await cartRepo.delete({ userId });
-      await sessionRepo.remove(session);
+      await tx.cartItem.deleteMany({ where: { userId } });
+      await tx.checkoutSession.delete({ where: { id: session.id } });
 
       return savedOrder.id;
     });
@@ -192,18 +173,12 @@ export class CompleteCheckoutProvider {
     }
   }
 
-  private async loadOrder(orderId: number): Promise<Order> {
-    return joinProductImages(
-      this.orderRepository
-        .createQueryBuilder('order')
-        .leftJoinAndSelect('order.user', 'user')
-        .leftJoinAndSelect('order.items', 'items')
-        .leftJoinAndSelect('items.variant', 'variant')
-        .leftJoinAndSelect('variant.product', 'product')
-        .withDeleted()
-        .where('order.id = :orderId', { orderId }),
-      'product',
-    ).getOneOrFail();
+  private async loadOrder(orderId: number) {
+    const order = await findOrderWithImages(this.prisma, { id: orderId });
+    if (!order) {
+      throw new NotFoundException('Order not found');
+    }
+    return order;
   }
 
   private formatPaymentSummary(

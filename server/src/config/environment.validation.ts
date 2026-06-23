@@ -4,21 +4,9 @@ export default Joi.object({
   NODE_ENV: Joi.string().valid('development', 'production', 'test').required(),
   PORT: Joi.number().default(3000),
   FRONTEND_URL: Joi.string().optional(),
+  DATABASE_URL: Joi.string().required(),
   API_VERSION: Joi.string().default('v1'),
   STRIPE_SECRET_KEY: Joi.string().required(),
-  DATABASE_HOST: Joi.string().required(),
-  DATABASE_NAME: Joi.string().required(),
-  DATABASE_PORT: Joi.number().default(5432),
-  DATABASE_USERNAME: Joi.string().required(),
-  DATABASE_PASSWORD: Joi.string().required(),
-  DATABASE_SYNCHRONIZE: Joi.boolean()
-    .truthy('true')
-    .falsy('false')
-    .default(false),
-  DATABASE_AUTO_LOAD_ENTITIES: Joi.boolean()
-    .truthy('true')
-    .falsy('false')
-    .default(true),
   JWT_SECRET: Joi.string()
     .required()
     .min(16)

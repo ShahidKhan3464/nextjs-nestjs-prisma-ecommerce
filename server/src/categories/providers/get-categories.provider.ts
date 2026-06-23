@@ -1,6 +1,5 @@
-import { Repository } from 'typeorm';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Category } from '../entities/category.entity';
+import { Category } from 'src/generated/prisma/client';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { QueryCategoryDto } from '../dto/query-category.dto';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PaginationProviders } from 'src/common/pagination/providers/pagination.providers';
@@ -9,28 +8,47 @@ import { PaginateQueryResult } from 'src/common/pagination/interfaces/paginated.
 @Injectable()
 export class GetCategoriesProvider {
   constructor(
-    @InjectRepository(Category)
-    private readonly categoryRepository: Repository<Category>,
+    private readonly prisma: PrismaService,
     private readonly paginationProviders: PaginationProviders,
   ) {}
 
-  private buildFilteredQb(query: QueryCategoryDto) {
-    const qb = this.categoryRepository.createQueryBuilder('category');
-
-    if (query.lifeCycle === 'all' || query.lifeCycle === 'removed') {
-      qb.withDeleted();
-    }
-
+  private buildWhere(query: QueryCategoryDto) {
     if (query.lifeCycle === 'removed') {
-      qb.andWhere('category.deletedAt IS NOT NULL');
+      return {
+        deletedAt: { not: null },
+        ...(query.search?.trim()
+          ? {
+              name: {
+                contains: query.search.trim(),
+                mode: 'insensitive' as const,
+              },
+            }
+          : {}),
+      };
     }
 
-    if (query.search?.trim()) {
-      qb.andWhere('category.name ILIKE :search', {
-        search: `%${query.search.trim()}%`,
-      });
+    if (query.lifeCycle === 'all') {
+      return query.search?.trim()
+        ? {
+            name: {
+              contains: query.search.trim(),
+              mode: 'insensitive' as const,
+            },
+          }
+        : {};
     }
-    return qb;
+
+    return {
+      deletedAt: null,
+      ...(query.search?.trim()
+        ? {
+            name: {
+              contains: query.search.trim(),
+              mode: 'insensitive' as const,
+            },
+          }
+        : {}),
+    };
   }
 
   public async findAllPaginated(
@@ -39,22 +57,21 @@ export class GetCategoriesProvider {
     const { page, limit, skip } = this.paginationProviders.resolvePaging(query);
     const sortBy = query.sortBy ?? 'name';
     const sortOrder = query.sortOrder ?? 'ASC';
+    const where = this.buildWhere(query);
 
-    const total = await this.buildFilteredQb(query).getCount();
-    const data = await this.buildFilteredQb(query)
-      .orderBy(`category.${sortBy}`, sortOrder)
-      .skip(skip)
-      .take(limit)
-      .getMany();
+    const total = await this.prisma.category.count({ where });
+    const data = await this.prisma.category.findMany({
+      where,
+      orderBy: { [sortBy]: sortOrder.toLowerCase() as 'asc' | 'desc' },
+      skip,
+      take: limit,
+    });
 
     return { data, page, limit, total };
   }
 
   public async findOne(id: number): Promise<Category> {
-    const category = await this.categoryRepository.findOne({
-      where: { id },
-      withDeleted: true,
-    });
+    const category = await this.prisma.category.findUnique({ where: { id } });
     if (!category) {
       throw new NotFoundException('Category not found');
     }

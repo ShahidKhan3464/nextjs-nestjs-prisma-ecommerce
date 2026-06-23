@@ -1,10 +1,8 @@
-import { Repository } from 'typeorm';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Product } from '../entities/product.entity';
+import { ProductWithRelations } from 'src/common/types/domain.types';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { GetProductsProvider } from './get-products.provider';
 import { DeleteProductProvider } from './delete-product.provider';
 import { FileOwnerModule } from 'src/common/files/file.constants';
-import { StoredFile } from 'src/common/files/entities/stored-file.entity';
 import {
   Inject,
   Injectable,
@@ -16,10 +14,7 @@ import {
 @Injectable()
 export class ProductImagesProvider {
   constructor(
-    @InjectRepository(Product)
-    private readonly productRepository: Repository<Product>,
-    @InjectRepository(StoredFile)
-    private readonly fileRepository: Repository<StoredFile>,
+    private readonly prisma: PrismaService,
     @Inject(forwardRef(() => GetProductsProvider))
     private readonly getProductsProvider: GetProductsProvider,
     private readonly deleteProductProvider: DeleteProductProvider,
@@ -28,39 +23,40 @@ export class ProductImagesProvider {
   public async addImages(
     productId: number,
     files: Express.Multer.File[],
-  ): Promise<Product> {
+  ): Promise<ProductWithRelations> {
     if (!files?.length) {
       throw new BadRequestException('No image files provided');
     }
-    const product = await this.productRepository.findOne({
-      where: { id: productId },
+    const product = await this.prisma.product.findFirst({
+      where: { id: productId, deletedAt: null },
     });
     if (!product) {
       throw new NotFoundException('Product not found');
     }
 
-    const raw = await this.fileRepository
-      .createQueryBuilder('file')
-      .select('MAX(file.sortOrder)', 'max')
-      .where('file.ownerModule = :module', { module: FileOwnerModule.PRODUCT })
-      .andWhere('file.ownerId = :ownerId', { ownerId: productId })
-      .getRawOne<{ max: string | null }>();
-    const maxSort = raw?.max != null ? Number(raw.max) : -1;
+    const aggregate = await this.prisma.storedFile.aggregate({
+      where: {
+        ownerModule: FileOwnerModule.PRODUCT,
+        ownerId: productId,
+      },
+      _max: { sortOrder: true },
+    });
+    const maxSort = aggregate._max.sortOrder ?? -1;
 
-    const entities = files.map((file, index) =>
-      this.fileRepository.create({
+    await this.prisma.storedFile.createMany({
+      data: files.map((file, index) => ({
         urlPath: `/uploads/products/${file.filename}`,
         sortOrder: maxSort + 1 + index,
         ownerModule: FileOwnerModule.PRODUCT,
         ownerId: productId,
-      }),
-    );
-    await this.fileRepository.save(entities);
+      })),
+    });
+
     return await this.getProductsProvider.findOne(productId);
   }
 
   public async removeImage(productId: number, imageId: number): Promise<void> {
-    const image = await this.fileRepository.findOne({
+    const image = await this.prisma.storedFile.findFirst({
       where: {
         id: imageId,
         ownerModule: FileOwnerModule.PRODUCT,
@@ -71,6 +67,6 @@ export class ProductImagesProvider {
       throw new NotFoundException('Image not found');
     }
     await this.deleteProductProvider.safeUnlinkPublicPath(image.urlPath);
-    await this.fileRepository.remove(image);
+    await this.prisma.storedFile.delete({ where: { id: imageId } });
   }
 }

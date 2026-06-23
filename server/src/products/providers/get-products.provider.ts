@@ -1,100 +1,106 @@
-import { Repository } from 'typeorm';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Product } from '../entities/product.entity';
+import { Prisma } from '../../generated/prisma/client';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { QueryProductDto } from '../dto/query-product.dto';
+import { ProductStatus } from '../constants/product.constants';
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { joinProductImages } from 'src/common/files/file-query.util';
+import { ProductWithRelations } from 'src/common/types/domain.types';
 import { PaginationProviders } from 'src/common/pagination/providers/pagination.providers';
 import { PaginateQueryResult } from 'src/common/pagination/interfaces/paginated.interfaces';
+import {
+  findProductWithImages,
+  attachImagesToNestedProducts,
+} from 'src/common/files/file-query.util';
 
 @Injectable()
 export class GetProductsProvider {
   constructor(
-    @InjectRepository(Product)
-    private readonly productRepository: Repository<Product>,
+    private readonly prisma: PrismaService,
     private readonly paginationProviders: PaginationProviders,
   ) {}
 
-  private buildFilteredProductQb(query: QueryProductDto) {
-    const qb = this.productRepository.createQueryBuilder('product');
-
-    if (query.lifeCycle === 'all' || query.lifeCycle === 'removed') {
-      qb.withDeleted();
-    }
+  private buildWhere(query: QueryProductDto): Prisma.ProductWhereInput {
+    const where: Prisma.ProductWhereInput = {};
 
     if (query.lifeCycle === 'removed') {
-      qb.andWhere('product.deletedAt IS NOT NULL');
+      where.deletedAt = { not: null };
+    } else if (query.lifeCycle !== 'all') {
+      where.deletedAt = null;
     }
 
     if (query.categoryId) {
-      // Use join to ensure categoryId filtering works reliably regardless of virtual column naming
-      qb.innerJoin(
-        'product.category',
-        'cat_filter',
-        'cat_filter.id = :categoryId',
-        {
-          categoryId: query.categoryId,
-        },
-      );
+      where.categoryId = query.categoryId;
     }
+
     if (query.status) {
-      qb.andWhere('product.status = :status', { status: query.status });
+      where.status = query.status;
     }
+
     if (query.search?.trim()) {
-      qb.andWhere(
-        "(product.name ILIKE :search OR COALESCE(product.description, '') ILIKE :search)",
-        { search: `%${query.search.trim()}%` },
-      );
+      where.OR = [
+        { name: { contains: query.search.trim(), mode: 'insensitive' } },
+        {
+          description: {
+            contains: query.search.trim(),
+            mode: 'insensitive',
+          },
+        },
+      ];
     }
 
     if (query.minPrice !== undefined || query.maxPrice !== undefined) {
-      qb.innerJoin('product.variants', 'price_filter');
-
-      if (query.minPrice !== undefined && query.minPrice !== null) {
-        qb.andWhere('price_filter.price >= :minPrice', {
-          minPrice: query.minPrice,
-        });
-      }
-
-      if (query.maxPrice !== undefined && query.maxPrice !== null) {
-        qb.andWhere('price_filter.price <= :maxPrice', {
-          maxPrice: query.maxPrice,
-        });
-      }
+      where.variants = {
+        some: {
+          ...(query.minPrice !== undefined && query.minPrice !== null
+            ? { price: { gte: query.minPrice } }
+            : {}),
+          ...(query.maxPrice !== undefined && query.maxPrice !== null
+            ? { price: { lte: query.maxPrice } }
+            : {}),
+        },
+      };
     }
 
-    return qb;
+    return where;
   }
 
   public async findAllPaginated(
     query: QueryProductDto,
-  ): Promise<PaginateQueryResult<Product>> {
+  ): Promise<PaginateQueryResult<ProductWithRelations>> {
     const { page, limit, skip } = this.paginationProviders.resolvePaging(query);
+    const where = this.buildWhere(query);
 
-    const total = await this.buildFilteredProductQb(query).getCount();
+    const total = await this.prisma.product.count({ where });
+    const products = await this.prisma.product.findMany({
+      where,
+      include: {
+        category: true,
+        variants: true,
+      },
+      orderBy: { createdAt: 'desc' },
+      skip,
+      take: limit,
+    });
 
-    const data = await joinProductImages(
-      this.buildFilteredProductQb(query)
-        .leftJoinAndSelect('product.category', 'category')
-        .leftJoinAndSelect('product.variants', 'variants')
-        .orderBy('product.createdAt', 'DESC'),
-    )
-      .skip(skip)
-      .take(limit)
-      .getMany();
+    const data = await attachImagesToNestedProducts(
+      this.prisma,
+      products.map((product) => ({
+        ...product,
+        basePrice: Number(product.basePrice),
+        status: product.status as ProductStatus,
+        variants: product.variants.map((variant) => ({
+          ...variant,
+          price: Number(variant.price),
+        })),
+      })),
+    );
 
     return { data, page, limit, total };
   }
 
-  public async findOne(id: number): Promise<Product> {
-    const product = await joinProductImages(
-      this.productRepository
-        .createQueryBuilder('product')
-        .withDeleted()
-        .where('product.id = :id', { id })
-        .leftJoinAndSelect('product.category', 'category')
-        .leftJoinAndSelect('product.variants', 'variants'),
-    ).getOne();
+  public async findOne(id: number): Promise<ProductWithRelations> {
+    const product = await findProductWithImages(this.prisma, {
+      where: { id },
+    });
 
     if (!product) {
       throw new NotFoundException('Product not found');
@@ -102,14 +108,10 @@ export class GetProductsProvider {
     return product;
   }
 
-  public async findBySlug(slug: string): Promise<Product> {
-    const product = await joinProductImages(
-      this.productRepository
-        .createQueryBuilder('product')
-        .where('product.slug = :slug', { slug })
-        .leftJoinAndSelect('product.category', 'category')
-        .leftJoinAndSelect('product.variants', 'variants'),
-    ).getOne();
+  public async findBySlug(slug: string): Promise<ProductWithRelations> {
+    const product = await findProductWithImages(this.prisma, {
+      where: { slug, deletedAt: null },
+    });
 
     if (!product) {
       throw new NotFoundException('Product not found');

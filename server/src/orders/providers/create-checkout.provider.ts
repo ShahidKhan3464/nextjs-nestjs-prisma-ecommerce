@@ -1,17 +1,12 @@
 import Stripe from 'stripe';
-import { DataSource, Repository } from 'typeorm';
 import type { ConfigType } from '@nestjs/config';
-import { InjectRepository } from '@nestjs/typeorm';
 import type { Stripe as StripeTypes } from 'stripe';
 import stripeConfig from 'src/config/stripe.config';
-import { CartItem } from 'src/cart/entities/cart-item.entity';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateCheckoutDto } from '../dto/create-checkout.dto';
 import { calculateOrderPricing } from '../utils/order-pricing.util';
-import { joinProductImages } from 'src/common/files/file-query.util';
-import { CheckoutSession } from '../entities/checkout-session.entity';
 import { Inject, Injectable, BadRequestException } from '@nestjs/common';
-import { ProductVariant } from 'src/products/entities/product-variant.entity';
-import { CheckoutSessionItem } from '../entities/checkout-session-item.entity';
+import { findCartItemsWithImages } from 'src/common/files/file-query.util';
 
 type CheckoutPreview = {
   tax: number;
@@ -31,11 +26,7 @@ export class CreateCheckoutProvider {
   private stripe: StripeTypes;
 
   constructor(
-    @InjectRepository(CheckoutSession)
-    private readonly sessionRepository: Repository<CheckoutSession>,
-    @InjectRepository(CartItem)
-    private readonly cartRepository: Repository<CartItem>,
-    private readonly dataSource: DataSource,
+    private readonly prisma: PrismaService,
     @Inject(stripeConfig.KEY)
     private readonly stripeConfiguration: ConfigType<typeof stripeConfig>,
   ) {
@@ -50,21 +41,14 @@ export class CreateCheckoutProvider {
     userId: number,
     dto: CreateCheckoutDto,
   ): Promise<CheckoutSessionResponse> {
-    const existingSessions = await this.sessionRepository.find({
+    const existingSessions = await this.prisma.checkoutSession.findMany({
       where: { userId },
     });
     if (existingSessions.length > 0) {
-      await this.sessionRepository.remove(existingSessions);
+      await this.prisma.checkoutSession.deleteMany({ where: { userId } });
     }
 
-    const cartItems = await joinProductImages(
-      this.cartRepository
-        .createQueryBuilder('cart')
-        .where('cart.userId = :userId', { userId })
-        .innerJoinAndSelect('cart.variant', 'variant')
-        .innerJoinAndSelect('variant.product', 'product'),
-      'product',
-    ).getMany();
+    const cartItems = await findCartItemsWithImages(this.prisma, { userId });
 
     if (cartItems.length === 0) {
       throw new BadRequestException('Cart is empty');
@@ -86,17 +70,14 @@ export class CreateCheckoutProvider {
 
     const shippingAddressJson = JSON.stringify(dto.shippingAddress);
 
-    const savedSession = await this.dataSource.transaction(async (manager) => {
-      const sessionRepo = manager.getRepository(CheckoutSession);
-      const itemRepo = manager.getRepository(CheckoutSessionItem);
-      const variantRepo = manager.getRepository(ProductVariant);
-
+    const savedSession = await this.prisma.$transaction(async (tx) => {
       for (const item of cartItems) {
-        const variant = await variantRepo
-          .createQueryBuilder('variant')
-          .setLock('pessimistic_write')
-          .where('variant.id = :id', { id: item.productVariantId })
-          .getOne();
+        await tx.$executeRaw`
+          SELECT id FROM product_variants WHERE id = ${item.productVariantId} FOR UPDATE
+        `;
+        const variant = await tx.productVariant.findUnique({
+          where: { id: item.productVariantId },
+        });
 
         if (!variant || item.quantity > variant.stock) {
           throw new BadRequestException(
@@ -105,28 +86,26 @@ export class CreateCheckoutProvider {
         }
       }
 
-      const session = sessionRepo.create({
-        userId,
-        tax: pricing.tax,
-        totalAmount: pricing.total,
-        subtotal: pricing.subtotal,
-        stripePaymentIntentId: 'pending',
-        shippingAddress: shippingAddressJson,
+      const createdSession = await tx.checkoutSession.create({
+        data: {
+          userId,
+          tax: pricing.tax,
+          totalAmount: pricing.total,
+          subtotal: pricing.subtotal,
+          stripePaymentIntentId: 'pending',
+          shippingAddress: shippingAddressJson,
+        },
       });
 
-      const createdSession = await sessionRepo.save(session);
-
-      const lineItems = cartItems.map((cartItem) =>
-        itemRepo.create({
+      await tx.checkoutSessionItem.createMany({
+        data: cartItems.map((cartItem) => ({
           checkoutSessionId: createdSession.id,
           variantId: cartItem.productVariantId,
           quantity: cartItem.quantity,
           priceAtPurchase: Number(cartItem.variant.price),
-        }),
-      );
+        })),
+      });
 
-      await itemRepo.save(lineItems);
-      createdSession.items = lineItems;
       return createdSession;
     });
 
@@ -142,12 +121,16 @@ export class CreateCheckoutProvider {
     });
 
     if (!paymentIntent.client_secret) {
-      await this.sessionRepository.remove(savedSession);
+      await this.prisma.checkoutSession.delete({
+        where: { id: savedSession.id },
+      });
       throw new BadRequestException('Failed to initialize payment');
     }
 
-    savedSession.stripePaymentIntentId = paymentIntent.id;
-    await this.sessionRepository.save(savedSession);
+    await this.prisma.checkoutSession.update({
+      where: { id: savedSession.id },
+      data: { stripePaymentIntentId: paymentIntent.id },
+    });
 
     return {
       paymentIntentId: paymentIntent.id,

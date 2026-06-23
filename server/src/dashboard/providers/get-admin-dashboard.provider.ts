@@ -1,13 +1,8 @@
-import { Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { User } from 'src/users/entities/user.entity';
-import { Order } from 'src/orders/entities/order.entity';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { UserRole } from 'src/users/constants/user.constants';
-import { Product } from 'src/products/entities/product.entity';
-import { joinProductImages } from 'src/common/files/file-query.util';
+import { findOrdersWithImages } from 'src/common/files/file-query.util';
 import { ProductStatus } from 'src/products/constants/product.constants';
-import { ProductVariant } from 'src/products/entities/product-variant.entity';
 import {
   OrderStatus,
   PaymentStatus,
@@ -29,16 +24,7 @@ const RECENT_ORDERS_LIMIT = 5;
 
 @Injectable()
 export class GetAdminDashboardProvider {
-  constructor(
-    @InjectRepository(Order)
-    private readonly orderRepository: Repository<Order>,
-    @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
-    @InjectRepository(Product)
-    private readonly productRepository: Repository<Product>,
-    @InjectRepository(ProductVariant)
-    private readonly variantRepository: Repository<ProductVariant>,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   async getOverview(): Promise<AdminDashboardResponse> {
     const [
@@ -54,15 +40,15 @@ export class GetAdminDashboardProvider {
       recentOrders,
     ] = await Promise.all([
       this.getTotalRevenue(),
-      this.orderRepository.count(),
-      this.productRepository.count({
-        where: { status: ProductStatus.ACTIVE },
+      this.prisma.order.count(),
+      this.prisma.product.count({
+        where: { status: ProductStatus.ACTIVE, deletedAt: null },
       }),
-      this.variantRepository.count(),
-      this.userRepository.count({
+      this.prisma.productVariant.count(),
+      this.prisma.user.count({
         where: { role: UserRole.CUSTOMER, isBlocked: false },
       }),
-      this.orderRepository.count({ where: { status: OrderStatus.PENDING } }),
+      this.prisma.order.count({ where: { status: OrderStatus.PENDING } }),
       this.getRevenueByDay(),
       this.getOrdersByStatus(),
       this.getLowStock(),
@@ -86,30 +72,30 @@ export class GetAdminDashboardProvider {
   }
 
   private async getTotalRevenue(): Promise<{ revenue: string } | undefined> {
-    return this.orderRepository
-      .createQueryBuilder('order')
-      .select('COALESCE(SUM(order.totalAmount), 0)', 'revenue')
-      .where('order.paymentStatus = :paid', { paid: PaymentStatus.PAID })
-      .andWhere('order.status != :cancelled', {
-        cancelled: OrderStatus.CANCELLED,
-      })
-      .getRawOne();
+    const result = await this.prisma.order.aggregate({
+      where: {
+        paymentStatus: PaymentStatus.PAID,
+        status: { not: OrderStatus.CANCELLED },
+      },
+      _sum: { totalAmount: true },
+    });
+    return { revenue: String(result._sum.totalAmount ?? 0) };
   }
 
   private async getRevenueByDay(): Promise<DashboardRevenuePoint[]> {
     const { start, keys } = this.buildLastNDaysRange(REVENUE_DAYS);
 
-    const rows = await this.orderRepository
-      .createQueryBuilder('order')
-      .select("TO_CHAR(order.createdAt, 'YYYY-MM-DD')", 'date')
-      .addSelect('COALESCE(SUM(order.totalAmount), 0)', 'revenue')
-      .where('order.createdAt >= :start', { start })
-      .andWhere('order.paymentStatus = :paid', { paid: PaymentStatus.PAID })
-      .andWhere('order.status != :cancelled', {
-        cancelled: OrderStatus.CANCELLED,
-      })
-      .groupBy("TO_CHAR(order.createdAt, 'YYYY-MM-DD')")
-      .getRawMany<{ date: string; revenue: string }>();
+    const rows = await this.prisma.$queryRaw<
+      { date: string; revenue: string }[]
+    >`
+      SELECT TO_CHAR("createdAt", 'YYYY-MM-DD') AS date,
+             COALESCE(SUM("totalAmount"), 0) AS revenue
+      FROM orders
+      WHERE "createdAt" >= ${start}
+        AND "paymentStatus" = ${PaymentStatus.PAID}::orders_paymentstatus_enum
+        AND status != ${OrderStatus.CANCELLED}::orders_status_enum
+      GROUP BY TO_CHAR("createdAt", 'YYYY-MM-DD')
+    `;
 
     const byDate = new Map(rows.map((row) => [row.date, Number(row.revenue)]));
 
@@ -120,29 +106,30 @@ export class GetAdminDashboardProvider {
   }
 
   private async getOrdersByStatus(): Promise<DashboardStatusCount[]> {
-    const rows = await this.orderRepository
-      .createQueryBuilder('order')
-      .select('order.status', 'status')
-      .addSelect('COUNT(*)', 'count')
-      .groupBy('order.status')
-      .getRawMany<{ status: string; count: string }>();
+    const rows = await this.prisma.order.groupBy({
+      by: ['status'],
+      _count: { _all: true },
+    });
 
     return rows.map((row) => ({
       status: row.status,
-      count: Number(row.count),
+      count: row._count._all,
     }));
   }
 
   private async getLowStock(): Promise<DashboardLowStockItem[]> {
-    const variants = await this.variantRepository
-      .createQueryBuilder('variant')
-      .innerJoinAndSelect('variant.product', 'product')
-      .where('variant.stock < :threshold', { threshold: LOW_STOCK_THRESHOLD })
-      .andWhere('product.deletedAt IS NULL')
-      .andWhere('product.status = :status', { status: ProductStatus.ACTIVE })
-      .orderBy('variant.stock', 'ASC')
-      .take(10)
-      .getMany();
+    const variants = await this.prisma.productVariant.findMany({
+      where: {
+        stock: { lt: LOW_STOCK_THRESHOLD },
+        product: {
+          deletedAt: null,
+          status: ProductStatus.ACTIVE,
+        },
+      },
+      include: { product: true },
+      orderBy: { stock: 'asc' },
+      take: 10,
+    });
 
     return variants.map((variant) => ({
       sku: variant.sku,
@@ -152,17 +139,10 @@ export class GetAdminDashboardProvider {
   }
 
   private async getRecentOrders(): Promise<OrderResponse[]> {
-    const orders = await joinProductImages(
-      this.orderRepository
-        .createQueryBuilder('order')
-        .leftJoinAndSelect('order.items', 'items')
-        .leftJoinAndSelect('items.variant', 'variant')
-        .leftJoinAndSelect('variant.product', 'product')
-        .withDeleted()
-        .orderBy('order.createdAt', 'DESC')
-        .take(RECENT_ORDERS_LIMIT),
-      'product',
-    ).getMany();
+    const orders = await findOrdersWithImages(this.prisma, {
+      orderBy: { createdAt: 'desc' },
+      take: RECENT_ORDERS_LIMIT,
+    });
 
     return orders.map(mapOrderToResponse);
   }

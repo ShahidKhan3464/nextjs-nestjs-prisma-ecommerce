@@ -1,13 +1,8 @@
-import { Repository } from 'typeorm';
-import { User } from '../entities/user.entity';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Order } from 'src/orders/entities/order.entity';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { FileOwnerModule } from 'src/common/files/file.constants';
-import { joinProductImages } from 'src/common/files/file-query.util';
+import { findOrdersWithImages } from 'src/common/files/file-query.util';
 import { UserResponse, mapUserToResponse } from '../utils/map-user.util';
-import { StoredFile } from 'src/common/files/entities/stored-file.entity';
-import { WishlistItem } from 'src/wishlist/entities/wishlist-item.entity';
 import {
   OrderAddress,
   OrderResponse,
@@ -28,39 +23,23 @@ export type UserDetailResponse = {
 
 @Injectable()
 export class GetUserDetailProvider {
-  constructor(
-    @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
-    @InjectRepository(Order)
-    private readonly orderRepository: Repository<Order>,
-    @InjectRepository(WishlistItem)
-    private readonly wishlistRepository: Repository<WishlistItem>,
-    @InjectRepository(StoredFile)
-    private readonly fileRepository: Repository<StoredFile>,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   async getDetail(userId: number): Promise<UserDetailResponse> {
-    const user = await this.userRepository.findOne({ where: { id: userId } });
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) {
       throw new NotFoundException('User not found');
     }
 
-    const avatar = await this.fileRepository.findOne({
+    const avatar = await this.prisma.storedFile.findFirst({
       where: { ownerModule: FileOwnerModule.CUSTOMER, ownerId: userId },
-      order: { sortOrder: 'ASC' },
+      orderBy: { sortOrder: 'asc' },
     });
 
-    const orders = await joinProductImages(
-      this.orderRepository
-        .createQueryBuilder('order')
-        .leftJoinAndSelect('order.items', 'items')
-        .leftJoinAndSelect('items.variant', 'variant')
-        .leftJoinAndSelect('variant.product', 'product')
-        .withDeleted()
-        .where('order.userId = :userId', { userId })
-        .orderBy('order.createdAt', 'DESC'),
-      'product',
-    ).getMany();
+    const orders = await findOrdersWithImages(this.prisma, {
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+    });
 
     const orderResponses = orders.map(mapOrderToResponse);
     const totalSpending = orders.reduce(
@@ -74,7 +53,7 @@ export class GetUserDetailProvider {
 
     const uniqueAddresses = this.dedupeAddresses(addresses);
 
-    const wishlistCount = await this.wishlistRepository.count({
+    const wishlistCount = await this.prisma.wishlistItem.count({
       where: { userId },
     });
 

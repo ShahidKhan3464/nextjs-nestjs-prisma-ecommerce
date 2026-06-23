@@ -1,8 +1,6 @@
-import { Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { CartItem } from '../entities/cart-item.entity';
-import { joinProductImages } from 'src/common/files/file-query.util';
+import { PrismaService } from 'src/prisma/prisma.service';
+import { findCartItemsWithImages } from 'src/common/files/file-query.util';
 import {
   CartItemResponse,
   mapCartItemToResponse,
@@ -10,22 +8,14 @@ import {
 
 @Injectable()
 export class GetCartProvider {
-  constructor(
-    @InjectRepository(CartItem)
-    private readonly cartRepository: Repository<CartItem>,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   public async findByUser(userId: number): Promise<CartItemResponse[]> {
-    const items = await joinProductImages(
-      this.cartRepository
-        .createQueryBuilder('cart')
-        .where('cart.userId = :userId', { userId })
-        .innerJoinAndSelect('cart.variant', 'variant')
-        .innerJoinAndSelect('variant.product', 'product')
-        .withDeleted()
-        .addOrderBy('cart.createdAt', 'ASC'),
-      'product',
-    ).getMany();
+    const items = await findCartItemsWithImages(
+      this.prisma,
+      { userId },
+      { createdAt: 'asc' },
+    );
 
     return items.map(mapCartItemToResponse);
   }

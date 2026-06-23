@@ -1,18 +1,15 @@
-import { Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Category } from '../entities/category.entity';
+import { Category } from 'src/generated/prisma/client';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateCategoryDto } from '../dto/create-category.dto';
 
 @Injectable()
 export class CreateCategoryProvider {
-  constructor(
-    @InjectRepository(Category)
-    private readonly categoryRepository: Repository<Category>,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   public async create(dto: CreateCategoryDto): Promise<Category> {
-    const entity = this.categoryRepository.create(dto);
-    return await this.categoryRepository.save(entity);
+    return await this.prisma.category.create({
+      data: dto,
+    });
   }
 }

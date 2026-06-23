@@ -1,10 +1,7 @@
-import { Repository } from 'typeorm';
-import { InjectRepository } from '@nestjs/typeorm';
-import { CartItem } from '../entities/cart-item.entity';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { AddCartItemDto } from '../dto/add-cart-item.dto';
 import { Injectable, BadRequestException } from '@nestjs/common';
-import { joinProductImages } from 'src/common/files/file-query.util';
-import { ProductVariant } from 'src/products/entities/product-variant.entity';
+import { findCartItemsWithImages } from 'src/common/files/file-query.util';
 import {
   CartItemResponse,
   mapCartItemToResponse,
@@ -12,20 +9,15 @@ import {
 
 @Injectable()
 export class AddCartItemProvider {
-  constructor(
-    @InjectRepository(CartItem)
-    private readonly cartRepository: Repository<CartItem>,
-    @InjectRepository(ProductVariant)
-    private readonly variantRepository: Repository<ProductVariant>,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   public async add(
     userId: number,
     dto: AddCartItemDto,
   ): Promise<CartItemResponse> {
-    const variant = await this.variantRepository.findOne({
+    const variant = await this.prisma.productVariant.findUnique({
       where: { id: dto.variantId },
-      relations: ['product'],
+      include: { product: true },
     });
 
     if (!variant) {
@@ -36,40 +28,40 @@ export class AddCartItemProvider {
       throw new BadRequestException('Insufficient stock');
     }
 
-    let item = await this.cartRepository.findOne({
-      where: { userId, productVariantId: dto.variantId },
+    const existing = await this.prisma.cartItem.findUnique({
+      where: {
+        userId_productVariantId: {
+          userId,
+          productVariantId: dto.variantId,
+        },
+      },
     });
 
-    if (item) {
-      const nextQty = Math.min(item.quantity + dto.quantity, variant.stock);
-      item.quantity = nextQty;
-      await this.cartRepository.save(item);
-    } else {
-      item = this.cartRepository.create({
-        userId,
-        productVariantId: dto.variantId,
-        quantity: dto.quantity,
+    if (existing) {
+      const nextQty = Math.min(existing.quantity + dto.quantity, variant.stock);
+      await this.prisma.cartItem.update({
+        where: { id: existing.id },
+        data: { quantity: nextQty },
       });
-      await this.cartRepository.save(item);
+    } else {
+      await this.prisma.cartItem.create({
+        data: {
+          userId,
+          productVariantId: dto.variantId,
+          quantity: dto.quantity,
+        },
+      });
     }
 
-    const reloaded = await this.loadCartItem(userId, dto.variantId);
-    if (!reloaded) {
+    const reloaded = await findCartItemsWithImages(this.prisma, {
+      userId,
+      productVariantId: dto.variantId,
+    });
+    const item = reloaded[0];
+    if (!item) {
       throw new BadRequestException('Failed to add cart item');
     }
 
-    return mapCartItemToResponse(reloaded);
-  }
-
-  private loadCartItem(userId: number, variantId: number) {
-    return joinProductImages(
-      this.cartRepository
-        .createQueryBuilder('cart')
-        .where('cart.userId = :userId', { userId })
-        .andWhere('cart.productVariantId = :variantId', { variantId })
-        .innerJoinAndSelect('cart.variant', 'variant')
-        .innerJoinAndSelect('variant.product', 'product'),
-      'product',
-    ).getOne();
+    return mapCartItemToResponse(item);
   }
 }

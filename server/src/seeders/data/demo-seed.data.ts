@@ -11,7 +11,7 @@ export type DemoCategorySeed = {
   description: string;
 };
 
-export type DemoVariantSeed = {
+type DemoVariantSeed = {
   size: string;
   color: string;
   sku: string;

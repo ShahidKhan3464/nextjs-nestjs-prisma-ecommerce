@@ -1,10 +1,8 @@
-import { Repository } from 'typeorm';
-import { Order } from '../entities/order.entity';
-import { InjectRepository } from '@nestjs/typeorm';
 import { UsersService } from 'src/users/users.service';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { OrderStatus } from '../constants/order.constants';
 import { MailService } from 'src/mail/providers/mail.service';
-import { joinProductImages } from 'src/common/files/file-query.util';
+import { findOrderWithImages } from 'src/common/files/file-query.util';
 import { OrderResponse, mapOrderToResponse } from '../utils/map-order.util';
 import {
   Injectable,
@@ -20,23 +18,13 @@ const ALLOWED_TRANSITIONS: Partial<Record<OrderStatus, OrderStatus[]>> = {
 @Injectable()
 export class UpdateOrderStatusProvider {
   constructor(
-    @InjectRepository(Order)
-    private readonly orderRepository: Repository<Order>,
+    private readonly prisma: PrismaService,
     private readonly mailService: MailService,
     private readonly usersService: UsersService,
   ) {}
 
   async update(orderId: number, status: OrderStatus): Promise<OrderResponse> {
-    const order = await joinProductImages(
-      this.orderRepository
-        .createQueryBuilder('order')
-        .leftJoinAndSelect('order.items', 'items')
-        .leftJoinAndSelect('items.variant', 'variant')
-        .leftJoinAndSelect('variant.product', 'product')
-        .withDeleted()
-        .where('order.id = :orderId', { orderId }),
-      'product',
-    ).getOne();
+    const order = await findOrderWithImages(this.prisma, { id: orderId });
 
     if (!order) {
       throw new NotFoundException('Order not found');
@@ -50,16 +38,23 @@ export class UpdateOrderStatusProvider {
     }
 
     const previousStatus = order.status;
-    order.status = status;
 
-    if (status === OrderStatus.SHIPPED && !order.shippedAt) {
-      order.shippedAt = new Date();
-    }
-    if (status === OrderStatus.DELIVERED && !order.deliveredAt) {
-      order.deliveredAt = new Date();
-    }
+    const updated = await this.prisma.order.update({
+      where: { id: orderId },
+      data: {
+        status,
+        ...(status === OrderStatus.SHIPPED && !order.shippedAt
+          ? { shippedAt: new Date() }
+          : {}),
+        ...(status === OrderStatus.DELIVERED && !order.deliveredAt
+          ? { deliveredAt: new Date() }
+          : {}),
+      },
+    });
 
-    await this.orderRepository.save(order);
+    order.status = updated.status as OrderStatus;
+    order.shippedAt = updated.shippedAt;
+    order.deliveredAt = updated.deliveredAt;
 
     const response = mapOrderToResponse(order);
 

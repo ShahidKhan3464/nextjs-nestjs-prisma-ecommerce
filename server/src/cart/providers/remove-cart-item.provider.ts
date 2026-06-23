@@ -1,21 +1,15 @@
-import { Repository } from 'typeorm';
-import { InjectRepository } from '@nestjs/typeorm';
-import { CartItem } from '../entities/cart-item.entity';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { Injectable, NotFoundException } from '@nestjs/common';
 
 @Injectable()
 export class RemoveCartItemProvider {
-  constructor(
-    @InjectRepository(CartItem)
-    private readonly cartRepository: Repository<CartItem>,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   public async remove(userId: number, variantId: number): Promise<void> {
-    const result = await this.cartRepository.delete({
-      userId,
-      productVariantId: variantId,
+    const result = await this.prisma.cartItem.deleteMany({
+      where: { userId, productVariantId: variantId },
     });
-    if (!result.affected) {
+    if (!result.count) {
       throw new NotFoundException('Cart item not found');
     }
   }

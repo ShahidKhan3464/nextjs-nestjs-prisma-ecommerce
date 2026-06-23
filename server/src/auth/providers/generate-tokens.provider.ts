@@ -3,7 +3,7 @@ import jwtConfig from '../config/jwt.config';
 import type { SignOptions } from 'jsonwebtoken';
 import type { ConfigType } from '@nestjs/config';
 import { Inject, Injectable } from '@nestjs/common';
-import type { User } from '../../users/entities/user.entity';
+import type { User } from 'src/generated/prisma/client';
 
 @Injectable()
 export class GenerateTokensProvider {

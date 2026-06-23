@@ -1,4 +1,4 @@
-import { User } from '../entities/user.entity';
+import { User } from 'src/generated/prisma/client';
 import { UserRole } from '../constants/user.constants';
 
 export type UserResponse = {
@@ -19,12 +19,12 @@ export type UserMeResponse = UserResponse & {
 export function mapUserToResponse(user: User): UserResponse {
   return {
     id: user.id,
-    role: user.role,
     email: user.email,
     fullName: user.fullName,
     isBlocked: user.isBlocked,
     createDate: user.createDate,
     updateDate: user.updateDate,
+    role: user.role as UserRole,
     phoneNumber: user.phoneNumber,
   };
 }

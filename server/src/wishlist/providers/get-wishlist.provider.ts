@@ -1,19 +1,14 @@
-import { Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { WishlistItem } from '../entities/wishlist-item.entity';
+import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class GetWishlistProvider {
-  constructor(
-    @InjectRepository(WishlistItem)
-    private readonly wishlistRepository: Repository<WishlistItem>,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   public async findProductIds(userId: number): Promise<number[]> {
-    const items = await this.wishlistRepository.find({
+    const items = await this.prisma.wishlistItem.findMany({
       where: { userId },
-      order: { createdAt: 'DESC' },
+      orderBy: { createdAt: 'desc' },
     });
     return items.map((i) => i.productId);
   }

@@ -1,19 +1,13 @@
-import { Repository, In } from 'typeorm';
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { SyncCartDto } from '../dto/sync-cart.dto';
 import { GetCartProvider } from './get-cart.provider';
-import { CartItem } from '../entities/cart-item.entity';
+import { PrismaService } from 'src/prisma/prisma.service';
 import type { CartItemResponse } from '../utils/map-cart-item.util';
-import { ProductVariant } from 'src/products/entities/product-variant.entity';
 
 @Injectable()
 export class SyncCartProvider {
   constructor(
-    @InjectRepository(CartItem)
-    private readonly cartRepository: Repository<CartItem>,
-    @InjectRepository(ProductVariant)
-    private readonly variantRepository: Repository<ProductVariant>,
+    private readonly prisma: PrismaService,
     private readonly getCartProvider: GetCartProvider,
   ) {}
 
@@ -24,13 +18,13 @@ export class SyncCartProvider {
     const variantIds = [...new Set(dto.items.map((i) => i.variantId))];
     const variants =
       variantIds.length > 0
-        ? await this.variantRepository.find({
-            where: { id: In(variantIds) },
+        ? await this.prisma.productVariant.findMany({
+            where: { id: { in: variantIds } },
           })
         : [];
     const variantById = new Map(variants.map((v) => [v.id, v]));
 
-    const existing = await this.cartRepository.find({ where: { userId } });
+    const existing = await this.prisma.cartItem.findMany({ where: { userId } });
     const existingByVariant = new Map(
       existing.map((e) => [e.productVariantId, e]),
     );
@@ -43,15 +37,18 @@ export class SyncCartProvider {
       const current = existingByVariant.get(line.variantId);
 
       if (current) {
-        current.quantity = Math.max(current.quantity, qty);
-        await this.cartRepository.save(current);
-      } else {
-        const created = this.cartRepository.create({
-          userId,
-          productVariantId: line.variantId,
-          quantity: qty,
+        await this.prisma.cartItem.update({
+          where: { id: current.id },
+          data: { quantity: Math.max(current.quantity, qty) },
         });
-        await this.cartRepository.save(created);
+      } else {
+        const created = await this.prisma.cartItem.create({
+          data: {
+            userId,
+            productVariantId: line.variantId,
+            quantity: qty,
+          },
+        });
         existingByVariant.set(line.variantId, created);
       }
     }

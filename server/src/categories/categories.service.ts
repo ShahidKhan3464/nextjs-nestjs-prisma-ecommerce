@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Category } from './entities/category.entity';
+import { Category } from 'src/generated/prisma/client';
 import { QueryCategoryDto } from './dto/query-category.dto';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';

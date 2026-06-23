@@ -1,5 +1,7 @@
-import { CartItem } from '../entities/cart-item.entity';
-import { ProductVariant } from 'src/products/entities/product-variant.entity';
+import {
+  CartItemWithRelations,
+  ProductVariantWithRelations,
+} from 'src/common/types/domain.types';
 
 export type CartItemResponse = {
   id: number;
@@ -14,14 +16,16 @@ export type CartItemResponse = {
   variantLabel: string;
 };
 
-function formatVariantLabel(variant: ProductVariant): string {
+function formatVariantLabel(variant: ProductVariantWithRelations): string {
   const parts = [variant.size, variant.color].filter(
     (p) => typeof p === 'string' && p.trim().length > 0,
   );
   return parts.length > 0 ? parts.join(' / ') : variant.sku;
 }
 
-export function mapCartItemToResponse(item: CartItem): CartItemResponse {
+export function mapCartItemToResponse(
+  item: CartItemWithRelations,
+): CartItemResponse {
   const variant = item.variant;
   const product = variant.product;
   const image =

@@ -1,7 +1,9 @@
-import { Order } from '../entities/order.entity';
-import { OrderItem } from '../entities/order-item.entity';
 import { OrderStatus, PaymentStatus } from '../constants/order.constants';
-import { ProductVariant } from 'src/products/entities/product-variant.entity';
+import {
+  OrderWithRelations,
+  OrderItemWithRelations,
+  ProductVariantWithRelations,
+} from 'src/common/types/domain.types';
 
 export type OrderAddress = {
   city: string;
@@ -43,7 +45,7 @@ export type OrderResponse = {
   items: OrderLineItemResponse[];
 };
 
-function formatVariantLabel(variant: ProductVariant): string {
+function formatVariantLabel(variant: ProductVariantWithRelations): string {
   const parts = [variant.size, variant.color].filter(
     (p) => typeof p === 'string' && p.trim().length > 0,
   );
@@ -69,7 +71,7 @@ function mapEnumValue(value: OrderStatus | PaymentStatus): string {
   return value.toLowerCase();
 }
 
-function mapOrderItem(item: OrderItem): OrderLineItemResponse {
+function mapOrderItem(item: OrderItemWithRelations): OrderLineItemResponse {
   const variant = item.variant;
   const product = variant?.product;
   const image =
@@ -88,7 +90,7 @@ function mapOrderItem(item: OrderItem): OrderLineItemResponse {
   };
 }
 
-export function mapOrderToResponse(order: Order): OrderResponse {
+export function mapOrderToResponse(order: OrderWithRelations): OrderResponse {
   return {
     id: String(order.id),
     tax: Number(order.tax),

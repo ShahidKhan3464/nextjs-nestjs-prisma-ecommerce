@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { Product } from './entities/product.entity';
 import { QueryProductDto } from './dto/query-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { CreateProductDto } from './dto/create-product.dto';
+import { ProductWithRelations } from 'src/common/types/domain.types';
 import { GetProductsProvider } from './providers/get-products.provider';
 import { CreateProductProvider } from './providers/create-product.provider';
 import { UpdateProductProvider } from './providers/update-product.provider';
@@ -20,22 +20,22 @@ export class ProductsService {
 
   public async findAllPaginated(
     query: QueryProductDto,
-  ): Promise<PaginateQueryResult<Product>> {
+  ): Promise<PaginateQueryResult<ProductWithRelations>> {
     return await this.getProductsProvider.findAllPaginated(query);
   }
 
-  public async findOne(id: number): Promise<Product> {
+  public async findOne(id: number): Promise<ProductWithRelations> {
     return await this.getProductsProvider.findOne(id);
   }
 
-  public async findBySlug(slug: string): Promise<Product> {
+  public async findBySlug(slug: string): Promise<ProductWithRelations> {
     return await this.getProductsProvider.findBySlug(slug);
   }
 
   public async create(
     dto: CreateProductDto,
     files: Express.Multer.File[],
-  ): Promise<Product> {
+  ): Promise<ProductWithRelations> {
     return await this.createProductProvider.create(dto, files);
   }
 
@@ -43,7 +43,7 @@ export class ProductsService {
     id: number,
     dto: UpdateProductDto,
     files: Express.Multer.File[] = [],
-  ): Promise<Product> {
+  ): Promise<ProductWithRelations> {
     return await this.updateProductProvider.update(id, dto, files);
   }
 
@@ -51,7 +51,7 @@ export class ProductsService {
     return await this.deleteProductProvider.remove(id);
   }
 
-  public async restore(id: number): Promise<Product> {
+  public async restore(id: number): Promise<ProductWithRelations> {
     return await this.deleteProductProvider.restore(id);
   }
 }

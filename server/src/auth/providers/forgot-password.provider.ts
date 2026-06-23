@@ -1,6 +1,6 @@
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { User } from 'src/users/entities/user.entity';
+import { User } from 'src/generated/prisma/client';
 import { UsersService } from 'src/users/users.service';
 import { MailService } from 'src/mail/providers/mail.service';
 import { ForgotPasswordDto } from '../dto/forgot-password.dto';

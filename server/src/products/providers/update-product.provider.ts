@@ -1,14 +1,10 @@
-import { In, Not, Repository } from 'typeorm';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Product } from '../entities/product.entity';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { UpdateProductDto } from '../dto/update-product.dto';
 import { GetProductsProvider } from './get-products.provider';
 import { FileOwnerModule } from 'src/common/files/file.constants';
 import { DeleteProductProvider } from './delete-product.provider';
-import { OrderItem } from 'src/orders/entities/order-item.entity';
-import { Category } from 'src/categories/entities/category.entity';
-import { ProductVariant } from '../entities/product-variant.entity';
-import { StoredFile } from 'src/common/files/entities/stored-file.entity';
+import { ProductWithRelations } from 'src/common/types/domain.types';
+import { generateProductSlug } from '../utils/generate-product-slug.util';
 import { CreateProductVariantDto } from '../dto/create-product-variant.dto';
 import {
   Inject,
@@ -22,16 +18,7 @@ import {
 @Injectable()
 export class UpdateProductProvider {
   constructor(
-    @InjectRepository(Product)
-    private readonly productRepository: Repository<Product>,
-    @InjectRepository(Category)
-    private readonly categoryRepository: Repository<Category>,
-    @InjectRepository(ProductVariant)
-    private readonly productVariantRepository: Repository<ProductVariant>,
-    @InjectRepository(OrderItem)
-    private readonly orderItemRepository: Repository<OrderItem>,
-    @InjectRepository(StoredFile)
-    private readonly fileRepository: Repository<StoredFile>,
+    private readonly prisma: PrismaService,
     @Inject(forwardRef(() => GetProductsProvider))
     private readonly getProductsProvider: GetProductsProvider,
     private readonly deleteProductProvider: DeleteProductProvider,
@@ -41,94 +28,101 @@ export class UpdateProductProvider {
     id: number,
     dto: UpdateProductDto,
     files: Express.Multer.File[] = [],
-  ): Promise<Product> {
-    const product = await this.productRepository.findOne({
-      where: { id },
-      relations: ['category'],
+  ): Promise<ProductWithRelations> {
+    const product = await this.prisma.product.findFirst({
+      where: { id, deletedAt: null },
+      include: { category: true },
     });
     if (!product) {
       throw new NotFoundException('Product not found');
     }
 
     if (dto.categoryId !== undefined) {
-      const category = await this.categoryRepository.findOne({
-        where: { id: dto.categoryId },
+      const category = await this.prisma.category.findFirst({
+        where: { id: dto.categoryId, deletedAt: null },
       });
       if (!category) {
         throw new NotFoundException('Category not found');
       }
-      product.category = category;
-    }
-    if (dto.name !== undefined) product.name = dto.name;
-    if (dto.description !== undefined) product.description = dto.description;
-    if (dto.status !== undefined) product.status = dto.status;
-    if (dto.variants !== undefined) {
-      await this.syncVariants(product, dto.variants);
     }
 
-    await this.productRepository.save(product);
+    if (dto.variants !== undefined) {
+      await this.syncVariants(id, dto.variants);
+    }
+
+    const nextName = dto.name ?? product.name;
+    await this.prisma.product.update({
+      where: { id },
+      data: {
+        ...(dto.categoryId !== undefined ? { categoryId: dto.categoryId } : {}),
+        ...(dto.name !== undefined ? { name: dto.name } : {}),
+        ...(dto.description !== undefined
+          ? { description: dto.description }
+          : {}),
+        ...(dto.status !== undefined ? { status: dto.status } : {}),
+        slug: generateProductSlug(nextName),
+        ...(dto.variants !== undefined
+          ? {
+              basePrice: Math.min(
+                ...dto.variants.map((variant) => variant.price),
+              ),
+            }
+          : {}),
+      },
+    });
 
     if (dto.retainImagePaths !== undefined) {
       const keep = dto.retainImagePaths;
-      const imagesToRemove = await this.fileRepository.find({
-        where:
-          keep.length === 0
-            ? { ownerModule: FileOwnerModule.PRODUCT, ownerId: id }
-            : {
-                ownerModule: FileOwnerModule.PRODUCT,
-                ownerId: id,
-                urlPath: Not(In(keep)),
-              },
+      const imagesToRemove = await this.prisma.storedFile.findMany({
+        where: {
+          ownerModule: FileOwnerModule.PRODUCT,
+          ownerId: id,
+          ...(keep.length > 0 ? { urlPath: { notIn: keep } } : {}),
+        },
       });
       await Promise.all(
         imagesToRemove.map((img) =>
           this.deleteProductProvider.safeUnlinkPublicPath(img.urlPath),
         ),
       );
-      if (keep.length === 0) {
-        await this.fileRepository.delete({
+      await this.prisma.storedFile.deleteMany({
+        where: {
           ownerModule: FileOwnerModule.PRODUCT,
           ownerId: id,
-        });
-      } else {
-        await this.fileRepository.delete({
-          ownerModule: FileOwnerModule.PRODUCT,
-          ownerId: id,
-          urlPath: Not(In(keep)),
-        });
-      }
+          ...(keep.length > 0 ? { urlPath: { notIn: keep } } : {}),
+        },
+      });
     }
 
     if (files.length > 0) {
-      const existing = await this.fileRepository.find({
+      const existing = await this.prisma.storedFile.findMany({
         where: { ownerModule: FileOwnerModule.PRODUCT, ownerId: id },
-        order: { sortOrder: 'ASC' },
+        orderBy: { sortOrder: 'asc' },
       });
       const nextOrder =
         existing.length > 0
           ? Math.max(...existing.map((img) => img.sortOrder)) + 1
           : 0;
 
-      const imageEntities = files.map((file, index) =>
-        this.fileRepository.create({
+      await this.prisma.storedFile.createMany({
+        data: files.map((file, index) => ({
           urlPath: `/uploads/products/${file.filename}`,
           sortOrder: nextOrder + index,
           ownerModule: FileOwnerModule.PRODUCT,
           ownerId: id,
-        }),
-      );
-      await this.fileRepository.save(imageEntities);
+        })),
+      });
     }
 
     return await this.getProductsProvider.findOne(id);
   }
 
   private async syncVariants(
-    product: Product,
+    productId: number,
     incoming: CreateProductVariantDto[],
   ): Promise<void> {
-    const existing = await this.productVariantRepository.find({
-      where: { product: { id: product.id } },
+    const existing = await this.prisma.productVariant.findMany({
+      where: { productId },
     });
     const existingBySku = new Map(
       existing.map((variant) => [variant.sku, variant]),
@@ -140,7 +134,7 @@ export class UpdateProductProvider {
         continue;
       }
 
-      const skuExists = await this.productVariantRepository.exists({
+      const skuExists = await this.prisma.productVariant.findUnique({
         where: { sku: variant.sku },
       });
       if (skuExists) {
@@ -151,24 +145,28 @@ export class UpdateProductProvider {
     for (const variantDto of incoming) {
       const existingVariant = existingBySku.get(variantDto.sku);
       if (existingVariant) {
-        existingVariant.size = variantDto.size;
-        existingVariant.color = variantDto.color;
-        existingVariant.stock = variantDto.stock;
-        existingVariant.price = variantDto.price;
-        await this.productVariantRepository.save(existingVariant);
+        await this.prisma.productVariant.update({
+          where: { id: existingVariant.id },
+          data: {
+            size: variantDto.size,
+            color: variantDto.color,
+            stock: variantDto.stock,
+            price: variantDto.price,
+          },
+        });
         continue;
       }
 
-      await this.productVariantRepository.save(
-        this.productVariantRepository.create({
-          product,
+      await this.prisma.productVariant.create({
+        data: {
+          productId,
           sku: variantDto.sku,
           size: variantDto.size,
           color: variantDto.color,
           stock: variantDto.stock,
           price: variantDto.price,
-        }),
-      );
+        },
+      });
     }
 
     for (const variant of existing) {
@@ -176,7 +174,7 @@ export class UpdateProductProvider {
         continue;
       }
 
-      const referenced = await this.orderItemRepository.exists({
+      const referenced = await this.prisma.orderItem.findFirst({
         where: { variantId: variant.id },
       });
       if (referenced) {
@@ -185,9 +183,7 @@ export class UpdateProductProvider {
         );
       }
 
-      await this.productVariantRepository.remove(variant);
+      await this.prisma.productVariant.delete({ where: { id: variant.id } });
     }
-
-    product.basePrice = Math.min(...incoming.map((variant) => variant.price));
   }
 }

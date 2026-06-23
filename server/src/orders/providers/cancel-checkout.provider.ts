@@ -1,6 +1,4 @@
-import { Repository } from 'typeorm';
-import { InjectRepository } from '@nestjs/typeorm';
-import { CheckoutSession } from '../entities/checkout-session.entity';
+import { PrismaService } from 'src/prisma/prisma.service';
 import {
   Injectable,
   NotFoundException,
@@ -9,13 +7,10 @@ import {
 
 @Injectable()
 export class CancelCheckoutProvider {
-  constructor(
-    @InjectRepository(CheckoutSession)
-    private readonly sessionRepository: Repository<CheckoutSession>,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   async cancel(paymentIntentId: string, userId: number): Promise<void> {
-    const session = await this.sessionRepository.findOne({
+    const session = await this.prisma.checkoutSession.findFirst({
       where: { stripePaymentIntentId: paymentIntentId },
     });
 
@@ -27,6 +22,6 @@ export class CancelCheckoutProvider {
       throw new ForbiddenException();
     }
 
-    await this.sessionRepository.remove(session);
+    await this.prisma.checkoutSession.delete({ where: { id: session.id } });
   }
 }

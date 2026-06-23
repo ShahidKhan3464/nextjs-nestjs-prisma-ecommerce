@@ -1,11 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { ObjectLiteral, Repository } from 'typeorm';
 import { PaginationQueryDto } from '../dto/pagination-query.dto';
 import { PaginateQueryResult } from '../interfaces/paginated.interfaces';
 
 @Injectable()
 export class PaginationProviders {
-  /** Normalized skip/take for TypeORM queries (shared across modules). */
+  /** Normalized skip/take for list queries (shared across modules). */
   public resolvePaging(query: PaginationQueryDto): {
     page: number;
     limit: number;
@@ -21,16 +20,14 @@ export class PaginationProviders {
     return { page, limit, skip };
   }
 
-  public async paginateQuery<T extends ObjectLiteral>(
+  public async paginateQuery<T>(
     query: PaginationQueryDto,
-    repository: Repository<T>,
+    countFn: () => Promise<number>,
+    findFn: (skip: number, take: number) => Promise<T[]>,
   ): Promise<PaginateQueryResult<T>> {
     const { limit, page, skip } = this.resolvePaging(query);
-    const total = await repository.count();
-    const data = await repository.find({
-      skip,
-      take: limit,
-    });
+    const total = await countFn();
+    const data = await findFn(skip, limit);
     return {
       data,
       page,

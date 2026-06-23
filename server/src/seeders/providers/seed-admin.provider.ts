@@ -1,7 +1,5 @@
-import { Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
-import { InjectRepository } from '@nestjs/typeorm';
-import { User } from 'src/users/entities/user.entity';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { UserRole } from 'src/users/constants/user.constants';
 import { HashingProvider } from 'src/auth/providers/hashing.provider';
 import { Logger, Injectable, OnApplicationBootstrap } from '@nestjs/common';
@@ -12,8 +10,7 @@ export class SeedAdminProvider implements OnApplicationBootstrap {
 
   constructor(
     private readonly configService: ConfigService,
-    @InjectRepository(User)
-    private readonly usersRepository: Repository<User>,
+    private readonly prisma: PrismaService,
     private readonly hashingProvider: HashingProvider,
   ) {}
 
@@ -35,7 +32,7 @@ export class SeedAdminProvider implements OnApplicationBootstrap {
       return;
     }
 
-    const existingUser = await this.usersRepository.findOne({
+    const existingUser = await this.prisma.user.findUnique({
       where: { email: adminEmail },
     });
 
@@ -46,17 +43,18 @@ export class SeedAdminProvider implements OnApplicationBootstrap {
       return;
     }
 
-    const adminUser = this.usersRepository.create({
-      isBlocked: false,
-      email: adminEmail,
-      fullName: adminName,
-      role: UserRole.ADMIN,
-      phoneNumber: adminPhone,
-      password: await this.hashingProvider.hash(adminPassword),
-      confirmPassword: await this.hashingProvider.hash(adminPassword),
+    await this.prisma.user.create({
+      data: {
+        isBlocked: false,
+        email: adminEmail,
+        fullName: adminName,
+        role: UserRole.ADMIN,
+        phoneNumber: adminPhone,
+        password: await this.hashingProvider.hash(adminPassword),
+        confirmPassword: await this.hashingProvider.hash(adminPassword),
+      },
     });
 
-    await this.usersRepository.save(adminUser);
     this.logger.log(`Admin user seeded successfully: ${adminEmail}`);
   }
 }

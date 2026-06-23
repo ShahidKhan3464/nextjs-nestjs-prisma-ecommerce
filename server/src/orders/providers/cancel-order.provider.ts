@@ -1,18 +1,15 @@
 import Stripe from 'stripe';
 import type { ConfigType } from '@nestjs/config';
-import { Order } from '../entities/order.entity';
-import { DataSource, Repository } from 'typeorm';
-import { InjectRepository } from '@nestjs/typeorm';
 import stripeConfig from 'src/config/stripe.config';
 import type { Stripe as StripeTypes } from 'stripe';
 import { UsersService } from 'src/users/users.service';
 import { CancelOrderDto } from '../dto/cancel-order.dto';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { UserRole } from 'src/users/constants/user.constants';
 import { MailService } from 'src/mail/providers/mail.service';
-import { joinProductImages } from 'src/common/files/file-query.util';
+import { findOrderWithImages } from 'src/common/files/file-query.util';
 import { OrderStatus, PaymentStatus } from '../constants/order.constants';
 import { OrderResponse, mapOrderToResponse } from '../utils/map-order.util';
-import { ProductVariant } from 'src/products/entities/product-variant.entity';
 import {
   Inject,
   Injectable,
@@ -26,9 +23,7 @@ export class CancelOrderProvider {
   private stripe: StripeTypes;
 
   constructor(
-    @InjectRepository(Order)
-    private readonly orderRepository: Repository<Order>,
-    private readonly dataSource: DataSource,
+    private readonly prisma: PrismaService,
     private readonly mailService: MailService,
     private readonly usersService: UsersService,
     @Inject(stripeConfig.KEY)
@@ -46,16 +41,7 @@ export class CancelOrderProvider {
     userId: number,
     dto: CancelOrderDto,
   ): Promise<OrderResponse> {
-    const order = await joinProductImages(
-      this.orderRepository
-        .createQueryBuilder('order')
-        .leftJoinAndSelect('order.items', 'items')
-        .leftJoinAndSelect('items.variant', 'variant')
-        .leftJoinAndSelect('variant.product', 'product')
-        .withDeleted()
-        .where('order.id = :orderId', { orderId }),
-      'product',
-    ).getOne();
+    const order = await findOrderWithImages(this.prisma, { id: orderId });
 
     if (!order) {
       throw new NotFoundException('Order not found');
@@ -81,46 +67,46 @@ export class CancelOrderProvider {
       });
     }
 
-    await this.dataSource.transaction(async (manager) => {
-      const orderRepo = manager.getRepository(Order);
-      const variantRepo = manager.getRepository(ProductVariant);
-
-      const lockedOrder = await orderRepo.findOne({
+    await this.prisma.$transaction(async (tx) => {
+      const lockedOrder = await tx.order.findUnique({
         where: { id: orderId },
-        relations: ['items'],
+        include: { items: true },
       });
 
-      if (!lockedOrder || lockedOrder.status !== OrderStatus.PENDING) {
+      if (
+        !lockedOrder ||
+        (lockedOrder.status as OrderStatus) !== OrderStatus.PENDING
+      ) {
         throw new BadRequestException('Only pending orders can be cancelled');
       }
 
       for (const item of lockedOrder.items) {
-        const variant = await variantRepo.findOne({
+        const variant = await tx.productVariant.findUnique({
           where: { id: item.variantId },
         });
         if (variant) {
-          variant.stock += item.quantity;
-          await variantRepo.save(variant);
+          await tx.productVariant.update({
+            where: { id: variant.id },
+            data: { stock: variant.stock + item.quantity },
+          });
         }
       }
 
-      lockedOrder.status = OrderStatus.CANCELLED;
-      lockedOrder.paymentStatus = PaymentStatus.REFUNDED;
-      lockedOrder.cancellationReason = dto.reason.trim();
-      lockedOrder.cancelledAt = new Date();
-      await orderRepo.save(lockedOrder);
+      await tx.order.update({
+        where: { id: orderId },
+        data: {
+          status: OrderStatus.CANCELLED,
+          paymentStatus: PaymentStatus.REFUNDED,
+          cancellationReason: dto.reason.trim(),
+          cancelledAt: new Date(),
+        },
+      });
     });
 
-    const updated = await joinProductImages(
-      this.orderRepository
-        .createQueryBuilder('order')
-        .leftJoinAndSelect('order.items', 'items')
-        .leftJoinAndSelect('items.variant', 'variant')
-        .leftJoinAndSelect('variant.product', 'product')
-        .withDeleted()
-        .where('order.id = :orderId', { orderId }),
-      'product',
-    ).getOneOrFail();
+    const updated = await findOrderWithImages(this.prisma, { id: orderId });
+    if (!updated) {
+      throw new NotFoundException('Order not found');
+    }
 
     const response = mapOrderToResponse(updated);
 

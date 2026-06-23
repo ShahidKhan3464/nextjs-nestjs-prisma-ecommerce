@@ -1,6 +1,4 @@
-import { Repository } from 'typeorm';
-import { User } from '../entities/user.entity';
-import { InjectRepository } from '@nestjs/typeorm';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { ChangePasswordDto } from '../dto/change-password.dto';
 import { HashingProvider } from 'src/auth/providers/hashing.provider';
 import {
@@ -14,8 +12,7 @@ import {
 @Injectable()
 export class ChangePasswordProvider {
   constructor(
-    @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
+    private readonly prisma: PrismaService,
     @Inject(forwardRef(() => HashingProvider))
     private readonly hashingProvider: HashingProvider,
   ) {}
@@ -25,7 +22,7 @@ export class ChangePasswordProvider {
       throw new BadRequestException('Passwords do not match');
     }
 
-    const user = await this.userRepository.findOne({ where: { id: userId } });
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) {
       throw new NotFoundException('User not found');
     }
@@ -39,8 +36,12 @@ export class ChangePasswordProvider {
     }
 
     const hashed = await this.hashingProvider.hash(dto.newPassword);
-    user.password = hashed;
-    user.confirmPassword = hashed;
-    await this.userRepository.save(user);
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        password: hashed,
+        confirmPassword: hashed,
+      },
+    });
   }
 }

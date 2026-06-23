@@ -1,8 +1,7 @@
-import { In, Repository } from 'typeorm';
-import { InjectRepository } from '@nestjs/typeorm';
 import { Injectable, Logger } from '@nestjs/common';
+import { Category } from 'src/generated/prisma/client';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { SeedResult } from '../types/seed-result.type.js';
-import { Category } from 'src/categories/entities/category.entity';
 import {
   DEMO_CATEGORIES,
   DEMO_SEED_CATEGORY_MARKER,
@@ -12,13 +11,10 @@ import {
 export class SeedCategoriesProvider {
   private readonly logger = new Logger(SeedCategoriesProvider.name);
 
-  constructor(
-    @InjectRepository(Category)
-    private readonly categoryRepository: Repository<Category>,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   public async seed(): Promise<SeedResult> {
-    const alreadySeeded = await this.categoryRepository.exists({
+    const alreadySeeded = await this.prisma.category.findFirst({
       where: { name: DEMO_SEED_CATEGORY_MARKER },
     });
 
@@ -33,14 +29,16 @@ export class SeedCategoriesProvider {
       };
     }
 
-    const entities = DEMO_CATEGORIES.map((category) =>
-      this.categoryRepository.create({
-        name: category.name,
-        description: category.description,
-      }),
+    const saved = await this.prisma.$transaction(
+      DEMO_CATEGORIES.map((category) =>
+        this.prisma.category.create({
+          data: {
+            name: category.name,
+            description: category.description,
+          },
+        }),
+      ),
     );
-
-    const saved = await this.categoryRepository.save(entities);
 
     this.logger.log(`Seeded ${saved.length} categories.`);
 
@@ -51,9 +49,9 @@ export class SeedCategoriesProvider {
   }
 
   public async getCategoryMapByName(): Promise<Map<string, Category>> {
-    const categories = await this.categoryRepository.find({
+    const categories = await this.prisma.category.findMany({
       where: {
-        name: In(DEMO_CATEGORIES.map((category) => category.name)),
+        name: { in: DEMO_CATEGORIES.map((category) => category.name) },
       },
     });
 

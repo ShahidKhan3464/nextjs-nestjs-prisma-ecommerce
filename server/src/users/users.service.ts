@@ -1,7 +1,6 @@
-import { Repository } from 'typeorm';
-import { User } from './entities/user.entity';
-import { InjectRepository } from '@nestjs/typeorm';
+import { User } from 'src/generated/prisma/client';
 import { CreateUserDto } from './dto/create-user.dto';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { Injectable, NotFoundException } from '@nestjs/common';
@@ -24,8 +23,7 @@ import {
 @Injectable()
 export class UsersService {
   constructor(
-    @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
+    private readonly prisma: PrismaService,
     private readonly getUsersProvider: GetUsersProvider,
     private readonly blockUserProvider: BlockUserProvider,
     private readonly createUserProvider: CreateUserProvider,
@@ -94,11 +92,13 @@ export class UsersService {
   }
 
   public async findOneById(id: number): Promise<User | null> {
-    return await this.userRepository.findOneBy({ id });
+    const user = await this.prisma.user.findUnique({ where: { id } });
+    return user;
   }
 
   public async findOneByEmail(email: string): Promise<User | null> {
-    return await this.userRepository.findOne({ where: { email } });
+    const user = await this.prisma.user.findUnique({ where: { email } });
+    return user;
   }
 
   public async updatePassword(
@@ -106,11 +106,12 @@ export class UsersService {
     password: string,
     confirmPassword: string,
   ): Promise<void> {
-    const result = await this.userRepository.update(
-      { id },
-      { password, confirmPassword },
-    );
-    if (!result.affected) {
+    try {
+      await this.prisma.user.update({
+        where: { id },
+        data: { password, confirmPassword },
+      });
+    } catch {
       throw new NotFoundException('User not found');
     }
   }

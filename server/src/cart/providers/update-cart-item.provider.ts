@@ -1,8 +1,6 @@
-import { Repository } from 'typeorm';
-import { InjectRepository } from '@nestjs/typeorm';
-import { CartItem } from '../entities/cart-item.entity';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { UpdateCartItemDto } from '../dto/update-cart-item.dto';
-import { joinProductImages } from 'src/common/files/file-query.util';
+import { findCartItemsWithImages } from 'src/common/files/file-query.util';
 import {
   Injectable,
   NotFoundException,
@@ -15,25 +13,18 @@ import {
 
 @Injectable()
 export class UpdateCartItemProvider {
-  constructor(
-    @InjectRepository(CartItem)
-    private readonly cartRepository: Repository<CartItem>,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   public async update(
     userId: number,
     variantId: number,
     dto: UpdateCartItemDto,
   ): Promise<CartItemResponse> {
-    const item = await joinProductImages(
-      this.cartRepository
-        .createQueryBuilder('cart')
-        .where('cart.userId = :userId', { userId })
-        .andWhere('cart.productVariantId = :variantId', { variantId })
-        .innerJoinAndSelect('cart.variant', 'variant')
-        .innerJoinAndSelect('variant.product', 'product'),
-      'product',
-    ).getOne();
+    const items = await findCartItemsWithImages(this.prisma, {
+      userId,
+      productVariantId: variantId,
+    });
+    const item = items[0];
 
     if (!item) {
       throw new NotFoundException('Cart item not found');
@@ -43,9 +34,12 @@ export class UpdateCartItemProvider {
       throw new BadRequestException('Insufficient stock');
     }
 
-    item.quantity = dto.quantity;
-    await this.cartRepository.save(item);
+    await this.prisma.cartItem.update({
+      where: { id: item.id },
+      data: { quantity: dto.quantity },
+    });
 
+    item.quantity = dto.quantity;
     return mapCartItemToResponse(item);
   }
 }

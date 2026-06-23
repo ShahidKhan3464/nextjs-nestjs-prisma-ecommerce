@@ -1,27 +1,23 @@
-import { Repository } from 'typeorm';
-import { User } from '../entities/user.entity';
-import { InjectRepository } from '@nestjs/typeorm';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { UserResponse, mapUserToResponse } from '../utils/map-user.util';
 
 @Injectable()
 export class BlockUserProvider {
-  constructor(
-    @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   public async blockUser(
     id: number,
     isBlocked: boolean,
   ): Promise<UserResponse> {
-    const user = await this.userRepository.findOne({ where: { id } });
-    if (!user) {
+    try {
+      const saved = await this.prisma.user.update({
+        where: { id },
+        data: { isBlocked },
+      });
+      return mapUserToResponse(saved);
+    } catch {
       throw new NotFoundException('User not found');
     }
-
-    user.isBlocked = isBlocked;
-    const saved = await this.userRepository.save(user);
-    return mapUserToResponse(saved);
   }
 }

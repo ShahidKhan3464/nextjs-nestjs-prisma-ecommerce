@@ -1,28 +1,20 @@
 import { join } from 'path';
 import { unlink } from 'fs/promises';
-import { Repository } from 'typeorm';
-import { User } from '../entities/user.entity';
-import { InjectRepository } from '@nestjs/typeorm';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { FileOwnerModule } from 'src/common/files/file.constants';
-import { StoredFile } from 'src/common/files/entities/stored-file.entity';
 
 @Injectable()
 export class UploadProfileAvatarProvider {
-  constructor(
-    @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
-    @InjectRepository(StoredFile)
-    private readonly fileRepository: Repository<StoredFile>,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   async upload(userId: number, file: Express.Multer.File): Promise<string> {
-    const user = await this.userRepository.findOne({ where: { id: userId } });
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) {
       throw new NotFoundException('User not found');
     }
 
-    const existing = await this.fileRepository.find({
+    const existing = await this.prisma.storedFile.findMany({
       where: { ownerModule: FileOwnerModule.CUSTOMER, ownerId: userId },
     });
 
@@ -39,18 +31,20 @@ export class UploadProfileAvatarProvider {
     );
 
     if (existing.length) {
-      await this.fileRepository.remove(existing);
+      await this.prisma.storedFile.deleteMany({
+        where: { ownerModule: FileOwnerModule.CUSTOMER, ownerId: userId },
+      });
     }
 
     const urlPath = `/uploads/customers/${file.filename}`;
-    await this.fileRepository.save(
-      this.fileRepository.create({
+    await this.prisma.storedFile.create({
+      data: {
         urlPath,
         sortOrder: 0,
         ownerModule: FileOwnerModule.CUSTOMER,
         ownerId: userId,
-      }),
-    );
+      },
+    });
 
     return urlPath;
   }

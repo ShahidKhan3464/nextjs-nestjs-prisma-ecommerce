@@ -1,16 +1,11 @@
-import { Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { CartItem } from '../entities/cart-item.entity';
+import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class ClearCartProvider {
-  constructor(
-    @InjectRepository(CartItem)
-    private readonly cartRepository: Repository<CartItem>,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   public async clear(userId: number): Promise<void> {
-    await this.cartRepository.delete({ userId });
+    await this.prisma.cartItem.deleteMany({ where: { userId } });
   }
 }
