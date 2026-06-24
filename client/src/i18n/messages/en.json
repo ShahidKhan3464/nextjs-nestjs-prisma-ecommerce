@@ -1,0 +1,12 @@
+{
+  "common": {
+    "brand": "Atelier Commerce",
+    "continue": "Continue",
+    "cancel": "Cancel"
+  },
+  "nav": {
+    "shop": "Shop",
+    "cart": "Cart",
+    "account": "Account"
+  }
+}

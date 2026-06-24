@@ -1,0 +1,63 @@
+import { z } from "zod";
+import type { ApiResponse } from "@/types";
+import { getBackendUrl } from "@/lib/backend-url";
+import { jsonMessage, jsonOk } from "@/lib/api-response";
+import type { CheckoutSession } from "@/modules/customer/checkout/types";
+import { nestErrorMessage, forwardAuthorization } from "@/lib/nest-http";
+
+const checkoutSchema = z.object({
+  shippingAddress: z.object({
+    city: z.string().min(1),
+    line1: z.string().min(2),
+    region: z.string().min(1),
+    country: z.string().min(2),
+    fullName: z.string().min(2),
+    line2: z.string().optional(),
+    phone: z.string().optional(),
+    postalCode: z.string().min(1),
+  }),
+});
+
+export async function POST(req: Request) {
+  let json: unknown;
+  try {
+    json = await req.json();
+  } catch {
+    return jsonMessage("Invalid JSON body", 400);
+  }
+
+  const parsed = checkoutSchema.safeParse(json);
+  if (!parsed.success) {
+    return jsonMessage("Invalid checkout payload", 422);
+  }
+
+  const backend = getBackendUrl();
+  const res = await fetch(`${backend}/orders/checkout`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...forwardAuthorization(req),
+    },
+    body: JSON.stringify(parsed.data),
+  });
+
+  let raw: unknown = null;
+  try {
+    raw = await res.json();
+  } catch {
+    raw = null;
+  }
+
+  if (!res.ok) {
+    return jsonMessage(nestErrorMessage(raw), res.status);
+  }
+
+  const envelope = raw as { data?: CheckoutSession };
+  const data = envelope?.data;
+  if (!data?.clientSecret || !data.paymentIntentId) {
+    return jsonMessage("Invalid checkout response", 500);
+  }
+
+  const body: ApiResponse<CheckoutSession> = { data };
+  return jsonOk(body, { status: 201 });
+}

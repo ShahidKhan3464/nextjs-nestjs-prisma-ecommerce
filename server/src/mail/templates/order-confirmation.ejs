@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Order Confirmation</title>
+  </head>
+  <body
+    style="font-family: Arial, Helvetica, sans-serif; line-height: 1.6; color: #1a1a1a; max-width: 600px; margin: 0 auto; padding: 20px; background: #f5f5f4;"
+  >
+    <div style="background: #ffffff; padding: 32px; border-radius: 12px; border: 1px solid #e7e5e4;">
+      <p style="margin: 0 0 8px; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: #78716c;">
+        Atelier Commerce
+      </p>
+      <h1 style="margin: 0 0 16px; font-size: 24px; font-weight: 600;">
+        Thank you for your order
+      </h1>
+      <p style="margin: 0 0 24px; color: #57534e;">
+        Hi <%= typeof name !== 'undefined' && name ? name : 'there' %>, we've received your order and payment was successful.
+      </p>
+
+      <div style="background: #fafaf9; border: 1px solid #e7e5e4; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
+        <p style="margin: 0 0 8px; font-size: 13px; color: #78716c;">Order number</p>
+        <p style="margin: 0 0 16px; font-size: 18px; font-weight: 600;"><%= orderNumber %></p>
+        <p style="margin: 0 0 8px; font-size: 13px; color: #78716c;">Total paid</p>
+        <p style="margin: 0; font-size: 18px; font-weight: 600;">$<%= total %></p>
+      </div>
+
+      <% if (typeof items !== 'undefined' && items && items.length) { %>
+      <h2 style="font-size: 14px; text-transform: uppercase; letter-spacing: 0.06em; color: #78716c; margin: 0 0 12px;">
+        Items
+      </h2>
+      <table style="width: 100%; border-collapse: collapse; margin-bottom: 24px; font-size: 14px;">
+        <% items.forEach(function(item) { %>
+        <tr>
+          <td style="padding: 8px 0; border-bottom: 1px solid #f5f5f4;">
+            <%= item.productName %> · <%= item.variantLabel %> × <%= item.quantity %>
+          </td>
+          <td style="padding: 8px 0; border-bottom: 1px solid #f5f5f4; text-align: right; white-space: nowrap;">
+            $<%= item.lineTotal %>
+          </td>
+        </tr>
+        <% }); %>
+      </table>
+      <% } %>
+
+      <p style="margin: 0; color: #57534e; font-size: 14px;">
+        We'll email you again when your order status changes. If you have questions, reply to this email or contact support.
+      </p>
+    </div>
+  </body>
+</html>

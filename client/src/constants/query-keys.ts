@@ -1,0 +1,30 @@
+export const queryKeys = {
+  products: {
+    all: ["products"] as const,
+    list: (filters: Record<string, unknown>) =>
+      [...queryKeys.products.all, "list", filters] as const,
+  },
+  wishlist: {
+    all: ["wishlist"] as const,
+  },
+  dashboard: {
+    customer: ["dashboard", "customer"] as const,
+  },
+  orders: {
+    all: ["orders"] as const,
+    list: (filters?: Record<string, unknown>) =>
+      [...queryKeys.orders.all, "list", filters ?? {}] as const,
+    detail: (id: string) => [...queryKeys.orders.all, "detail", id] as const,
+  },
+  admin: {
+    users: ["admin", "users"] as const,
+    orders: (filters?: Record<string, unknown>) =>
+      ["admin", "orders", filters ?? {}] as const,
+    products: ["admin", "products"] as const,
+    analytics: ["admin", "analytics"] as const,
+    categories: ["admin", "categories"] as const,
+    order: (id: string) => ["admin", "orders", id] as const,
+    category: (id: number) => ["admin", "categories", id] as const,
+    userDetail: (id: string) => ["admin", "users", id, "detail"] as const,
+  },
+} as const;

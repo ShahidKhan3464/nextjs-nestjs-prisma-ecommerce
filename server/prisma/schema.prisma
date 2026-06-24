@@ -1,0 +1,208 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id               Int               @id(map: "PK_a3ffb1c0c8416b9fc6f907b7433") @default(autoincrement())
+  fullName         String            @db.VarChar(30)
+  phoneNumber      String?           @db.VarChar
+  email            String            @unique(map: "UQ_97672ac88f789774dd47f7c8be3") @db.VarChar
+  password         String            @db.VarChar
+  confirmPassword  String            @db.VarChar
+  isBlocked        Boolean           @default(false)
+  role             users_role_enum   @default(CUSTOMER)
+  createDate       DateTime          @default(now()) @db.Timestamp(6)
+  updateDate       DateTime          @default(now()) @updatedAt @db.Timestamp(6)
+  cartItems        CartItem[]
+  checkoutSessions CheckoutSession[]
+  orders           Order[]
+  wishlistItems    WishlistItem[]
+
+  @@map("users")
+}
+
+model Category {
+  id          Int       @id(map: "PK_24dbc6126a28ff948da33e97d3b") @default(autoincrement())
+  name        String    @db.VarChar(255)
+  description String?
+  createdAt   DateTime  @default(now()) @db.Timestamp(6)
+  updatedAt   DateTime  @default(now()) @updatedAt @db.Timestamp(6)
+  deletedAt   DateTime? @db.Timestamp(6)
+  products    Product[]
+
+  @@map("categories")
+}
+
+model Product {
+  id            Int                  @id(map: "PK_0806c755e0aca124e67c0cf6d7d") @default(autoincrement())
+  name          String               @db.VarChar(255)
+  slug          String?              @unique(map: "UQ_464f927ae360106b783ed0b4106") @db.VarChar(255)
+  description   String?
+  basePrice     Decimal              @default(0) @db.Decimal(10, 2)
+  status        products_status_enum @default(ACTIVE)
+  createdAt     DateTime             @default(now()) @db.Timestamp(6)
+  updatedAt     DateTime             @default(now()) @updatedAt @db.Timestamp(6)
+  deletedAt     DateTime?            @db.Timestamp(6)
+  categoryId    Int
+  variants      ProductVariant[]
+  category      Category             @relation(fields: [categoryId], references: [id], onUpdate: NoAction, map: "FK_ff56834e735fa78a15d0cf21926")
+  wishlistItems WishlistItem[]
+
+  @@index([categoryId], map: "IDX_ff56834e735fa78a15d0cf2192")
+  @@map("products")
+}
+
+model ProductVariant {
+  id                   Int                   @id(map: "PK_281e3f2c55652d6a22c0aa59fd7") @default(autoincrement())
+  size                 String                @db.VarChar(255)
+  color                String                @db.VarChar(255)
+  sku                  String                @unique(map: "UQ_46f236f21640f9da218a063a866") @db.VarChar
+  stock                Int
+  price                Decimal               @db.Decimal(10, 2)
+  createdAt            DateTime              @default(now()) @db.Timestamp(6)
+  updatedAt            DateTime              @default(now()) @updatedAt @db.Timestamp(6)
+  productId            Int
+  cartItems            CartItem[]
+  checkoutSessionItems CheckoutSessionItem[]
+  orderItems           OrderItem[]
+  product              Product               @relation(fields: [productId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_f515690c571a03400a9876600b5")
+
+  @@index([sku], map: "IDX_46f236f21640f9da218a063a86")
+  @@map("product_variants")
+}
+
+model StoredFile {
+  id          Int                    @id(map: "PK_6c16b9093a142e0e7613b04a3d9") @default(autoincrement())
+  urlPath     String                 @db.VarChar(512)
+  ownerModule files_ownermodule_enum
+  ownerId     Int
+  sortOrder   Int                    @default(0)
+  createdAt   DateTime               @default(now()) @db.Timestamp(6)
+
+  @@map("files")
+}
+
+model CartItem {
+  id               Int            @id(map: "PK_6fccf5ec03c172d27a28a82928b") @default(autoincrement())
+  userId           Int
+  productVariantId Int
+  quantity         Int            @default(1)
+  createdAt        DateTime       @default(now()) @db.Timestamp(6)
+  updatedAt        DateTime       @default(now()) @updatedAt @db.Timestamp(6)
+  user             User           @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_84e765378a5f03ad9900df3a9ba")
+  variant          ProductVariant @relation(fields: [productVariantId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_98ba4bbf6e3611d2062b898f5c1")
+
+  @@unique([userId, productVariantId], map: "UQ_029e3499726b1681378523174da")
+  @@map("cart_items")
+}
+
+model WishlistItem {
+  id        Int      @id(map: "PK_0bd52924a97cda208ed2a07bd69") @default(autoincrement())
+  userId    Int
+  productId Int
+  createdAt DateTime @default(now()) @db.Timestamp(6)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_3167e7490f12ed329a36703d980")
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_485ece8ab9b569d1c560144aa25")
+
+  @@unique([userId, productId], map: "UQ_d461b3ed3990144aa6d5c45083b")
+  @@map("wishlist_items")
+}
+
+model Order {
+  id                    Int                       @id(map: "PK_710e2d4957aa5878dfe94e4ac2f") @default(autoincrement())
+  userId                Int
+  orderNumber           String                    @unique(map: "UQ_59b0c3b34ea0fa5562342f24143") @db.VarChar(64)
+  status                orders_status_enum        @default(PENDING)
+  paymentStatus         orders_paymentstatus_enum @default(PAID)
+  totalAmount           Decimal                   @db.Decimal(10, 2)
+  subtotal              Decimal                   @default(0) @db.Decimal(10, 2)
+  tax                   Decimal                   @default(0) @db.Decimal(10, 2)
+  shippingAddress       String
+  stripePaymentIntentId String?                   @db.VarChar(255)
+  paymentMethodSummary  String?                   @db.VarChar(255)
+  cancellationReason    String?
+  shippedAt             DateTime?                 @db.Timestamp(6)
+  deliveredAt           DateTime?                 @db.Timestamp(6)
+  cancelledAt           DateTime?                 @db.Timestamp(6)
+  createdAt             DateTime                  @default(now()) @db.Timestamp(6)
+  updatedAt             DateTime                  @default(now()) @updatedAt @db.Timestamp(6)
+  items                 OrderItem[]
+  user                  User                      @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_151b79a83ba240b0cb31b2302d1")
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id              Int            @id(map: "PK_005269d8574e6fac0493715c308") @default(autoincrement())
+  orderId         Int
+  variantId       Int
+  quantity        Int
+  priceAtPurchase Decimal        @db.Decimal(10, 2)
+  imageUrl        String?        @db.VarChar(512)
+  variant         ProductVariant @relation(fields: [variantId], references: [id], onUpdate: NoAction, map: "FK_516736b9807228bb17b2d0a3e2a")
+  order           Order          @relation(fields: [orderId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_f1d359a55923bb45b057fbdab0d")
+
+  @@map("order_items")
+}
+
+model CheckoutSession {
+  id                    Int                   @id(map: "PK_5730b2bbc190203a94941d82bd1") @default(autoincrement())
+  userId                Int
+  totalAmount           Decimal               @db.Decimal(10, 2)
+  subtotal              Decimal               @default(0) @db.Decimal(10, 2)
+  tax                   Decimal               @default(0) @db.Decimal(10, 2)
+  shippingAddress       String
+  stripePaymentIntentId String                @db.VarChar(255)
+  createdAt             DateTime              @default(now()) @db.Timestamp(6)
+  updatedAt             DateTime              @default(now()) @updatedAt @db.Timestamp(6)
+  items                 CheckoutSessionItem[]
+  user                  User                  @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_03c03fa217eec30f71d2762f44e")
+
+  @@map("checkout_sessions")
+}
+
+model CheckoutSessionItem {
+  id                Int             @id(map: "PK_4bc14bdd64e6077b3c75fcf2cfe") @default(autoincrement())
+  checkoutSessionId Int
+  variantId         Int
+  quantity          Int
+  priceAtPurchase   Decimal         @db.Decimal(10, 2)
+  variant           ProductVariant  @relation(fields: [variantId], references: [id], onUpdate: NoAction, map: "FK_57044fc85b65fe42b4cfcaf05c2")
+  session           CheckoutSession @relation(fields: [checkoutSessionId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_ec11f9a5ff93785bf57e652bef3")
+
+  @@map("checkout_session_items")
+}
+
+enum files_ownermodule_enum {
+  product
+  customer
+}
+
+enum orders_paymentstatus_enum {
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum orders_status_enum {
+  PENDING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+enum products_status_enum {
+  ACTIVE
+  DRAFT
+  ARCHIVED
+}
+
+enum users_role_enum {
+  ADMIN
+  CUSTOMER
+}
