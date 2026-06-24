@@ -1,12 +1,10 @@
-import { ProductWithRelations } from 'src/common/types/domain.types';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { GetProductsProvider } from './get-products.provider';
 import { DeleteProductProvider } from './delete-product.provider';
 import { FileOwnerModule } from 'src/common/files/file.constants';
+import { ProductWithRelations } from 'src/common/types/domain.types';
 import {
-  Inject,
   Injectable,
-  forwardRef,
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
@@ -15,7 +13,6 @@ import {
 export class ProductImagesProvider {
   constructor(
     private readonly prisma: PrismaService,
-    @Inject(forwardRef(() => GetProductsProvider))
     private readonly getProductsProvider: GetProductsProvider,
     private readonly deleteProductProvider: DeleteProductProvider,
   ) {}

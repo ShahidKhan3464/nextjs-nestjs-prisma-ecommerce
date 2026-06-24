@@ -1,5 +1,4 @@
-import { AuthModule } from 'src/auth/auth.module';
-import { Module, forwardRef } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { ProductsService } from './products.service';
 import { ProductsController } from './products.controller';
 import { GetProductsProvider } from './providers/get-products.provider';
@@ -9,7 +8,6 @@ import { DeleteProductProvider } from './providers/delete-product.provider';
 import { ProductImagesProvider } from './providers/product-images.provider';
 
 @Module({
-  imports: [forwardRef(() => AuthModule)],
   providers: [
     ProductsService,
     GetProductsProvider,

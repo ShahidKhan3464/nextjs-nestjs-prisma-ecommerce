@@ -7,7 +7,6 @@ import { ACCOUNT_BLOCKED_MESSAGE } from './login.provider';
 import { GenerateTokensProvider } from './generate-tokens.provider';
 import {
   Inject,
-  forwardRef,
   Injectable,
   ForbiddenException,
   UnauthorizedException,
@@ -21,7 +20,6 @@ interface RefreshTokenPayload {
 export class RefreshTokensProvider {
   constructor(
     private readonly jwtService: JwtService,
-    @Inject(forwardRef(() => UsersService))
     private readonly usersService: UsersService,
     private readonly generateTokensProvider: GenerateTokensProvider,
 

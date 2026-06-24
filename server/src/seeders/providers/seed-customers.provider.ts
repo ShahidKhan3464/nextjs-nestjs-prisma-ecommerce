@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { SeedResult } from '../types/seed-result.type.js';
 import { UserRole } from 'src/users/constants/user.constants';
-import { HashingProvider } from 'src/auth/providers/hashing.provider';
+import { HashingProvider } from 'src/crypto/providers/hashing.provider';
 import {
   DEMO_CUSTOMERS,
   DEMO_CUSTOMER_PASSWORD,

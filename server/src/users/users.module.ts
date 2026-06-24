@@ -1,7 +1,7 @@
+import { Module } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { AuthModule } from 'src/auth/auth.module';
-import { Module, forwardRef } from '@nestjs/common';
 import { UsersController } from './users.controller';
+import { CryptoModule } from 'src/crypto/crypto.module';
 import { GetUsersProvider } from './providers/get-users.provider';
 import { BlockUserProvider } from './providers/block-user.provider';
 import { CreateUserProvider } from './providers/create-user.provider';
@@ -11,7 +11,7 @@ import { ChangePasswordProvider } from './providers/change-password.provider';
 import { UploadProfileAvatarProvider } from './providers/upload-profile-avatar.provider';
 
 @Module({
-  imports: [forwardRef(() => AuthModule)],
+  imports: [CryptoModule],
   providers: [
     UsersService,
     GetUsersProvider,

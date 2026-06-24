@@ -8,7 +8,6 @@ import { ACCOUNT_BLOCKED_MESSAGE } from 'src/auth/providers/login.provider';
 import {
   Inject,
   Injectable,
-  forwardRef,
   CanActivate,
   ExecutionContext,
   ForbiddenException,
@@ -21,7 +20,6 @@ export class AccessTokenGuard implements CanActivate {
     private readonly jwtService: JwtService,
     @Inject(jwtConfig.KEY)
     private readonly jwtConfiguration: ConfigType<typeof jwtConfig>,
-    @Inject(forwardRef(() => UsersService))
     private readonly usersService: UsersService,
   ) {}
 

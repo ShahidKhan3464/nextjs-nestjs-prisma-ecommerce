@@ -1,7 +1,7 @@
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UserRole } from 'src/users/constants/user.constants';
-import { HashingProvider } from 'src/auth/providers/hashing.provider';
+import { HashingProvider } from 'src/crypto/providers/hashing.provider';
 import { Logger, Injectable, OnApplicationBootstrap } from '@nestjs/common';
 
 @Injectable()

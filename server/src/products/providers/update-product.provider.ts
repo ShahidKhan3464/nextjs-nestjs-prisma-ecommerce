@@ -7,9 +7,7 @@ import { ProductWithRelations } from 'src/common/types/domain.types';
 import { generateProductSlug } from '../utils/generate-product-slug.util';
 import { CreateProductVariantDto } from '../dto/create-product-variant.dto';
 import {
-  Inject,
   Injectable,
-  forwardRef,
   NotFoundException,
   ConflictException,
   BadRequestException,
@@ -19,7 +17,6 @@ import {
 export class UpdateProductProvider {
   constructor(
     private readonly prisma: PrismaService,
-    @Inject(forwardRef(() => GetProductsProvider))
     private readonly getProductsProvider: GetProductsProvider,
     private readonly deleteProductProvider: DeleteProductProvider,
   ) {}

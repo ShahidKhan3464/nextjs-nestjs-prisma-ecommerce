@@ -43,7 +43,7 @@ export default tseslint.config(
   },
   // `bcrypt` is native CJS without package exports; some IDE TypeScript-ESLint projectService runs resolve it as an error type while `tsc`/CLI do not.
   {
-    files: ['src/auth/providers/bcrypt.provider.ts'],
+    files: ['src/crypto/providers/bcrypt.provider.ts'],
     rules: {
       '@typescript-eslint/no-unsafe-assignment': 'off',
       '@typescript-eslint/no-unsafe-call': 'off',

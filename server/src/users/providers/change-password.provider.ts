@@ -1,10 +1,8 @@
 import { PrismaService } from 'src/prisma/prisma.service';
 import { ChangePasswordDto } from '../dto/change-password.dto';
-import { HashingProvider } from 'src/auth/providers/hashing.provider';
+import { HashingProvider } from 'src/crypto/providers/hashing.provider';
 import {
-  Inject,
   Injectable,
-  forwardRef,
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
@@ -13,7 +11,6 @@ import {
 export class ChangePasswordProvider {
   constructor(
     private readonly prisma: PrismaService,
-    @Inject(forwardRef(() => HashingProvider))
     private readonly hashingProvider: HashingProvider,
   ) {}
 

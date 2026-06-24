@@ -1,8 +1,8 @@
 import { LoginDto } from '../dto/login.dto';
 import { User } from 'src/generated/prisma/client';
-import { HashingProvider } from './hashing.provider';
 import { UsersService } from '../../users/users.service';
 import { GenerateTokensProvider } from './generate-tokens.provider';
+import { HashingProvider } from 'src/crypto/providers/hashing.provider';
 import {
   Injectable,
   ForbiddenException,

@@ -2,23 +2,16 @@ import { User } from 'src/generated/prisma/client';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { MailService } from 'src/mail/providers/mail.service';
-import { HashingProvider } from 'src/auth/providers/hashing.provider';
-import {
-  Inject,
-  Logger,
-  forwardRef,
-  Injectable,
-  BadRequestException,
-} from '@nestjs/common';
+import { HashingProvider } from 'src/crypto/providers/hashing.provider';
+import { Logger, Injectable, BadRequestException } from '@nestjs/common';
 
 @Injectable()
 export class CreateUserProvider {
   private readonly logger = new Logger(CreateUserProvider.name);
 
   constructor(
-    private readonly mailService: MailService,
     private readonly prisma: PrismaService,
-    @Inject(forwardRef(() => HashingProvider))
+    private readonly mailService: MailService,
     private readonly hashingProvider: HashingProvider,
   ) {}
 
