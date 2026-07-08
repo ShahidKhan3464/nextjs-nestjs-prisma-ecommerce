@@ -1,10 +1,10 @@
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { CategoriesService } from './categories.service';
+import { UserRole } from 'src/common/enums/user-role.enum';
 import { QueryCategoryDto } from './dto/query-category.dto';
 import { Roles } from './../auth/decorators/roles.decorator';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
-import { UserRole } from 'src/common/enums/user-role.enum';
 import {
   Get,
   Body,

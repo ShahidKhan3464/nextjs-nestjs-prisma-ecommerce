@@ -1,5 +1,1 @@
-export enum ProductStatus {
-  ACTIVE = 'ACTIVE',
-  DRAFT = 'DRAFT',
-  ARCHIVED = 'ARCHIVED',
-}
+export { ProductStatus } from 'src/common/enums/product-status.enum';

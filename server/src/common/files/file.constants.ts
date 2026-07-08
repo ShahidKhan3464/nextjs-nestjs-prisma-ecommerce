@@ -1,4 +1,1 @@
-export enum FileOwnerModule {
-  PRODUCT = 'product',
-  CUSTOMER = 'customer',
-}
+export { FileOwnerModule } from 'src/common/enums/file-owner-module.enum';

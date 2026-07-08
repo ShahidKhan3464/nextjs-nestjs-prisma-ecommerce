@@ -8,6 +8,7 @@ import { MailModule } from './mail/mail.module';
 import stripeConfig from './config/stripe.config';
 import { UsersModule } from './users/users.module';
 import { OrdersModule } from './orders/orders.module';
+import { CommonModule } from './common/common.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { SeedersModule } from './seeders/seeders.module';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
@@ -28,6 +29,7 @@ import { DataResponseInterceptor } from './common/interceptors/data-response/dat
     UsersModule,
     OrdersModule,
     PrismaModule,
+    CommonModule,
     SeedersModule,
     WishlistModule,
     ProductsModule,

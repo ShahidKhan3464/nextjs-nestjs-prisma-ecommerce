@@ -1,7 +1,7 @@
 import type { Request } from 'express';
 import { JwtService } from '@nestjs/jwt';
-import type { ConfigType } from '@nestjs/config';
 import jwtConfig from 'src/config/jwt.config';
+import type { ConfigType } from '@nestjs/config';
 import { UsersService } from 'src/users/users.service';
 import { REQUEST_USER_KEY } from 'src/auth/constants/auth.constants';
 import { ACCOUNT_BLOCKED_MESSAGE } from 'src/auth/providers/login.provider';

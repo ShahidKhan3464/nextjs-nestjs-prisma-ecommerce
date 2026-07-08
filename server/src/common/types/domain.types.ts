@@ -1,4 +1,6 @@
-import type { ProductStatus } from 'src/products/constants/product.constants';
+import type { OrderStatus } from 'src/common/enums/order-status.enum';
+import type { PaymentStatus } from 'src/common/enums/payment-status.enum';
+import type { ProductStatus } from 'src/common/enums/product-status.enum';
 import type {
   User,
   Order,
@@ -10,10 +12,6 @@ import type {
   CheckoutSession,
   CheckoutSessionItem,
 } from 'src/generated/prisma/client';
-import type {
-  OrderStatus,
-  PaymentStatus,
-} from 'src/orders/constants/order.constants';
 
 export type ProductWithRelations = {
   id: number;

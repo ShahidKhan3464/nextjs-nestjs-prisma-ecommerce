@@ -1,19 +1,19 @@
 import { JwtModule } from '@nestjs/jwt';
 import { Module } from '@nestjs/common';
-import jwtConfig from 'src/config/jwt.config';
+import { APP_GUARD } from '@nestjs/core';
 import { AuthService } from './auth.service';
 import { ConfigModule } from '@nestjs/config';
+import jwtConfig from 'src/config/jwt.config';
 import { AuthController } from './auth.controller';
 import { UsersModule } from 'src/users/users.module';
+import { RolesGuard } from './guards/roles/roles.guard';
 import { CryptoModule } from 'src/crypto/crypto.module';
 import { LoginProvider } from './providers/login.provider';
-import { APP_GUARD } from '@nestjs/core';
-import { RolesGuard } from './guards/roles/roles.guard';
 import { RefreshTokensProvider } from './providers/refresh-tokens.provider';
+import { AccessTokenGuard } from './guards/access-token/access-token.guard';
 import { ResetPasswordProvider } from './providers/reset-password.provider';
 import { GenerateTokensProvider } from './providers/generate-tokens.provider';
 import { ForgotPasswordProvider } from './providers/forgot-password.provider';
-import { AccessTokenGuard } from './guards/access-token/access-token.guard';
 import { AuthenticationGuard } from './guards/authentication/authentication.guard';
 
 @Module({
