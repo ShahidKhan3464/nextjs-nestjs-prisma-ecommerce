@@ -1,6 +1,6 @@
 import { UsersService } from 'src/users/users.service';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { UserRole } from 'src/users/constants/user.constants';
+import { UserRole } from 'src/common/enums/user-role.enum';
 import { findOrderWithImages } from 'src/common/files/file-query.util';
 import { OrderResponse, mapOrderToResponse } from '../utils/map-order.util';
 import {

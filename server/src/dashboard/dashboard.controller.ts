@@ -2,7 +2,7 @@ import { Get, Controller } from '@nestjs/common';
 import { DashboardService } from './dashboard.service';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Roles } from 'src/auth/decorators/roles.decorator';
-import { UserRole } from 'src/users/constants/user.constants';
+import { UserRole } from 'src/common/enums/user-role.enum';
 import { ActiveUser } from 'src/auth/decorators/active-user.decorator';
 
 @ApiTags('dashboard')

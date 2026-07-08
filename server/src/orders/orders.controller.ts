@@ -3,7 +3,7 @@ import { QueryOrderDto } from './dto/query-order.dto';
 import { CancelOrderDto } from './dto/cancel-order.dto';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Roles } from 'src/auth/decorators/roles.decorator';
-import { UserRole } from 'src/users/constants/user.constants';
+import { UserRole } from 'src/common/enums/user-role.enum';
 import { CreateCheckoutDto } from './dto/create-checkout.dto';
 import { CancelCheckoutDto } from './dto/cancel-checkout.dto';
 import { CompleteCheckoutDto } from './dto/complete-checkout.dto';

@@ -1,7 +1,7 @@
 import { FileOwnerModule } from './file.constants';
 import { StoredFile } from 'src/generated/prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { UserRole } from 'src/users/constants/user.constants';
+import { UserRole } from 'src/common/enums/user-role.enum';
 import { ProductStatus } from 'src/products/constants/product.constants';
 import {
   OrderWithRelations,

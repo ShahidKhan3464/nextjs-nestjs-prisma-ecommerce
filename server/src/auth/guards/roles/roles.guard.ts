@@ -1,6 +1,6 @@
 import { Request } from 'express';
 import { Reflector } from '@nestjs/core';
-import { UserRole } from 'src/users/constants/user.constants';
+import { UserRole } from 'src/common/enums/user-role.enum';
 import { ROLES_KEY } from 'src/auth/decorators/roles.decorator';
 import { REQUEST_USER_KEY } from 'src/auth/constants/auth.constants';
 import {

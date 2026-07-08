@@ -1,5 +1,5 @@
 import { QueryUserDto } from '../dto/query-user.dto';
-import { UserRole } from '../constants/user.constants';
+import { UserRole } from 'src/common/enums/user-role.enum';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { FileOwnerModule } from 'src/common/files/file.constants';

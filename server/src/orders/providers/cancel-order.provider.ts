@@ -5,7 +5,7 @@ import type { Stripe as StripeTypes } from 'stripe';
 import { UsersService } from 'src/users/users.service';
 import { CancelOrderDto } from '../dto/cancel-order.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { UserRole } from 'src/users/constants/user.constants';
+import { UserRole } from 'src/common/enums/user-role.enum';
 import { MailService } from 'src/mail/providers/mail.service';
 import { findOrderWithImages } from 'src/common/files/file-query.util';
 import { OrderStatus, PaymentStatus } from '../constants/order.constants';

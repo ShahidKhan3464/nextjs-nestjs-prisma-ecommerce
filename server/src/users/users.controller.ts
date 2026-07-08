@@ -1,5 +1,5 @@
 import { UsersService } from './users.service';
-import { UserRole } from './constants/user.constants';
+import { UserRole } from 'src/common/enums/user-role.enum';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { UpdateProfileDto } from './dto/update-profile.dto';

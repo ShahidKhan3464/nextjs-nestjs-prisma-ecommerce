@@ -1,5 +1,5 @@
 import { JwtService } from '@nestjs/jwt';
-import jwtConfig from '../config/jwt.config';
+import jwtConfig from 'src/config/jwt.config';
 import type { ConfigType } from '@nestjs/config';
 import { UsersService } from '../../users/users.service';
 import { RefreshTokenDto } from '../dto/refresh-token.dto';

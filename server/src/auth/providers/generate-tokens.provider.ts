@@ -1,5 +1,5 @@
 import { JwtService } from '@nestjs/jwt';
-import jwtConfig from '../config/jwt.config';
+import jwtConfig from 'src/config/jwt.config';
 import type { SignOptions } from 'jsonwebtoken';
 import type { ConfigType } from '@nestjs/config';
 import { Inject, Injectable } from '@nestjs/common';

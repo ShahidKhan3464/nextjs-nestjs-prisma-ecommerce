@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { UserRole } from 'src/users/constants/user.constants';
+import { UserRole } from 'src/common/enums/user-role.enum';
 import { findOrdersWithImages } from 'src/common/files/file-query.util';
 import { ProductStatus } from 'src/products/constants/product.constants';
 import {

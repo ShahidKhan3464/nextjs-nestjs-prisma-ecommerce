@@ -1,6 +1,6 @@
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { UserRole } from 'src/users/constants/user.constants';
+import { UserRole } from 'src/common/enums/user-role.enum';
 import { HashingProvider } from 'src/crypto/providers/hashing.provider';
 import { Logger, Injectable, OnApplicationBootstrap } from '@nestjs/common';
 

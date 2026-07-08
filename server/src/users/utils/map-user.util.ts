@@ -1,5 +1,5 @@
 import { User } from 'src/generated/prisma/client';
-import { UserRole } from '../constants/user.constants';
+import { UserRole } from 'src/common/enums/user-role.enum';
 
 export type UserResponse = {
   id: number;
