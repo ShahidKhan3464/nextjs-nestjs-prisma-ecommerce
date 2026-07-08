@@ -7,17 +7,21 @@ import { AuthModule } from './auth/auth.module';
 import { MailModule } from './mail/mail.module';
 import stripeConfig from './config/stripe.config';
 import { UsersModule } from './users/users.module';
+import { StoreModule } from './store/store.module';
 import { OrdersModule } from './orders/orders.module';
+import { SellerModule } from './seller/seller.module';
 import { CommonModule } from './common/common.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { SeedersModule } from './seeders/seeders.module';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { WishlistModule } from './wishlist/wishlist.module';
 import { ProductsModule } from './products/products.module';
+import { InventoryModule } from './inventory/inventory.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { CategoriesModule } from './categories/categories.module';
 import environmentValidation from './config/environment.validation';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { NotificationModule } from './notification/notification.module';
 import { PaginationModule } from './common/pagination/pagination.module';
 import { DataResponseInterceptor } from './common/interceptors/data-response/data-response.interceptor';
 
@@ -26,7 +30,9 @@ import { DataResponseInterceptor } from './common/interceptors/data-response/dat
     AuthModule,
     MailModule,
     CartModule,
+    StoreModule,
     UsersModule,
+    SellerModule,
     OrdersModule,
     PrismaModule,
     CommonModule,
@@ -34,8 +40,10 @@ import { DataResponseInterceptor } from './common/interceptors/data-response/dat
     WishlistModule,
     ProductsModule,
     DashboardModule,
-    CategoriesModule,
+    InventoryModule,
     PaginationModule,
+    CategoriesModule,
+    NotificationModule,
     ThrottlerModule.forRoot([
       {
         limit: 100,
