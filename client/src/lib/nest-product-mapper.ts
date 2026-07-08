@@ -10,10 +10,11 @@ export type NestProductPayload = {
   slug: string | null;
   description: string;
   basePrice: string | number;
-  category: {
+  category?: {
     id: number;
     name: string;
   };
+  categoryId?: number;
   variants: {
     sku: string;
     size?: string;
@@ -39,16 +40,16 @@ export function normalizeNestProductPayload(p: NestProductPayload): Product {
   const slug = p.slug ?? `${slugify(p.name)}-${p.id}`;
 
   const variants = (p.variants ?? []).map((v) => ({
-    id: String(v.id),
-    productId: String(p.id),
     sku: v.sku,
+    stock: v.stock,
+    id: String(v.id),
+    price: Number(v.price),
+    productId: String(p.id),
     name: formatVariantNameFromNest(v),
     options: {
       ...(v.size ? { size: v.size } : {}),
       ...(v.color ? { color: v.color } : {}),
     },
-    price: Number(v.price),
-    stock: v.stock,
   }));
 
   return {
@@ -57,8 +58,8 @@ export function normalizeNestProductPayload(p: NestProductPayload): Product {
     variants,
     name: p.name,
     id: String(p.id),
-    category: p.category.name,
     description: p.description,
     basePrice: Number(p.basePrice),
+    category: p.category?.name ?? "",
   };
 }
