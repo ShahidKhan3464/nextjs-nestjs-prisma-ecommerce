@@ -1,11 +1,11 @@
 import { UsersService } from './users.service';
 import { UserRole } from 'src/common/enums/user-role.enum';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { Roles } from 'src/auth/decorators/roles.decorator';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { Roles } from 'src/common/decorators/roles.decorator';
 import { ApiTags, ApiBearerAuth, ApiConsumes } from '@nestjs/swagger';
-import { ActiveUser } from 'src/auth/decorators/active-user.decorator';
+import { ActiveUser } from 'src/common/decorators/active-user.decorator';
 import { parseUserBlockedFilter, QueryUserDto } from './dto/query-user.dto';
 import { getUploadsRoot, UploadSubdir } from 'src/common/storage/uploads-root';
 import { createImageDiskMulterOptions } from 'src/common/storage/image-upload.multer';

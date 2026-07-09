@@ -1,7 +1,7 @@
 import { WishlistService } from './wishlist.service';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { SyncWishlistDto } from './dto/sync-wishlist.dto';
-import { ActiveUser } from 'src/auth/decorators/active-user.decorator';
+import { ActiveUser } from 'src/common/decorators/active-user.decorator';
 import {
   Get,
   Body,

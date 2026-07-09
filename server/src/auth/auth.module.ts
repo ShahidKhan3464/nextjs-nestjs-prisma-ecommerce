@@ -6,7 +6,6 @@ import { ConfigModule } from '@nestjs/config';
 import jwtConfig from 'src/config/jwt.config';
 import { AuthController } from './auth.controller';
 import { UsersModule } from 'src/users/users.module';
-import { RolesGuard } from './guards/roles/roles.guard';
 import { CryptoModule } from 'src/crypto/crypto.module';
 import { LoginProvider } from './providers/login.provider';
 import { RefreshTokensProvider } from './providers/refresh-tokens.provider';
@@ -28,10 +27,6 @@ import { AuthenticationGuard } from './guards/authentication/authentication.guar
     {
       provide: APP_GUARD,
       useClass: AuthenticationGuard,
-    },
-    {
-      provide: APP_GUARD,
-      useClass: RolesGuard,
     },
   ],
   controllers: [AuthController],

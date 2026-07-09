@@ -3,8 +3,8 @@ import { JwtService } from '@nestjs/jwt';
 import jwtConfig from 'src/config/jwt.config';
 import type { ConfigType } from '@nestjs/config';
 import { UsersService } from 'src/users/users.service';
-import { REQUEST_USER_KEY } from 'src/auth/constants/auth.constants';
-import { ACCOUNT_BLOCKED_MESSAGE } from 'src/auth/providers/login.provider';
+import { REQUEST_USER_KEY } from 'src/common/constants/request-user.constants';
+import { ACCOUNT_BLOCKED_MESSAGE } from 'src/auth/constants/auth-messages.constants';
 import {
   Inject,
   Injectable,

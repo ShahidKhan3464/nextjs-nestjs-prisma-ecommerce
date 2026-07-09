@@ -3,12 +3,12 @@ import { QueryOrderDto } from './dto/query-order.dto';
 import { CancelOrderDto } from './dto/cancel-order.dto';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { UserRole } from 'src/common/enums/user-role.enum';
-import { Roles } from 'src/auth/decorators/roles.decorator';
+import { Roles } from 'src/common/decorators/roles.decorator';
 import { CreateCheckoutDto } from './dto/create-checkout.dto';
 import { CancelCheckoutDto } from './dto/cancel-checkout.dto';
 import { CompleteCheckoutDto } from './dto/complete-checkout.dto';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
-import { ActiveUser } from 'src/auth/decorators/active-user.decorator';
+import { ActiveUser } from 'src/common/decorators/active-user.decorator';
 import {
   Get,
   Post,

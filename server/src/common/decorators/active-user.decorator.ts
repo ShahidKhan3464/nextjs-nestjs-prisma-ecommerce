@@ -1,5 +1,5 @@
 import { Request } from 'express';
-import { REQUEST_USER_KEY } from '../constants/auth.constants';
+import { REQUEST_USER_KEY } from 'src/common/constants/request-user.constants';
 import {
   ExecutionContext,
   createParamDecorator,

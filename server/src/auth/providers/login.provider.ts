@@ -3,15 +3,13 @@ import { User } from 'src/generated/prisma/client';
 import { UsersService } from '../../users/users.service';
 import { GenerateTokensProvider } from './generate-tokens.provider';
 import { HashingProvider } from 'src/crypto/providers/hashing.provider';
+import { ACCOUNT_BLOCKED_MESSAGE } from '../constants/auth-messages.constants';
 import {
   Injectable,
   ForbiddenException,
   UnauthorizedException,
   RequestTimeoutException,
 } from '@nestjs/common';
-
-export const ACCOUNT_BLOCKED_MESSAGE =
-  'Your account has been blocked. Please contact support.';
 
 export type LoggedInUser = Pick<
   User,

@@ -3,7 +3,7 @@ import { SyncCartDto } from './dto/sync-cart.dto';
 import { AddCartItemDto } from './dto/add-cart-item.dto';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { UpdateCartItemDto } from './dto/update-cart-item.dto';
-import { ActiveUser } from 'src/auth/decorators/active-user.decorator';
+import { ActiveUser } from 'src/common/decorators/active-user.decorator';
 import {
   Get,
   Body,

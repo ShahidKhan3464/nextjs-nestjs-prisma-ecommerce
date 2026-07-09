@@ -1,10 +1,10 @@
 import { ProductsService } from './products.service';
 import { QueryProductDto } from './dto/query-product.dto';
-import { FilesInterceptor } from '@nestjs/platform-express';
-import { Roles } from 'src/auth/decorators/roles.decorator';
+import { UserRole } from 'src/common/enums/user-role.enum';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
-import { UserRole } from 'src/common/enums/user-role.enum';
+import { FilesInterceptor } from '@nestjs/platform-express';
+import { Roles } from 'src/common/decorators/roles.decorator';
 import { ApiTags, ApiConsumes, ApiBearerAuth } from '@nestjs/swagger';
 import { ParseProductImagesPipe } from './pipes/parse-product-images.pipe';
 import { getUploadsRoot, UploadSubdir } from 'src/common/storage/uploads-root';
