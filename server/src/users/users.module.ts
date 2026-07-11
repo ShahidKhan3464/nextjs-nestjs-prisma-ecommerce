@@ -23,6 +23,6 @@ import { UploadProfileAvatarProvider } from './providers/upload-profile-avatar.p
     UploadProfileAvatarProvider,
   ],
   controllers: [UsersController],
-  exports: [UsersService],
+  exports: [UsersService, CreateUserProvider],
 })
 export class UsersModule {}
