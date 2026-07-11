@@ -1,12 +1,16 @@
 import { UserRole } from 'src/common/enums/user-role.enum';
-import { user_role_name_enum } from 'src/generated/prisma/client';
-import { UserWithRoles } from 'src/common/types/user-with-roles.type';
+import {
+  UserRole as UserRoleRecord,
+  user_role_name_enum,
+} from 'src/generated/prisma/client';
 
 export function mapPrismaRoleToUserRole(role: user_role_name_enum): UserRole {
   return role as UserRole;
 }
 
-export function extractUserRoles(user: UserWithRoles): UserRole[] {
+export function extractUserRoles(user: {
+  userRoles: Pick<UserRoleRecord, 'role'>[];
+}): UserRole[] {
   return user.userRoles.map((userRole) =>
     mapPrismaRoleToUserRole(userRole.role),
   );

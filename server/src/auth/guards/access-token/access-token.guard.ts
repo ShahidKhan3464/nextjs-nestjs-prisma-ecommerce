@@ -42,7 +42,7 @@ export class AccessTokenGuard implements CanActivate {
         throw new UnauthorizedException();
       }
 
-      const user = await this.usersService.findOneByIdWithRoles(userId);
+      const user = await this.usersService.findOneForAuthById(userId);
       if (!user || user.isBlocked) {
         throw new ForbiddenException(ACCOUNT_BLOCKED_MESSAGE);
       }

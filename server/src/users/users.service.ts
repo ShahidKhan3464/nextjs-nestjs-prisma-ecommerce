@@ -14,6 +14,10 @@ import { USER_ROLES_INCLUDE } from 'src/common/constants/user-roles.constants';
 import { UploadProfileAvatarProvider } from './providers/upload-profile-avatar.provider';
 import { PaginateQueryResult } from 'src/common/pagination/interfaces/paginated.interfaces';
 import {
+  AUTH_USER_SELECT,
+  AuthUserWithRoles,
+} from 'src/common/constants/auth-user.constants';
+import {
   UserDetailResponse,
   GetUserDetailProvider,
 } from './providers/get-user-detail.provider';
@@ -99,6 +103,15 @@ export class UsersService {
 
   public async findOneByEmail(email: string): Promise<User | null> {
     return this.prisma.user.findUnique({ where: { email } });
+  }
+
+  public async findOneForAuthById(
+    id: number,
+  ): Promise<AuthUserWithRoles | null> {
+    return this.prisma.user.findUnique({
+      where: { id },
+      select: AUTH_USER_SELECT,
+    });
   }
 
   public async findOneByIdWithRoles(id: number): Promise<UserWithRoles | null> {
