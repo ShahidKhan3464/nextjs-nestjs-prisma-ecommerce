@@ -5,11 +5,14 @@ import type { Stripe as StripeTypes } from 'stripe';
 import { UsersService } from 'src/users/users.service';
 import { CancelOrderDto } from '../dto/cancel-order.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { UserRole } from 'src/common/enums/user-role.enum';
 import { MailService } from 'src/mail/providers/mail.service';
 import { findOrderWithImages } from 'src/common/files/file-query.util';
 import { OrderStatus, PaymentStatus } from '../constants/order.constants';
 import { OrderResponse, mapOrderToResponse } from '../utils/map-order.util';
+import {
+  isSuperAdmin,
+  extractUserRoles,
+} from 'src/common/utils/authorization.util';
 import {
   Inject,
   Injectable,
@@ -47,8 +50,8 @@ export class CancelOrderProvider {
       throw new NotFoundException('Order not found');
     }
 
-    const user = await this.usersService.findOneById(userId);
-    const isAdmin = user?.role === UserRole.ADMIN;
+    const user = await this.usersService.findOneByIdWithRoles(userId);
+    const isAdmin = user ? isSuperAdmin(extractUserRoles(user)) : false;
 
     if (!isAdmin && order.userId !== userId) {
       throw new ForbiddenException();

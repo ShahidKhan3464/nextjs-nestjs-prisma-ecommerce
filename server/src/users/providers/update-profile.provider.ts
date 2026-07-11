@@ -2,6 +2,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { UpdateProfileDto } from '../dto/update-profile.dto';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { UserResponse, mapUserToResponse } from '../utils/map-user.util';
+import { USER_ROLES_INCLUDE } from 'src/common/constants/user-roles.constants';
 
 @Injectable()
 export class UpdateProfileProvider {
@@ -23,6 +24,7 @@ export class UpdateProfileProvider {
           ? { phoneNumber: dto.phoneNumber.trim() }
           : {}),
       },
+      include: USER_ROLES_INCLUDE,
     });
 
     return mapUserToResponse(saved);

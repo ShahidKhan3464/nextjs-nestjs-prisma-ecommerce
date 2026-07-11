@@ -25,8 +25,8 @@ function toIsoDate(value: string | Date | undefined): string {
 export function mapNestUserToClient(dto: NestUserDto): User {
   const createdAt = toIsoDate(dto.createdAt ?? dto.createDate);
   const role =
-    dto.role === "admin" || dto.role === "customer"
-      ? (dto.role as UserRole)
+    dto.role === "SUPER_ADMIN" || dto.role === "admin"
+      ? ("admin" as UserRole)
       : "customer";
 
   return {

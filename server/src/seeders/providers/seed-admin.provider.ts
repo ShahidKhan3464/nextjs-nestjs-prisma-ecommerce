@@ -48,10 +48,11 @@ export class SeedAdminProvider implements OnApplicationBootstrap {
         isBlocked: false,
         email: adminEmail,
         fullName: adminName,
-        role: UserRole.ADMIN,
         phoneNumber: adminPhone,
         password: await this.hashingProvider.hash(adminPassword),
-        confirmPassword: await this.hashingProvider.hash(adminPassword),
+        userRoles: {
+          create: { role: UserRole.SUPER_ADMIN },
+        },
       },
     });
 

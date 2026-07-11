@@ -1,6 +1,7 @@
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { UserResponse, mapUserToResponse } from '../utils/map-user.util';
+import { USER_ROLES_INCLUDE } from 'src/common/constants/user-roles.constants';
 
 @Injectable()
 export class BlockUserProvider {
@@ -14,6 +15,7 @@ export class BlockUserProvider {
       const saved = await this.prisma.user.update({
         where: { id },
         data: { isBlocked },
+        include: USER_ROLES_INCLUDE,
       });
       return mapUserToResponse(saved);
     } catch {

@@ -34,13 +34,13 @@ export class CategoriesController {
   }
 
   @Post()
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.SUPER_ADMIN)
   create(@Body() dto: CreateCategoryDto) {
     return this.categoriesService.create(dto);
   }
 
   @Patch(':id')
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.SUPER_ADMIN)
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateCategoryDto,
@@ -49,13 +49,13 @@ export class CategoriesController {
   }
 
   @Delete(':id')
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.SUPER_ADMIN)
   delete(@Param('id', ParseIntPipe) id: number) {
     return this.categoriesService.delete(id);
   }
 
   @Patch(':id/restore')
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.SUPER_ADMIN)
   restore(@Param('id', ParseIntPipe) id: number) {
     return this.categoriesService.restore(id);
   }

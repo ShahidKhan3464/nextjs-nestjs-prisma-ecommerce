@@ -50,7 +50,7 @@ export class ProductsController {
   }
 
   @Post()
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.SUPER_ADMIN)
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(FilesInterceptor('images', 12, imagesMulter))
   create(
@@ -62,7 +62,7 @@ export class ProductsController {
   }
 
   @Patch(':id')
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.SUPER_ADMIN)
   @ApiConsumes('multipart/form-data', 'application/json')
   @UseInterceptors(FilesInterceptor('images', 12, imagesMulter))
   update(
@@ -74,13 +74,13 @@ export class ProductsController {
   }
 
   @Delete(':id')
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.SUPER_ADMIN)
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.productsService.remove(id);
   }
 
   @Patch(':id/restore')
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.SUPER_ADMIN)
   restore(@Param('id', ParseIntPipe) id: number) {
     return this.productsService.restore(id);
   }

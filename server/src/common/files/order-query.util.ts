@@ -1,5 +1,4 @@
 import { PrismaService } from 'src/prisma/prisma.service';
-import { UserRole } from 'src/common/enums/user-role.enum';
 import { OrderStatus } from 'src/common/enums/order-status.enum';
 import { OrderWithRelations } from 'src/common/types/domain.types';
 import { PaymentStatus } from 'src/common/enums/payment-status.enum';
@@ -52,12 +51,7 @@ export async function findOrdersWithImages(
     cancelledAt: order.cancelledAt,
     createdAt: order.createdAt,
     updatedAt: order.updatedAt,
-    user: order.user
-      ? {
-          ...order.user,
-          role: order.user.role as UserRole,
-        }
-      : undefined,
+    user: order.user ?? undefined,
     items: order.items.map((item) => ({
       id: item.id,
       orderId: item.orderId,

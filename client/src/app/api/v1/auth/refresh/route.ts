@@ -16,12 +16,20 @@ import {
   AUTH_BACKEND_ACCESS_COOKIE,
 } from "@/lib/auth-cookies";
 
+function toSessionRole(roles: string[] | undefined): UserRole {
+  if (roles?.includes("SUPER_ADMIN")) {
+    return "admin";
+  }
+
+  return "customer";
+}
+
 type NestRefreshPayload = {
   data?: {
     user?: {
       id: number;
       email: string;
-      role?: string;
+      roles?: string[];
       fullName: string;
       isBlocked?: boolean;
       accessToken: string;
@@ -83,12 +91,7 @@ export async function POST() {
     return jsonMessage(ACCOUNT_BLOCKED_MESSAGE, 403);
   }
 
-  const role: UserRole =
-    u.role === "ADMIN"
-      ? "admin"
-      : u.role === "CUSTOMER"
-        ? "customer"
-        : "customer";
+  const role = toSessionRole(u.roles);
 
   const displayName =
     typeof u.fullName === "string" && u.fullName.trim().length > 0

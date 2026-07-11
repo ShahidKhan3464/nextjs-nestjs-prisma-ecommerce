@@ -46,7 +46,10 @@ export class GetAdminDashboardProvider {
       }),
       this.prisma.productVariant.count(),
       this.prisma.user.count({
-        where: { role: UserRole.CUSTOMER, isBlocked: false },
+        where: {
+          userRoles: { some: { role: UserRole.BUYER } },
+          isBlocked: false,
+        },
       }),
       this.prisma.order.count({ where: { status: OrderStatus.PENDING } }),
       this.getRevenueByDay(),

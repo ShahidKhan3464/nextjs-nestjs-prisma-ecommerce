@@ -14,14 +14,20 @@ import {
   AUTH_BACKEND_ACCESS_COOKIE,
 } from "@/lib/auth-cookies";
 
-const DEFAULT_ROLE: UserRole = "customer";
+function toSessionRole(roles: string[] | undefined): UserRole {
+  if (roles?.includes("SUPER_ADMIN")) {
+    return "admin";
+  }
+
+  return "customer";
+}
 
 /** Nest wraps controller return values with DataResponseInterceptor: `{ data, version }`. */
 type NestLoginPayload = {
   data?: {
     user?: {
       id: number;
-      role: string;
+      roles?: string[];
       email: string;
       fullName: string;
       isBlocked: boolean;
@@ -93,12 +99,7 @@ export async function POST(req: Request) {
     return jsonMessage(ACCOUNT_BLOCKED_MESSAGE, 403);
   }
 
-  const role: UserRole =
-    u.role === "ADMIN"
-      ? "admin"
-      : u.role === "CUSTOMER"
-        ? "customer"
-        : DEFAULT_ROLE;
+  const role = toSessionRole(u.roles);
 
   const sessionJwt = await signAccessToken({
     role,

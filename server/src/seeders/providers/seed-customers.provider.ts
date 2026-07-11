@@ -42,13 +42,14 @@ export class SeedCustomersProvider {
       DEMO_CUSTOMERS.map((customer) =>
         this.prisma.user.create({
           data: {
-            fullName: customer.fullName,
-            email: customer.email,
-            phoneNumber: customer.phoneNumber,
-            password: passwordHash,
-            confirmPassword: passwordHash,
             isBlocked: false,
-            role: UserRole.CUSTOMER,
+            email: customer.email,
+            password: passwordHash,
+            fullName: customer.fullName,
+            phoneNumber: customer.phoneNumber,
+            userRoles: {
+              create: { role: UserRole.BUYER },
+            },
           },
         }),
       ),

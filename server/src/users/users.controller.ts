@@ -59,7 +59,7 @@ export class UsersController {
   }
 
   @Get()
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.SUPER_ADMIN)
   findAll(@Query() query: QueryUserDto) {
     const { isBlocked: isBlockedRaw, ...rest } = query;
     return this.usersService.findAllPaginated({
@@ -69,19 +69,19 @@ export class UsersController {
   }
 
   @Get(':id/detail')
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.SUPER_ADMIN)
   findDetail(@Param('id', ParseIntPipe) id: number) {
     return this.usersService.getUserDetail(id);
   }
 
   @Get(':id')
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.SUPER_ADMIN)
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.usersService.findOne(id);
   }
 
   @Patch(':id/block')
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.SUPER_ADMIN)
   blockUser(
     @Param('id', ParseIntPipe) id: number,
     @Body('isBlocked') isBlocked: boolean,

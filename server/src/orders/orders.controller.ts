@@ -32,7 +32,7 @@ export class OrdersController {
   }
 
   @Get('admin/all')
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.SUPER_ADMIN)
   findAllAdmin(@Query() query: QueryOrderDto) {
     return this.ordersService.findAllAdmin(query);
   }
@@ -70,7 +70,7 @@ export class OrdersController {
   }
 
   @Patch(':id/status')
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.SUPER_ADMIN)
   updateStatus(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateOrderStatusDto,

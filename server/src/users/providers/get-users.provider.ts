@@ -3,6 +3,7 @@ import { UserRole } from 'src/common/enums/user-role.enum';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { FileOwnerModule } from 'src/common/files/file.constants';
+import { USER_ROLES_INCLUDE } from 'src/common/constants/user-roles.constants';
 import { PaginationProviders } from 'src/common/pagination/providers/pagination.providers';
 import { PaginateQueryResult } from 'src/common/pagination/interfaces/paginated.interfaces';
 import {
@@ -26,7 +27,9 @@ export class GetUsersProvider {
     query: FindUsersQuery,
   ): Promise<PaginateQueryResult<UserResponse>> {
     const where = {
-      role: { not: UserRole.ADMIN },
+      NOT: {
+        userRoles: { some: { role: UserRole.SUPER_ADMIN } },
+      },
       ...(query.isBlocked === true
         ? { isBlocked: true }
         : query.isBlocked === false
@@ -61,6 +64,7 @@ export class GetUsersProvider {
       where,
       skip,
       take: limit,
+      include: USER_ROLES_INCLUDE,
     });
 
     return {
@@ -72,7 +76,10 @@ export class GetUsersProvider {
   }
 
   public async findOne(id: number): Promise<UserResponse> {
-    const user = await this.prisma.user.findUnique({ where: { id } });
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+      include: USER_ROLES_INCLUDE,
+    });
     if (!user) {
       throw new NotFoundException('User not found');
     }
@@ -80,7 +87,10 @@ export class GetUsersProvider {
   }
 
   public async findMeWithAvatar(id: number): Promise<UserMeResponse> {
-    const user = await this.prisma.user.findUnique({ where: { id } });
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+      include: USER_ROLES_INCLUDE,
+    });
     if (!user) {
       throw new NotFoundException('User not found');
     }

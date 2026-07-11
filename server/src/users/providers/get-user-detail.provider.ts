@@ -3,6 +3,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { FileOwnerModule } from 'src/common/files/file.constants';
 import { findOrdersWithImages } from 'src/common/files/file-query.util';
 import { UserResponse, mapUserToResponse } from '../utils/map-user.util';
+import { USER_ROLES_INCLUDE } from 'src/common/constants/user-roles.constants';
 import {
   OrderAddress,
   OrderResponse,
@@ -26,7 +27,10 @@ export class GetUserDetailProvider {
   constructor(private readonly prisma: PrismaService) {}
 
   async getDetail(userId: number): Promise<UserDetailResponse> {
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: USER_ROLES_INCLUDE,
+    });
     if (!user) {
       throw new NotFoundException('User not found');
     }

@@ -40,11 +40,9 @@ export async function verifyToken(token: string): Promise<JwtPayload | null> {
 
     const rawRole = payload.role;
     const role: JwtPayload["role"] =
-      rawRole === "admin" || rawRole === "ADMIN"
+      rawRole === "admin" || rawRole === "SUPER_ADMIN"
         ? "admin"
-        : rawRole === "customer" || rawRole === "CUSTOMER"
-          ? "customer"
-          : "customer";
+        : "customer";
 
     const typ =
       payload.typ === "access" || payload.typ === "refresh"

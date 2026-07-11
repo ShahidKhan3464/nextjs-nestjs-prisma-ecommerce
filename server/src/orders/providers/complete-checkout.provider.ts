@@ -134,8 +134,8 @@ export class CompleteCheckoutProvider {
       await tx.orderItem.createMany({
         data: session.items.map((sessionItem) => ({
           orderId: savedOrder.id,
-          variantId: sessionItem.variantId,
           quantity: sessionItem.quantity,
+          variantId: sessionItem.variantId,
           priceAtPurchase: sessionItem.priceAtPurchase,
           imageUrl: sessionItem.variant?.product?.images?.[0]?.urlPath ?? null,
         })),

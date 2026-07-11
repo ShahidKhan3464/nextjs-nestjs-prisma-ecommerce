@@ -12,7 +12,7 @@ export class DashboardController {
   constructor(private readonly dashboardService: DashboardService) {}
 
   @Get('admin')
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.SUPER_ADMIN)
   getAdminOverview() {
     return this.dashboardService.getAdminOverview();
   }
