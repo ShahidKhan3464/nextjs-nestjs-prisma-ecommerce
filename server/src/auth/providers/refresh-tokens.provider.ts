@@ -36,7 +36,7 @@ export class RefreshTokensProvider {
           secret: this.jwtConfiguration.secret,
         },
       );
-      const user = await this.usersService.findOneById(sub);
+      const user = await this.usersService.findOneByIdWithRoles(sub);
       if (!user) {
         throw new UnauthorizedException('Invalid refresh token');
       }

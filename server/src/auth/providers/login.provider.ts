@@ -1,6 +1,7 @@
 import { LoginDto } from '../dto/login.dto';
 import { User } from 'src/generated/prisma/client';
 import { UsersService } from '../../users/users.service';
+import { UserRole } from 'src/common/enums/user-role.enum';
 import { GenerateTokensProvider } from './generate-tokens.provider';
 import { HashingProvider } from 'src/crypto/providers/hashing.provider';
 import { ACCOUNT_BLOCKED_MESSAGE } from '../constants/auth-messages.constants';
@@ -13,8 +14,9 @@ import {
 
 export type LoggedInUser = Pick<
   User,
-  'id' | 'fullName' | 'email' | 'role' | 'isBlocked'
+  'id' | 'fullName' | 'email' | 'isBlocked'
 > & {
+  roles: UserRole[];
   accessToken: string;
   refreshToken: string;
 };
@@ -28,12 +30,14 @@ export class LoginProvider {
   ) {}
 
   public async login(dto: LoginDto): Promise<{ user: LoggedInUser }> {
-    const user = await this.usersService.findOneByEmail(dto.email).catch(() => {
-      throw new RequestTimeoutException(
-        'Unable to process your request at the moment',
-        { description: 'Error connecting to the database' },
-      );
-    });
+    const user = await this.usersService
+      .findOneByEmailWithRoles(dto.email)
+      .catch(() => {
+        throw new RequestTimeoutException(
+          'Unable to process your request at the moment',
+          { description: 'Error connecting to the database' },
+        );
+      });
 
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');

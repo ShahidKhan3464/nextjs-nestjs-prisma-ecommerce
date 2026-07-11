@@ -6,9 +6,11 @@ import { ChangePasswordDto } from './dto/change-password.dto';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { BlockUserProvider } from './providers/block-user.provider';
 import { UserMeResponse, UserResponse } from './utils/map-user.util';
+import { UserWithRoles } from 'src/common/types/user-with-roles.type';
 import { CreateUserProvider } from './providers/create-user.provider.js';
 import { UpdateProfileProvider } from './providers/update-profile.provider';
 import { ChangePasswordProvider } from './providers/change-password.provider';
+import { USER_ROLES_INCLUDE } from 'src/common/constants/user-roles.constants';
 import { UploadProfileAvatarProvider } from './providers/upload-profile-avatar.provider';
 import { PaginateQueryResult } from 'src/common/pagination/interfaces/paginated.interfaces';
 import {
@@ -92,13 +94,27 @@ export class UsersService {
   }
 
   public async findOneById(id: number): Promise<User | null> {
-    const user = await this.prisma.user.findUnique({ where: { id } });
-    return user;
+    return this.prisma.user.findUnique({ where: { id } });
   }
 
   public async findOneByEmail(email: string): Promise<User | null> {
-    const user = await this.prisma.user.findUnique({ where: { email } });
-    return user;
+    return this.prisma.user.findUnique({ where: { email } });
+  }
+
+  public async findOneByIdWithRoles(id: number): Promise<UserWithRoles | null> {
+    return this.prisma.user.findUnique({
+      where: { id },
+      include: USER_ROLES_INCLUDE,
+    });
+  }
+
+  public async findOneByEmailWithRoles(
+    email: string,
+  ): Promise<UserWithRoles | null> {
+    return this.prisma.user.findUnique({
+      where: { email },
+      include: USER_ROLES_INCLUDE,
+    });
   }
 
   public async updatePassword(

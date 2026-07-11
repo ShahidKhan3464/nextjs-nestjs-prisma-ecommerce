@@ -3,7 +3,17 @@ import jwtConfig from 'src/config/jwt.config';
 import type { SignOptions } from 'jsonwebtoken';
 import type { ConfigType } from '@nestjs/config';
 import { Inject, Injectable } from '@nestjs/common';
-import type { User } from 'src/generated/prisma/client';
+import { UserRole } from 'src/common/enums/user-role.enum';
+import { UserWithRoles } from 'src/common/types/user-with-roles.type';
+import { extractUserRoles } from 'src/common/utils/authorization.util';
+
+export type AuthenticatedUserSummary = {
+  id: number;
+  email: string;
+  fullName: string;
+  roles: UserRole[];
+  isBlocked: boolean;
+};
 
 @Injectable()
 export class GenerateTokensProvider {
@@ -27,11 +37,12 @@ export class GenerateTokensProvider {
     );
   }
 
-  public async generateTokens(user: User) {
+  public async generateTokens(user: UserWithRoles) {
+    const roles = extractUserRoles(user);
     const [accessToken, refreshToken] = await Promise.all([
       this.signToken(user.id, this.jwtConfiguration.accessTokenTtl, {
         email: user.email,
-        role: user.role,
+        roles,
       }),
       this.signToken(user.id, this.jwtConfiguration.refreshTokenTtl),
     ]);
@@ -39,12 +50,12 @@ export class GenerateTokensProvider {
       accessToken,
       refreshToken,
       user: {
+        roles,
         id: user.id,
-        role: user.role,
         email: user.email,
         fullName: user.fullName,
         isBlocked: user.isBlocked,
-      },
+      } satisfies AuthenticatedUserSummary,
     };
   }
 }

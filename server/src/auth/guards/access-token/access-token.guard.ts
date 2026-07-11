@@ -3,6 +3,8 @@ import { JwtService } from '@nestjs/jwt';
 import jwtConfig from 'src/config/jwt.config';
 import type { ConfigType } from '@nestjs/config';
 import { UsersService } from 'src/users/users.service';
+import { extractUserRoles } from 'src/common/utils/authorization.util';
+import { JwtAccessTokenPayload } from 'src/common/types/jwt-payload.type';
 import { REQUEST_USER_KEY } from 'src/common/constants/request-user.constants';
 import { ACCOUNT_BLOCKED_MESSAGE } from 'src/auth/constants/auth-messages.constants';
 import {
@@ -18,9 +20,9 @@ import {
 export class AccessTokenGuard implements CanActivate {
   constructor(
     private readonly jwtService: JwtService,
+    private readonly usersService: UsersService,
     @Inject(jwtConfig.KEY)
     private readonly jwtConfiguration: ConfigType<typeof jwtConfig>,
-    private readonly usersService: UsersService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -40,14 +42,20 @@ export class AccessTokenGuard implements CanActivate {
         throw new UnauthorizedException();
       }
 
-      const user = await this.usersService.findOneById(userId);
+      const user = await this.usersService.findOneByIdWithRoles(userId);
       if (!user || user.isBlocked) {
         throw new ForbiddenException(ACCOUNT_BLOCKED_MESSAGE);
       }
 
-      (request as Request & { [REQUEST_USER_KEY]?: Record<string, unknown> })[
+      const authenticatedUser: JwtAccessTokenPayload = {
+        sub: userId,
+        email: user.email,
+        roles: extractUserRoles(user),
+      };
+
+      (request as Request & { [REQUEST_USER_KEY]?: JwtAccessTokenPayload })[
         REQUEST_USER_KEY
-      ] = payload;
+      ] = authenticatedUser;
     } catch (error) {
       if (
         error instanceof ForbiddenException ||

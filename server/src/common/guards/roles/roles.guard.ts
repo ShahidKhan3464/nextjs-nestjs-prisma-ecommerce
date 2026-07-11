@@ -4,6 +4,10 @@ import { UserRole } from 'src/common/enums/user-role.enum';
 import { ROLES_KEY } from 'src/common/decorators/roles.decorator';
 import { REQUEST_USER_KEY } from 'src/common/constants/request-user.constants';
 import {
+  hasAnyRole,
+  resolveRolesFromPayload,
+} from 'src/common/utils/authorization.util';
+import {
   Injectable,
   CanActivate,
   ExecutionContext,
@@ -27,10 +31,12 @@ export class RolesGuard implements CanActivate {
     const request = context.switchToHttp().getRequest<Request>();
 
     const user = request[REQUEST_USER_KEY] as {
+      roles?: UserRole[];
       role?: UserRole;
     };
 
-    const hasRole = requiredRoles.includes(user?.role as UserRole);
+    const userRoles = resolveRolesFromPayload(user ?? {});
+    const hasRole = hasAnyRole(userRoles, requiredRoles);
 
     if (!hasRole) {
       throw new ForbiddenException(
