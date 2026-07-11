@@ -4,6 +4,7 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import { SWAGGER_EXTRA_MODELS } from './common/swagger/swagger-extra-models';
 
 async function bootstrap() {
   // 1️⃣ Create Nest app
@@ -40,13 +41,12 @@ async function bootstrap() {
     .build();
 
   // 4️⃣ Create Swagger document
-  const document = SwaggerModule.createDocument(app, config);
+  const document = SwaggerModule.createDocument(app, config, {
+    extraModels: [...SWAGGER_EXTRA_MODELS],
+  });
 
   // 5️⃣ Setup Swagger route
   SwaggerModule.setup('api', app, document);
-
-  // // 6️⃣ Global Interceptors
-  // app.useGlobalInterceptors(new DataResponseInterceptor());
 
   // 6️⃣ Start server
   await app.listen(3001);
