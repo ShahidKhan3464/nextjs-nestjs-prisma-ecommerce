@@ -30,15 +30,3 @@ export function hasRole(userRoles: UserRole[], role: UserRole): boolean {
 export function isSuperAdmin(userRoles: UserRole[]): boolean {
   return hasRole(userRoles, UserRole.SUPER_ADMIN);
 }
-
-export function resolvePrimaryRole(userRoles: UserRole[]): UserRole {
-  if (hasRole(userRoles, UserRole.SUPER_ADMIN)) {
-    return UserRole.SUPER_ADMIN;
-  }
-
-  if (hasRole(userRoles, UserRole.SELLER)) {
-    return UserRole.SELLER;
-  }
-
-  return UserRole.BUYER;
-}

@@ -5,7 +5,10 @@ export class UserResponseDto {
   @ApiProperty({ example: 1, description: 'User ID' })
   id: number;
 
-  @ApiProperty({ example: 'john@example.com', description: 'User email address' })
+  @ApiProperty({
+    example: 'john@example.com',
+    description: 'User email address',
+  })
   email: string;
 
   @ApiProperty({ example: 'John Doe', description: 'Full name of the user' })
@@ -17,9 +20,12 @@ export class UserResponseDto {
     example: [UserRole.BUYER],
     description: 'Assigned roles for the user',
   })
-  roles: string[];
+  roles: UserRole[];
 
-  @ApiProperty({ example: false, description: 'Whether the user account is blocked' })
+  @ApiProperty({
+    example: false,
+    description: 'Whether the user account is blocked',
+  })
   isBlocked: boolean;
 
   @ApiProperty({
