@@ -1,1 +1,4 @@
-// Placeholder for store domain constants.
+export enum StoreStatus {
+  ACTIVE = 'ACTIVE',
+  SUSPENDED = 'SUSPENDED',
+}

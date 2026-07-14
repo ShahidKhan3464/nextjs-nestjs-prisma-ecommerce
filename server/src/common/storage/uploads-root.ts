@@ -7,6 +7,7 @@ export function getUploadsRoot(): string {
 
 /** Subfolders under `uploads/` — keep paths stable for URLs like `/uploads/{subdir}/...`. */
 export const UploadSubdir = {
+  SELLERS: 'sellers',
   PRODUCTS: 'products',
   CUSTOMERS: 'customers',
 } as const;
