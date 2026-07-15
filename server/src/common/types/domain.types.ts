@@ -18,13 +18,21 @@ export type ProductWithRelations = {
   name: string;
   createdAt: Date;
   updatedAt: Date;
+  storeId: number;
   basePrice: number;
   categoryId: number;
   slug: string | null;
   category?: Category;
+  store?: {
+    id: number;
+    name: string;
+    slug: string;
+    status: string;
+  };
   images?: StoredFile[];
   status: ProductStatus;
   deletedAt: Date | null;
+  publishedAt: Date | null;
   description: string | null;
   variants?: ProductVariantWithRelations[];
 };

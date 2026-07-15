@@ -1,6 +1,5 @@
 import { StoredFile } from 'src/generated/prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { FileOwnerModule } from 'src/common/enums/file-owner-module.enum';
 
 export async function loadProductImagesMap(
   prisma: PrismaService,
@@ -10,19 +9,17 @@ export async function loadProductImagesMap(
     return new Map();
   }
 
-  const files = await prisma.storedFile.findMany({
-    where: {
-      ownerModule: FileOwnerModule.PRODUCT,
-      ownerId: { in: productIds },
-    },
+  const productFiles = await prisma.productFile.findMany({
+    where: { productId: { in: productIds } },
     orderBy: { sortOrder: 'asc' },
+    include: { file: true },
   });
 
   const map = new Map<number, StoredFile[]>();
-  for (const file of files) {
-    const list = map.get(file.ownerId) ?? [];
-    list.push(file);
-    map.set(file.ownerId, list);
+  for (const entry of productFiles) {
+    const list = map.get(entry.productId) ?? [];
+    list.push(entry.file);
+    map.set(entry.productId, list);
   }
   return map;
 }

@@ -1,11 +1,18 @@
 import { PrismaService } from 'src/prisma/prisma.service';
+import { UserRole } from 'src/common/enums/user-role.enum';
 import { UpdateProductDto } from '../dto/update-product.dto';
-import { GetProductsProvider } from './get-products.provider';
-import { FileOwnerModule } from 'src/common/files/file.constants';
+import { mapProductToResponse } from '../utils/map-product.util';
 import { DeleteProductProvider } from './delete-product.provider';
 import { ProductWithRelations } from 'src/common/types/domain.types';
+import { ProductOwnershipProvider } from './product-ownership.provider';
 import { generateProductSlug } from '../utils/generate-product-slug.util';
 import { CreateProductVariantDto } from '../dto/create-product-variant.dto';
+import { resolveUniqueProductSlug } from '../utils/resolve-unique-product-slug.util';
+import { buildProductStoredFileData } from '../utils/build-product-stored-file.util';
+import {
+  PRODUCT_INCLUDE,
+  ProductFileType,
+} from '../constants/product.constants';
 import {
   Injectable,
   NotFoundException,
@@ -17,21 +24,36 @@ import {
 export class UpdateProductProvider {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly getProductsProvider: GetProductsProvider,
     private readonly deleteProductProvider: DeleteProductProvider,
+    private readonly productOwnershipProvider: ProductOwnershipProvider,
   ) {}
 
   public async update(
     id: number,
     dto: UpdateProductDto,
     files: Express.Multer.File[] = [],
+    userId: number,
+    roles: UserRole[],
   ): Promise<ProductWithRelations> {
+    await this.productOwnershipProvider.assertCanManage(id, userId, roles);
+
     const product = await this.prisma.product.findFirst({
       where: { id, deletedAt: null },
       include: { category: true },
     });
     if (!product) {
       throw new NotFoundException('Product not found');
+    }
+
+    if (
+      dto.name === undefined &&
+      dto.variants === undefined &&
+      dto.categoryId === undefined &&
+      dto.description === undefined &&
+      dto.retainImagePaths === undefined &&
+      files.length === 0
+    ) {
+      throw new BadRequestException('No fields provided to update');
     }
 
     if (dto.categoryId !== undefined) {
@@ -43,82 +65,114 @@ export class UpdateProductProvider {
       }
     }
 
-    if (dto.variants !== undefined) {
-      await this.syncVariants(id, dto.variants);
-    }
+    const removedStorageKeys: string[] = [];
 
-    const nextName = dto.name ?? product.name;
-    await this.prisma.product.update({
-      where: { id },
-      data: {
-        ...(dto.categoryId !== undefined ? { categoryId: dto.categoryId } : {}),
-        ...(dto.name !== undefined ? { name: dto.name } : {}),
-        ...(dto.description !== undefined
-          ? { description: dto.description }
-          : {}),
-        ...(dto.status !== undefined ? { status: dto.status } : {}),
-        slug: generateProductSlug(nextName),
-        ...(dto.variants !== undefined
-          ? {
-              basePrice: Math.min(
-                ...dto.variants.map((variant) => variant.price),
-              ),
-            }
-          : {}),
-      },
+    const updated = await this.prisma.$transaction(async (tx) => {
+      if (dto.variants !== undefined) {
+        await this.syncVariants(tx, id, dto.variants);
+      }
+
+      let slug: string | undefined;
+      if (dto.name !== undefined && dto.name !== product.name) {
+        const baseSlug = generateProductSlug(dto.name);
+        slug = await resolveUniqueProductSlug(tx, baseSlug, id);
+      }
+
+      await tx.product.update({
+        where: { id },
+        data: {
+          ...(dto.categoryId !== undefined
+            ? { categoryId: dto.categoryId }
+            : {}),
+          ...(dto.name !== undefined ? { name: dto.name } : {}),
+          ...(dto.description !== undefined
+            ? { description: dto.description }
+            : {}),
+          ...(slug !== undefined ? { slug } : {}),
+          ...(dto.variants !== undefined
+            ? {
+                basePrice: Math.min(
+                  ...dto.variants.map((variant) => variant.price),
+                ),
+              }
+            : {}),
+        },
+      });
+
+      if (dto.retainImagePaths !== undefined) {
+        const keep = dto.retainImagePaths;
+        const imagesToRemove = await tx.productFile.findMany({
+          where: {
+            productId: id,
+            ...(keep.length > 0 ? { file: { urlPath: { notIn: keep } } } : {}),
+          },
+          include: { file: true },
+        });
+
+        for (const entry of imagesToRemove) {
+          await tx.productFile.delete({ where: { id: entry.id } });
+          await tx.storedFile.delete({ where: { id: entry.fileId } });
+          removedStorageKeys.push(entry.file.storageKey);
+        }
+      }
+
+      if (files.length > 0) {
+        const existing = await tx.productFile.findMany({
+          where: { productId: id },
+          orderBy: { sortOrder: 'asc' },
+        });
+        const nextOrder =
+          existing.length > 0
+            ? Math.max(...existing.map((img) => img.sortOrder)) + 1
+            : 0;
+
+        for (let index = 0; index < files.length; index++) {
+          const file = files[index];
+          const storedFile = await tx.storedFile.create({
+            data: buildProductStoredFileData(file),
+          });
+
+          await tx.productFile.create({
+            data: {
+              productId: id,
+              fileId: storedFile.id,
+              sortOrder: nextOrder + index,
+              type:
+                existing.length === 0 && index === 0
+                  ? ProductFileType.THUMBNAIL
+                  : ProductFileType.GALLERY,
+            },
+          });
+        }
+      }
+
+      const result = await tx.product.findFirst({
+        where: { id, deletedAt: null },
+        include: PRODUCT_INCLUDE,
+      });
+
+      if (!result) {
+        throw new NotFoundException('Product not found');
+      }
+
+      return result;
     });
 
-    if (dto.retainImagePaths !== undefined) {
-      const keep = dto.retainImagePaths;
-      const imagesToRemove = await this.prisma.storedFile.findMany({
-        where: {
-          ownerModule: FileOwnerModule.PRODUCT,
-          ownerId: id,
-          ...(keep.length > 0 ? { urlPath: { notIn: keep } } : {}),
-        },
-      });
-      await Promise.all(
-        imagesToRemove.map((img) =>
-          this.deleteProductProvider.safeUnlinkPublicPath(img.urlPath),
-        ),
-      );
-      await this.prisma.storedFile.deleteMany({
-        where: {
-          ownerModule: FileOwnerModule.PRODUCT,
-          ownerId: id,
-          ...(keep.length > 0 ? { urlPath: { notIn: keep } } : {}),
-        },
-      });
-    }
+    await Promise.all(
+      removedStorageKeys.map((key) =>
+        this.deleteProductProvider.safeUnlinkStorageKey(key),
+      ),
+    );
 
-    if (files.length > 0) {
-      const existing = await this.prisma.storedFile.findMany({
-        where: { ownerModule: FileOwnerModule.PRODUCT, ownerId: id },
-        orderBy: { sortOrder: 'asc' },
-      });
-      const nextOrder =
-        existing.length > 0
-          ? Math.max(...existing.map((img) => img.sortOrder)) + 1
-          : 0;
-
-      await this.prisma.storedFile.createMany({
-        data: files.map((file, index) => ({
-          urlPath: `/uploads/products/${file.filename}`,
-          sortOrder: nextOrder + index,
-          ownerModule: FileOwnerModule.PRODUCT,
-          ownerId: id,
-        })),
-      });
-    }
-
-    return await this.getProductsProvider.findOne(id);
+    return mapProductToResponse(updated);
   }
 
   private async syncVariants(
+    tx: Parameters<Parameters<PrismaService['$transaction']>[0]>[0],
     productId: number,
     incoming: CreateProductVariantDto[],
   ): Promise<void> {
-    const existing = await this.prisma.productVariant.findMany({
+    const existing = await tx.productVariant.findMany({
       where: { productId },
     });
     const existingBySku = new Map(
@@ -131,7 +185,7 @@ export class UpdateProductProvider {
         continue;
       }
 
-      const skuExists = await this.prisma.productVariant.findUnique({
+      const skuExists = await tx.productVariant.findUnique({
         where: { sku: variant.sku },
       });
       if (skuExists) {
@@ -142,26 +196,26 @@ export class UpdateProductProvider {
     for (const variantDto of incoming) {
       const existingVariant = existingBySku.get(variantDto.sku);
       if (existingVariant) {
-        await this.prisma.productVariant.update({
+        await tx.productVariant.update({
           where: { id: existingVariant.id },
           data: {
             size: variantDto.size,
             color: variantDto.color,
-            stock: variantDto.stock,
             price: variantDto.price,
+            stockQuantity: variantDto.stock,
           },
         });
         continue;
       }
 
-      await this.prisma.productVariant.create({
+      await tx.productVariant.create({
         data: {
           productId,
           sku: variantDto.sku,
           size: variantDto.size,
           color: variantDto.color,
-          stock: variantDto.stock,
           price: variantDto.price,
+          stockQuantity: variantDto.stock,
         },
       });
     }
@@ -171,7 +225,7 @@ export class UpdateProductProvider {
         continue;
       }
 
-      const referenced = await this.prisma.orderItem.findFirst({
+      const referenced = await tx.orderItem.findFirst({
         where: { variantId: variant.id },
       });
       if (referenced) {
@@ -180,7 +234,7 @@ export class UpdateProductProvider {
         );
       }
 
-      await this.prisma.productVariant.delete({ where: { id: variant.id } });
+      await tx.productVariant.delete({ where: { id: variant.id } });
     }
   }
 }

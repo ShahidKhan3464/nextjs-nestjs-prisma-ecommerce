@@ -1,30 +1,38 @@
 import { Prisma } from '../../generated/prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { QueryProductDto } from '../dto/query-product.dto';
-import { ProductStatus } from '../constants/product.constants';
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { PRODUCT_INCLUDE } from '../constants/product.constants';
+import { mapProductToResponse } from '../utils/map-product.util';
 import { ProductWithRelations } from 'src/common/types/domain.types';
+import { ProductOwnershipProvider } from './product-ownership.provider';
 import { PaginationProviders } from 'src/common/pagination/providers/pagination.providers';
 import { PaginateQueryResult } from 'src/common/pagination/interfaces/paginated.interfaces';
-import {
-  findProductWithImages,
-  attachImagesToNestedProducts,
-} from 'src/common/files/file-query.util';
 
 @Injectable()
 export class GetProductsProvider {
   constructor(
     private readonly prisma: PrismaService,
     private readonly paginationProviders: PaginationProviders,
+    private readonly productOwnershipProvider: ProductOwnershipProvider,
   ) {}
 
-  private buildWhere(query: QueryProductDto): Prisma.ProductWhereInput {
+  private buildWhere(
+    query: QueryProductDto,
+    scope?: { storeId?: number },
+  ): Prisma.ProductWhereInput {
     const where: Prisma.ProductWhereInput = {};
 
     if (query.lifeCycle === 'removed') {
       where.deletedAt = { not: null };
     } else if (query.lifeCycle !== 'all') {
       where.deletedAt = null;
+    }
+
+    if (scope?.storeId !== undefined) {
+      where.storeId = scope.storeId;
+    } else if (query.storeId) {
+      where.storeId = query.storeId;
     }
 
     if (query.categoryId) {
@@ -66,56 +74,66 @@ export class GetProductsProvider {
   public async findAllPaginated(
     query: QueryProductDto,
   ): Promise<PaginateQueryResult<ProductWithRelations>> {
+    return this.paginate(query);
+  }
+
+  /** Seller-scoped listing — only products belonging to the seller's store. */
+  public async findMinePaginated(
+    userId: number,
+    query: QueryProductDto,
+  ): Promise<PaginateQueryResult<ProductWithRelations>> {
+    const store =
+      await this.productOwnershipProvider.findOwnedStoreOrThrow(userId);
+    return this.paginate(query, { storeId: store.id });
+  }
+
+  private async paginate(
+    query: QueryProductDto,
+    scope?: { storeId?: number },
+  ): Promise<PaginateQueryResult<ProductWithRelations>> {
     const { page, limit, skip } = this.paginationProviders.resolvePaging(query);
-    const where = this.buildWhere(query);
+    const where = this.buildWhere(query, scope);
 
     const total = await this.prisma.product.count({ where });
     const products = await this.prisma.product.findMany({
       where,
-      include: {
-        category: true,
-        variants: true,
-      },
+      include: PRODUCT_INCLUDE,
       orderBy: { createdAt: 'desc' },
       skip,
       take: limit,
     });
 
-    const data = await attachImagesToNestedProducts(
-      this.prisma,
-      products.map((product) => ({
-        ...product,
-        basePrice: Number(product.basePrice),
-        status: product.status as ProductStatus,
-        variants: product.variants.map((variant) => ({
-          ...variant,
-          price: Number(variant.price),
-        })),
-      })),
-    );
-
-    return { data, page, limit, total };
+    return {
+      data: products.map((product) => mapProductToResponse(product)),
+      page,
+      limit,
+      total,
+    };
   }
 
   public async findOne(id: number): Promise<ProductWithRelations> {
-    const product = await findProductWithImages(this.prisma, {
-      where: { id },
+    const product = await this.prisma.product.findFirst({
+      where: { id, deletedAt: null },
+      include: PRODUCT_INCLUDE,
     });
 
     if (!product) {
       throw new NotFoundException('Product not found');
     }
-    return product;
+
+    return mapProductToResponse(product);
   }
 
   public async findBySlug(slug: string): Promise<ProductWithRelations> {
-    const product = await findProductWithImages(this.prisma, {
+    const product = await this.prisma.product.findFirst({
       where: { slug, deletedAt: null },
+      include: PRODUCT_INCLUDE,
     });
 
     if (!product) {
       throw new NotFoundException('Product not found');
     }
-    return product;
+
+    return mapProductToResponse(product);
   }
 }

@@ -5,6 +5,7 @@ import { CreateProductVariantDto } from './create-product-variant.dto';
 import { UniqueVariantSkuConstraint } from '../validators/unique-variant-sku.validator';
 import {
   Min,
+  IsIn,
   IsEnum,
   IsArray,
   IsNumber,
@@ -27,6 +28,21 @@ export class CreateProductDto {
   @Min(1)
   categoryId: number;
 
+  @ApiPropertyOptional({
+    description:
+      'Required for SUPER_ADMIN. Ignored for sellers — store is resolved from the authenticated seller.',
+  })
+  @IsOptional()
+  @Transform(({ value }) =>
+    value === '' || value === undefined || value === null
+      ? undefined
+      : Number(value),
+  )
+  @Type(() => Number)
+  @IsNumber()
+  @Min(1)
+  storeId?: number;
+
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
@@ -44,9 +60,15 @@ export class CreateProductDto {
   @MaxLength(1000)
   description?: string;
 
-  @ApiPropertyOptional({ enum: ProductStatus })
+  @ApiPropertyOptional({
+    enum: [ProductStatus.DRAFT, ProductStatus.ACTIVE],
+    default: ProductStatus.DRAFT,
+    description:
+      'Defaults to DRAFT. Use Publish endpoint to go DRAFT → ACTIVE.',
+  })
   @IsOptional()
   @IsEnum(ProductStatus)
+  @IsIn([ProductStatus.DRAFT, ProductStatus.ACTIVE])
   status?: ProductStatus;
 
   @ApiProperty({

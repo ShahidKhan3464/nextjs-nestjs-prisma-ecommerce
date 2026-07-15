@@ -26,6 +26,14 @@ export async function findProductWithImages(
     include: {
       category: true,
       variants: true,
+      store: {
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          status: true,
+        },
+      },
       ...(typeof args?.include === 'object' && args.include !== null
         ? args.include
         : {}),

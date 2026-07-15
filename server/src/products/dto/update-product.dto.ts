@@ -1,11 +1,9 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { ProductStatus } from '../constants/product.constants';
 import { plainToInstance, Transform, Type } from 'class-transformer';
 import { CreateProductVariantDto } from './create-product-variant.dto';
 import { UniqueVariantSkuConstraint } from '../validators/unique-variant-sku.validator';
 import {
   Min,
-  IsEnum,
   IsArray,
   IsNumber,
   Validate,
@@ -17,6 +15,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 
+/** Status changes go through publish / archive / restore endpoints. */
 export class UpdateProductDto {
   @ApiPropertyOptional()
   @IsOptional()
@@ -43,11 +42,6 @@ export class UpdateProductDto {
   @MinLength(10)
   @MaxLength(1000)
   description?: string;
-
-  @ApiPropertyOptional({ enum: ProductStatus })
-  @IsOptional()
-  @IsEnum(ProductStatus)
-  status?: ProductStatus;
 
   @ApiPropertyOptional({ type: [CreateProductVariantDto] })
   @IsOptional()

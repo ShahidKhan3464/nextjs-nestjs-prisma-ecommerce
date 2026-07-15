@@ -1,53 +1,46 @@
 import { join } from 'path';
 import { unlink } from 'fs/promises';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { ProductStatus } from '../constants/product.constants';
-import { ProductWithRelations } from 'src/common/types/domain.types';
-import {
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-} from '@nestjs/common';
+import { UserRole } from 'src/common/enums/user-role.enum';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { getUploadsRoot } from 'src/common/storage/uploads-root';
+import { ProductOwnershipProvider } from './product-ownership.provider';
 
 @Injectable()
 export class DeleteProductProvider {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly productOwnershipProvider: ProductOwnershipProvider,
+  ) {}
 
-  public async remove(id: number): Promise<void> {
+  /** Soft-delete: only populates deletedAt. */
+  public async remove(
+    id: number,
+    userId: number,
+    roles: UserRole[],
+  ): Promise<void> {
+    await this.productOwnershipProvider.assertCanManage(id, userId, roles);
+
     const product = await this.prisma.product.findFirst({
       where: { id, deletedAt: null },
     });
     if (!product) {
       throw new NotFoundException('Product not found');
     }
+
     await this.prisma.product.update({
       where: { id },
       data: { deletedAt: new Date() },
     });
   }
 
-  public async restore(id: number): Promise<ProductWithRelations> {
-    const product = await this.prisma.product.findUnique({ where: { id } });
-    if (!product) {
-      throw new NotFoundException('Product not found');
+  public async safeUnlinkStorageKey(storageKey: string): Promise<void> {
+    const abs = join(getUploadsRoot(), storageKey.replace(/^uploads\//, ''));
+    try {
+      await unlink(abs);
+    } catch {
+      /* file may already be gone */
     }
-    if (!product.deletedAt) {
-      throw new BadRequestException('Product is not removed');
-    }
-    const restored = await this.prisma.product.update({
-      where: { id },
-      data: { deletedAt: null },
-      include: { category: true, variants: true },
-    });
-    return {
-      ...restored,
-      basePrice: Number(restored.basePrice),
-      status: restored.status as ProductStatus,
-      variants: restored.variants.map((variant) => ({
-        ...variant,
-        price: Number(variant.price),
-      })),
-    };
   }
 
   public async safeUnlinkPublicPath(urlPath: string): Promise<void> {

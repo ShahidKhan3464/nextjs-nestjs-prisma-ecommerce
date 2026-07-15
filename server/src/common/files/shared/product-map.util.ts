@@ -4,28 +4,34 @@ import { ProductWithRelations } from 'src/common/types/domain.types';
 export function mapPrismaProduct(product: {
   id: number;
   name: string;
-  slug: string | null;
-  description: string | null;
-  basePrice: { toNumber?: () => number } | number | string;
   status: string;
-  categoryId: number;
+  store?: unknown;
   createdAt: Date;
   updatedAt: Date;
-  deletedAt: Date | null;
+  storeId?: number;
+  categoryId: number;
   category?: unknown;
+  slug: string | null;
   variants?: unknown[];
+  deletedAt: Date | null;
+  publishedAt?: Date | null;
+  description: string | null;
+  basePrice: { toNumber?: () => number } | number | string;
 }): ProductWithRelations {
   return {
     id: product.id,
     name: product.name,
     slug: product.slug,
-    description: product.description,
-    basePrice: Number(product.basePrice),
-    status: product.status as ProductStatus,
-    categoryId: product.categoryId,
     createdAt: product.createdAt,
     updatedAt: product.updatedAt,
     deletedAt: product.deletedAt,
+    storeId: product.storeId ?? 0,
+    categoryId: product.categoryId,
+    description: product.description,
+    basePrice: Number(product.basePrice),
+    status: product.status as ProductStatus,
+    publishedAt: product.publishedAt ?? null,
+    store: product.store as ProductWithRelations['store'],
     category: product.category as ProductWithRelations['category'],
     variants: product.variants as ProductWithRelations['variants'],
   };
@@ -33,26 +39,26 @@ export function mapPrismaProduct(product: {
 
 export function mapPrismaVariant(variant: {
   id: number;
+  sku: string;
   size: string;
   color: string;
-  sku: string;
-  stock: number;
-  price: { toNumber?: () => number } | number | string;
-  productId: number;
   createdAt: Date;
   updatedAt: Date;
   product?: unknown;
+  productId: number;
+  stockQuantity: number;
+  price: { toNumber?: () => number } | number | string;
 }) {
   return {
     id: variant.id,
+    sku: variant.sku,
     size: variant.size,
     color: variant.color,
-    sku: variant.sku,
-    stock: variant.stock,
     price: Number(variant.price),
     productId: variant.productId,
     createdAt: variant.createdAt,
     updatedAt: variant.updatedAt,
+    stockQuantity: variant.stockQuantity,
     product: variant.product as ProductWithRelations | undefined,
   };
 }

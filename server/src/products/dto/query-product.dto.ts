@@ -20,6 +20,13 @@ export class QueryProductDto extends PaginationQueryDto {
   @Min(1)
   categoryId?: number;
 
+  @ApiPropertyOptional({ description: 'Filter by store id (admin / catalog)' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  storeId?: number;
+
   @ApiPropertyOptional({ enum: ProductStatus })
   @IsOptional()
   @IsEnum(ProductStatus)
