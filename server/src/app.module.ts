@@ -16,13 +16,13 @@ import { SeedersModule } from './seeders/seeders.module';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { WishlistModule } from './wishlist/wishlist.module';
 import { ProductsModule } from './products/products.module';
-import { InventoryModule } from './inventory/inventory.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { CategoriesModule } from './categories/categories.module';
 import environmentValidation from './config/environment.validation';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { NotificationModule } from './notification/notification.module';
 import { PaginationModule } from './common/pagination/pagination.module';
+import { ProductVariantsModule } from './product-variants/product-variants.module';
 import { DataResponseInterceptor } from './common/interceptors/data-response/data-response.interceptor';
 
 @Module({
@@ -40,10 +40,10 @@ import { DataResponseInterceptor } from './common/interceptors/data-response/dat
     WishlistModule,
     ProductsModule,
     DashboardModule,
-    InventoryModule,
     PaginationModule,
     CategoriesModule,
     NotificationModule,
+    ProductVariantsModule,
     ThrottlerModule.forRoot([
       {
         limit: 100,
