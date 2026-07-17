@@ -31,6 +31,15 @@ export class OrdersController {
     return this.ordersService.findMine(userId, query);
   }
 
+  @Get('seller')
+  @Roles(UserRole.SELLER)
+  findSellerOrders(
+    @ActiveUser() userId: number,
+    @Query() query: QueryOrderDto,
+  ) {
+    return this.ordersService.findSellerOrders(userId, query);
+  }
+
   @Get('admin/all')
   @Roles(UserRole.SUPER_ADMIN)
   findAllAdmin(@Query() query: QueryOrderDto) {
@@ -56,25 +65,32 @@ export class OrdersController {
   }
 
   @Get(':id')
-  findOne(@ActiveUser() userId: number, @Param('id', ParseIntPipe) id: number) {
-    return this.ordersService.findOne(id, userId);
+  findOne(
+    @ActiveUser() userId: number,
+    @ActiveUser('roles') roles: UserRole[],
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return this.ordersService.findOne(id, userId, roles);
   }
 
   @Post(':id/cancel')
   cancelOrder(
     @ActiveUser() userId: number,
+    @ActiveUser('roles') roles: UserRole[],
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: CancelOrderDto,
   ) {
-    return this.ordersService.cancelOrder(id, userId, dto);
+    return this.ordersService.cancelOrder(id, userId, roles, dto);
   }
 
   @Patch(':id/status')
-  @Roles(UserRole.SUPER_ADMIN)
+  @Roles(UserRole.SELLER, UserRole.SUPER_ADMIN)
   updateStatus(
+    @ActiveUser() userId: number,
+    @ActiveUser('roles') roles: UserRole[],
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateOrderStatusDto,
   ) {
-    return this.ordersService.updateStatus(id, dto);
+    return this.ordersService.updateStatus(id, dto, userId, roles);
   }
 }

@@ -3,37 +3,56 @@ import { OrderStatus } from 'src/common/enums/order-status.enum';
 import { OrderWithRelations } from 'src/common/types/domain.types';
 import { PaymentStatus } from 'src/common/enums/payment-status.enum';
 import { PaymentProvider } from 'src/common/enums/payment-provider.enum';
-import { mapPrismaProduct, mapPrismaVariant } from './shared/product-map.util';
-import {
-  attachProductImages,
-  loadProductImagesMap,
-} from './shared/product-image-map.util';
 
-export async function findOrdersWithImages(
-  prisma: PrismaService,
-  args: Parameters<PrismaService['order']['findMany']>[0],
-): Promise<OrderWithRelations[]> {
-  const orders = await prisma.order.findMany({
-    ...args,
+const ORDER_LIST_INCLUDE = {
+  user: {
+    select: {
+      id: true,
+      email: true,
+      fullName: true,
+    },
+  },
+  payment: true,
+  store: {
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      status: true,
+      deletedAt: true,
+    },
+  },
+  items: {
     include: {
-      user: true,
-      payment: true,
-      items: {
-        include: {
-          variant: {
-            include: {
-              product: true,
-            },
-          },
+      // Product id only — display fields come from OrderItem snapshots.
+      variant: {
+        select: {
+          id: true,
+          productId: true,
         },
       },
     },
-  });
+  },
+} as const;
 
-  const productIds = orders.flatMap((order) =>
-    order.items.map((item) => item.variant.product.id),
-  );
-  const imageMap = await loadProductImagesMap(prisma, productIds);
+/**
+ * Loads orders with payment, store, buyer, and line-item snapshots.
+ * Does not load live Product / ProductVariant catalog data for display.
+ */
+export async function findOrdersWithImages(
+  prisma: PrismaService,
+  args: Parameters<PrismaService['order']['findMany']>[0] = {},
+): Promise<OrderWithRelations[]> {
+  const {
+    include: _ignoredInclude,
+    select: _ignoredSelect,
+    ...rest
+  } = args ?? {};
+
+  const orders = await prisma.order.findMany({
+    ...rest,
+    include: ORDER_LIST_INCLUDE,
+  });
 
   return orders.map((order) => ({
     id: order.id,
@@ -52,6 +71,15 @@ export async function findOrdersWithImages(
     totalAmount: Number(order.totalAmount),
     shippingAddress: order.shippingAddress,
     cancellationReason: order.cancellationReason,
+    store: order.store
+      ? {
+          id: order.store.id,
+          name: order.store.name,
+          slug: order.store.slug,
+          status: order.store.status,
+          deletedAt: order.store.deletedAt,
+        }
+      : undefined,
     payment: order.payment
       ? {
           id: order.payment.id,
@@ -80,13 +108,12 @@ export async function findOrdersWithImages(
       variantColor: item.variantColor,
       productImageUrl: item.productImageUrl,
       priceAtPurchase: Number(item.priceAtPurchase),
-      variant: {
-        ...mapPrismaVariant(item.variant),
-        product: attachProductImages(
-          [mapPrismaProduct(item.variant.product)],
-          imageMap,
-        )[0],
-      },
+      variant: item.variant
+        ? {
+            id: item.variant.id,
+            productId: item.variant.productId,
+          }
+        : undefined,
     })),
   }));
 }

@@ -57,9 +57,13 @@ export type CartItemWithRelations = CartItem & {
   user?: User;
 };
 
+/** Line items use purchase-time snapshots; variant is id/productId only when needed. */
 export type OrderItemWithRelations = Omit<OrderItem, 'priceAtPurchase'> & {
   priceAtPurchase: number;
-  variant?: ProductVariantWithRelations;
+  variant?: {
+    id: number;
+    productId: number;
+  };
 };
 
 export type PaymentWithRelations = Omit<
@@ -72,6 +76,14 @@ export type PaymentWithRelations = Omit<
   provider: PaymentProvider;
 };
 
+export type OrderStoreSummary = {
+  id: number;
+  name: string;
+  slug: string;
+  status: string;
+  deletedAt?: Date | null;
+};
+
 export type OrderWithRelations = Omit<
   Order,
   'status' | 'totalAmount' | 'subtotal' | 'tax'
@@ -80,7 +92,8 @@ export type OrderWithRelations = Omit<
   totalAmount: number;
   subtotal: number;
   tax: number;
-  user?: User;
+  user?: Pick<User, 'id' | 'email' | 'fullName'>;
+  store?: OrderStoreSummary;
   payment?: PaymentWithRelations | null;
   items?: OrderItemWithRelations[];
 };

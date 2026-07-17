@@ -2,7 +2,6 @@ import { OrderStatus, PaymentStatus } from '../constants/order.constants';
 import {
   OrderWithRelations,
   OrderItemWithRelations,
-  ProductVariantWithRelations,
 } from 'src/common/types/domain.types';
 
 export type OrderAddress = {
@@ -24,6 +23,19 @@ type OrderLineItemResponse = {
   productName: string;
   variantLabel: string;
   priceAtPurchase: number;
+  sku?: string;
+};
+
+export type OrderStoreResponse = {
+  id: string;
+  name: string;
+  slug: string;
+};
+
+export type OrderBuyerResponse = {
+  id: string;
+  email: string;
+  fullName: string;
 };
 
 export type OrderResponse = {
@@ -35,6 +47,7 @@ export type OrderResponse = {
   storeId: string;
   subtotal: number;
   createdAt: string;
+  updatedAt: string;
   shippedAt?: string;
   orderNumber: string;
   deliveredAt?: string;
@@ -44,19 +57,16 @@ export type OrderResponse = {
   paymentMethodSummary: string;
   shippingAddress: OrderAddress;
   items: OrderLineItemResponse[];
+  store?: OrderStoreResponse;
+  buyer?: OrderBuyerResponse;
 };
 
-function formatVariantLabel(
-  variant: ProductVariantWithRelations | undefined,
-  item: OrderItemWithRelations,
-): string {
-  if (variant) {
-    const parts = [variant.size, variant.color].filter(
-      (p) => typeof p === 'string' && p.trim().length > 0,
-    );
-    return parts.length > 0 ? parts.join(' / ') : variant.sku;
-  }
+export type MapOrderOptions = {
+  /** Include buyer contact (admin / seller fulfillment). */
+  includeBuyer?: boolean;
+};
 
+function formatVariantLabel(item: OrderItemWithRelations): string {
   const parts = [item.variantSize, item.variantColor].filter(
     (p) => typeof p === 'string' && p.trim().length > 0,
   );
@@ -99,26 +109,23 @@ function mapPaymentStatus(value: PaymentStatus | undefined): string {
 }
 
 function mapOrderItem(item: OrderItemWithRelations): OrderLineItemResponse {
-  const variant = item.variant;
-  const product = variant?.product;
-  const image =
-    item.productImageUrl ??
-    product?.images?.[0]?.urlPath ??
-    (product?.images?.length ? product.images[0].urlPath : undefined);
-
   return {
     quantity: item.quantity,
-    image: image || undefined,
+    sku: item.variantSku,
+    productName: item.productName,
     variantId: String(item.variantId),
-    productId: product ? String(product.id) : '',
     priceAtPurchase: Number(item.priceAtPurchase),
-    variantLabel: formatVariantLabel(variant, item),
-    productName: item.productName || product?.name || 'Product',
+    variantLabel: formatVariantLabel(item),
+    image: item.productImageUrl || undefined,
+    productId: item.variant ? String(item.variant.productId) : '',
   };
 }
 
-export function mapOrderToResponse(order: OrderWithRelations): OrderResponse {
-  return {
+export function mapOrderToResponse(
+  order: OrderWithRelations,
+  options: MapOrderOptions = {},
+): OrderResponse {
+  const response: OrderResponse = {
     id: String(order.id),
     tax: Number(order.tax),
     userId: String(order.userId),
@@ -128,6 +135,7 @@ export function mapOrderToResponse(order: OrderWithRelations): OrderResponse {
     total: Number(order.totalAmount),
     status: mapOrderStatus(order.status),
     createdAt: order.createdAt.toISOString(),
+    updatedAt: order.updatedAt.toISOString(),
     shippedAt: order.shippedAt?.toISOString(),
     items: (order.items ?? []).map(mapOrderItem),
     deliveredAt: order.deliveredAt?.toISOString(),
@@ -137,6 +145,24 @@ export function mapOrderToResponse(order: OrderWithRelations): OrderResponse {
     paymentMethodSummary: order.payment?.methodSummary ?? 'Card',
     shippingAddress: parseShippingAddress(order.shippingAddress),
   };
+
+  if (order.store) {
+    response.store = {
+      id: String(order.store.id),
+      name: order.store.name,
+      slug: order.store.slug,
+    };
+  }
+
+  if (options.includeBuyer && order.user) {
+    response.buyer = {
+      id: String(order.user.id),
+      email: order.user.email,
+      fullName: order.user.fullName,
+    };
+  }
+
+  return response;
 }
 
 export function generateOrderNumber(): string {

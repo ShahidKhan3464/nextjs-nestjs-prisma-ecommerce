@@ -45,7 +45,7 @@ export class GetUserDetailProvider {
       orderBy: { createdAt: 'desc' },
     });
 
-    const orderResponses = orders.map(mapOrderToResponse);
+    const orderResponses = orders.map((order) => mapOrderToResponse(order));
     const totalSpending = orders.reduce(
       (sum, order) => sum + Number(order.totalAmount),
       0,

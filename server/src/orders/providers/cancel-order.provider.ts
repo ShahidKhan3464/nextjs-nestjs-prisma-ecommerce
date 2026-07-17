@@ -5,19 +5,16 @@ import type { Stripe as StripeTypes } from 'stripe';
 import { UsersService } from 'src/users/users.service';
 import { CancelOrderDto } from '../dto/cancel-order.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { UserRole } from 'src/common/enums/user-role.enum';
 import { MailService } from 'src/mail/providers/mail.service';
+import { OrderOwnershipProvider } from './order-ownership.provider';
 import { findOrderWithImages } from 'src/common/files/file-query.util';
 import { OrderStatus, PaymentStatus } from '../constants/order.constants';
 import { OrderResponse, mapOrderToResponse } from '../utils/map-order.util';
 import {
-  isSuperAdmin,
-  extractUserRoles,
-} from 'src/common/utils/authorization.util';
-import {
   Inject,
   Injectable,
   NotFoundException,
-  ForbiddenException,
   BadRequestException,
 } from '@nestjs/common';
 
@@ -29,6 +26,7 @@ export class CancelOrderProvider {
     private readonly prisma: PrismaService,
     private readonly mailService: MailService,
     private readonly usersService: UsersService,
+    private readonly orderOwnershipProvider: OrderOwnershipProvider,
     @Inject(stripeConfig.KEY)
     private readonly stripeConfiguration: ConfigType<typeof stripeConfig>,
   ) {
@@ -42,6 +40,7 @@ export class CancelOrderProvider {
   async cancel(
     orderId: number,
     userId: number,
+    roles: UserRole[],
     dto: CancelOrderDto,
   ): Promise<OrderResponse> {
     const order = await findOrderWithImages(this.prisma, { id: orderId });
@@ -50,12 +49,7 @@ export class CancelOrderProvider {
       throw new NotFoundException('Order not found');
     }
 
-    const user = await this.usersService.findOneByIdWithRoles(userId);
-    const isAdmin = user ? isSuperAdmin(extractUserRoles(user)) : false;
-
-    if (!isAdmin && order.userId !== userId) {
-      throw new ForbiddenException();
-    }
+    this.orderOwnershipProvider.assertCanCancel(order, userId, roles);
 
     if (order.status !== OrderStatus.PENDING) {
       throw new BadRequestException('Only pending orders can be cancelled');
@@ -124,7 +118,9 @@ export class CancelOrderProvider {
       throw new NotFoundException('Order not found');
     }
 
-    const response = mapOrderToResponse(updated);
+    const response = mapOrderToResponse(updated, {
+      includeBuyer: this.orderOwnershipProvider.shouldIncludeBuyer(roles),
+    });
 
     const customer = await this.usersService.findOneById(updated.userId);
     if (customer?.email) {

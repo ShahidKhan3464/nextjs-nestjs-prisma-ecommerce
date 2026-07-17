@@ -148,7 +148,7 @@ export class GetAdminDashboardProvider {
       take: RECENT_ORDERS_LIMIT,
     });
 
-    return orders.map(mapOrderToResponse);
+    return orders.map((order) => mapOrderToResponse(order));
   }
 
   private buildLastNDaysRange(days: number): { start: Date; keys: string[] } {

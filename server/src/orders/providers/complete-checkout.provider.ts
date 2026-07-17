@@ -79,7 +79,7 @@ export class CompleteCheckoutProvider {
       const orders = await this.loadOrders(
         existingPaid.map((payment) => payment.orderId),
       );
-      const responses = orders.map(mapOrderToResponse);
+      const responses = orders.map((order) => mapOrderToResponse(order));
       await this.sendConfirmationEmails(userId, responses);
       return { orders: responses };
     }
@@ -164,7 +164,7 @@ export class CompleteCheckoutProvider {
     });
 
     const created = await this.loadOrders(orderIds);
-    const responses = created.map(mapOrderToResponse);
+    const responses = created.map((order) => mapOrderToResponse(order));
 
     await this.sendConfirmationEmails(userId, responses);
 

@@ -7,17 +7,46 @@ import {
   normalizeNestOrderPayload,
 } from "@/lib/nest-order-mapper";
 
+type NestPagedOrders = {
+  data?: NestOrderPayload[];
+  page?: number;
+  limit?: number;
+  total?: number;
+};
+
 function mapOrders(raw: unknown): Order[] {
-  const list = Array.isArray(raw) ? raw : [];
-  return (list as NestOrderPayload[]).map(normalizeNestOrderPayload);
+  if (Array.isArray(raw)) {
+    return (raw as NestOrderPayload[]).map(normalizeNestOrderPayload);
+  }
+  const paged = raw as NestPagedOrders | null;
+  if (paged && Array.isArray(paged.data)) {
+    return paged.data.map(normalizeNestOrderPayload);
+  }
+  return [];
 }
 
 function buildQueryString(searchParams: URLSearchParams): string {
-  const allowed = ["status", "paymentStatus", "userId", "dateFrom", "dateTo"];
+  const allowed = [
+    "status",
+    "paymentStatus",
+    "userId",
+    "storeId",
+    "page",
+    "limit",
+    "dateFrom",
+    "dateTo",
+  ];
   const parts: string[] = [];
   for (const key of allowed) {
     const value = searchParams.get(key);
     if (value) parts.push(`${key}=${encodeURIComponent(value)}`);
+  }
+  // Existing list UIs are not paginated yet — fetch a wide page by default.
+  if (!searchParams.get("limit")) {
+    parts.push("limit=100");
+  }
+  if (!searchParams.get("page")) {
+    parts.push("page=1");
   }
   return parts.length > 0 ? `?${parts.join("&")}` : "";
 }

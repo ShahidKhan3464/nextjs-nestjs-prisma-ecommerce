@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { QueryOrderDto } from './dto/query-order.dto';
 import { CancelOrderDto } from './dto/cancel-order.dto';
+import { UserRole } from 'src/common/enums/user-role.enum';
 import { CreateCheckoutDto } from './dto/create-checkout.dto';
 import { CancelCheckoutDto } from './dto/cancel-checkout.dto';
 import { CompleteCheckoutDto } from './dto/complete-checkout.dto';
@@ -25,16 +26,20 @@ export class OrdersService {
     private readonly updateOrderStatusProvider: UpdateOrderStatusProvider,
   ) {}
 
-  findMine(userId: number, query: QueryOrderDto = {}) {
+  findMine(userId: number, query: QueryOrderDto) {
     return this.getOrdersProvider.findByUser(userId, query);
   }
 
-  findAllAdmin(query: QueryOrderDto = {}) {
+  findSellerOrders(userId: number, query: QueryOrderDto) {
+    return this.getOrdersProvider.findBySeller(userId, query);
+  }
+
+  findAllAdmin(query: QueryOrderDto) {
     return this.getOrdersProvider.findAll(query);
   }
 
-  findOne(orderId: number, userId: number) {
-    return this.getOrderProvider.findOne(orderId, userId);
+  findOne(orderId: number, userId: number, roles: UserRole[]) {
+    return this.getOrderProvider.findOne(orderId, userId, roles);
   }
 
   createCheckout(userId: number, dto: CreateCheckoutDto) {
@@ -49,11 +54,26 @@ export class OrdersService {
     return this.completeCheckoutProvider.complete(userId, dto);
   }
 
-  updateStatus(orderId: number, dto: UpdateOrderStatusDto) {
-    return this.updateOrderStatusProvider.update(orderId, dto.status);
+  updateStatus(
+    orderId: number,
+    dto: UpdateOrderStatusDto,
+    userId: number,
+    roles: UserRole[],
+  ) {
+    return this.updateOrderStatusProvider.update(
+      orderId,
+      dto.status,
+      userId,
+      roles,
+    );
   }
 
-  cancelOrder(orderId: number, userId: number, dto: CancelOrderDto) {
-    return this.cancelOrderProvider.cancel(orderId, userId, dto);
+  cancelOrder(
+    orderId: number,
+    userId: number,
+    roles: UserRole[],
+    dto: CancelOrderDto,
+  ) {
+    return this.cancelOrderProvider.cancel(orderId, userId, roles, dto);
   }
 }
