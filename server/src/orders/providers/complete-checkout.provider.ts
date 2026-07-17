@@ -4,10 +4,13 @@ import stripeConfig from 'src/config/stripe.config';
 import type { Stripe as StripeTypes } from 'stripe';
 import { UsersService } from 'src/users/users.service';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { PaymentStatus } from '../constants/order.constants';
 import { MailService } from 'src/mail/providers/mail.service';
 import { CompleteCheckoutDto } from '../dto/complete-checkout.dto';
 import { OrderResponse, mapOrderToResponse } from '../utils/map-order.util';
+import {
+  PaymentStatus,
+  CheckoutSessionStatus,
+} from '../constants/order.constants';
 import {
   Inject,
   Injectable,
@@ -84,6 +87,7 @@ export class CompleteCheckoutProvider {
     const session = await findCheckoutSessionWithImages(this.prisma, {
       id: sessionId,
       userId,
+      status: CheckoutSessionStatus.PENDING,
     });
 
     if (!session) {
@@ -153,7 +157,10 @@ export class CompleteCheckoutProvider {
         },
       });
 
-      await tx.checkoutSession.delete({ where: { id: session.id } });
+      await tx.checkoutSession.update({
+        where: { id: session.id },
+        data: { status: CheckoutSessionStatus.COMPLETED },
+      });
     });
 
     const created = await this.loadOrders(orderIds);

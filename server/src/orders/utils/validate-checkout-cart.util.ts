@@ -15,8 +15,8 @@ export type ValidatedCheckoutLine = {
   variantSku: string;
   variantColor: string;
   variantSize: string;
-  productImageUrl: string | null;
   stockQuantity: number;
+  productImageUrl: string | null;
 };
 
 export type StoreCheckoutGroup = {
@@ -126,17 +126,17 @@ function validateCheckoutCartItem(
     (product.images?.length ? product.images[0].urlPath : null);
 
   return {
-    cartItemId: item.id,
+    productImageUrl,
     storeId: store.id,
+    cartItemId: item.id,
     variantId: variant.id,
     productId: product.id,
     quantity: item.quantity,
-    unitPrice: Number(variant.price),
-    productName: product.name,
     variantSku: variant.sku,
-    variantColor: variant.color,
+    productName: product.name,
     variantSize: variant.size,
-    productImageUrl,
+    variantColor: variant.color,
+    unitPrice: Number(variant.price),
     stockQuantity: variant.stockQuantity,
   };
 }

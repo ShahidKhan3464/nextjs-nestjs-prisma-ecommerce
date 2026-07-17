@@ -13,6 +13,7 @@ import {
   OrderStatus,
   PaymentStatus,
   PaymentProvider,
+  CheckoutSessionStatus,
 } from '../constants/order.constants';
 
 type CheckoutPreview = {
@@ -126,6 +127,7 @@ export class CreateCheckoutProvider {
             tax: pricing.tax,
             totalAmount: pricing.total,
             subtotal: pricing.subtotal,
+            status: CheckoutSessionStatus.PENDING,
             stripePaymentIntentId: 'pending',
             shippingAddress: shippingAddressJson,
           },
@@ -243,9 +245,16 @@ export class CreateCheckoutProvider {
 
   private async clearAbandonedCheckout(userId: number): Promise<void> {
     const existingSessions = await this.prisma.checkoutSession.findMany({
-      where: { userId },
+      where: {
+        userId,
+        status: CheckoutSessionStatus.PENDING,
+      },
       select: { id: true, stripePaymentIntentId: true },
     });
+
+    if (existingSessions.length === 0) {
+      return;
+    }
 
     const transactionIds = existingSessions
       .map((session) => session.stripePaymentIntentId)
@@ -271,9 +280,13 @@ export class CreateCheckoutProvider {
         await tx.order.deleteMany({ where: { id: { in: orderIds } } });
       }
 
-      if (existingSessions.length > 0) {
-        await tx.checkoutSession.deleteMany({ where: { userId } });
-      }
+      await tx.checkoutSession.updateMany({
+        where: {
+          id: { in: existingSessions.map((session) => session.id) },
+          status: CheckoutSessionStatus.PENDING,
+        },
+        data: { status: CheckoutSessionStatus.EXPIRED },
+      });
     });
   }
 
@@ -285,11 +298,10 @@ export class CreateCheckoutProvider {
       if (orderIds.length > 0) {
         await tx.order.deleteMany({ where: { id: { in: orderIds } } });
       }
-      await tx.checkoutSession
-        .delete({ where: { id: sessionId } })
-        .catch(() => {
-          /* session may already be gone */
-        });
+      await tx.checkoutSession.update({
+        where: { id: sessionId },
+        data: { status: CheckoutSessionStatus.CANCELLED },
+      });
     });
   }
 }

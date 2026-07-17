@@ -2,6 +2,7 @@ import type { OrderStatus } from 'src/common/enums/order-status.enum';
 import type { PaymentStatus } from 'src/common/enums/payment-status.enum';
 import type { ProductStatus } from 'src/common/enums/product-status.enum';
 import type { PaymentProvider } from 'src/common/enums/payment-provider.enum';
+import type { CheckoutSessionStatus } from 'src/common/enums/checkout-session-status.enum';
 import type {
   User,
   Order,
@@ -86,11 +87,12 @@ export type OrderWithRelations = Omit<
 
 export type CheckoutSessionWithRelations = Omit<
   CheckoutSession,
-  'totalAmount' | 'subtotal' | 'tax'
+  'totalAmount' | 'subtotal' | 'tax' | 'status'
 > & {
   totalAmount: number;
   subtotal: number;
   tax: number;
+  status: CheckoutSessionStatus;
   items: CheckoutSessionItemWithRelations[];
 };
 
