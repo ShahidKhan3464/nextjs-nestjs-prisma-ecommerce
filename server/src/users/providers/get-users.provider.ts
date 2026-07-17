@@ -1,8 +1,7 @@
 import { QueryUserDto } from '../dto/query-user.dto';
-import { UserRole } from 'src/common/enums/user-role.enum';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { UserRole } from 'src/common/enums/user-role.enum';
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { FileOwnerModule } from 'src/common/files/file.constants';
 import { USER_ROLES_INCLUDE } from 'src/common/constants/user-roles.constants';
 import { PaginationProviders } from 'src/common/pagination/providers/pagination.providers';
 import { PaginateQueryResult } from 'src/common/pagination/interfaces/paginated.interfaces';
@@ -94,10 +93,11 @@ export class GetUsersProvider {
     if (!user) {
       throw new NotFoundException('User not found');
     }
-    const avatar = await this.prisma.storedFile.findFirst({
-      where: { ownerModule: FileOwnerModule.CUSTOMER, ownerId: id },
+    const avatar = await this.prisma.userFile.findFirst({
+      where: { userId: id, type: 'AVATAR' },
       orderBy: { sortOrder: 'asc' },
+      include: { file: { select: { urlPath: true } } },
     });
-    return { ...mapUserToResponse(user), avatarUrl: avatar?.urlPath };
+    return { ...mapUserToResponse(user), avatarUrl: avatar?.file.urlPath };
   }
 }

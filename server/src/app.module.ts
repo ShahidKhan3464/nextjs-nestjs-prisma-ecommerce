@@ -7,6 +7,7 @@ import { AuthModule } from './auth/auth.module';
 import { MailModule } from './mail/mail.module';
 import stripeConfig from './config/stripe.config';
 import { UsersModule } from './users/users.module';
+import { FilesModule } from './files/files.module';
 import { StoreModule } from './store/store.module';
 import { OrdersModule } from './orders/orders.module';
 import { SellerModule } from './seller/seller.module';
@@ -30,6 +31,7 @@ import { DataResponseInterceptor } from './common/interceptors/data-response/dat
     AuthModule,
     MailModule,
     CartModule,
+    FilesModule,
     StoreModule,
     UsersModule,
     SellerModule,

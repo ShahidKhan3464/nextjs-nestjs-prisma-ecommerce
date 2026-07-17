@@ -12,8 +12,8 @@ import { createImageDiskMulterOptions } from 'src/common/storage/image-upload.mu
 import {
   Get,
   Body,
-  Patch,
   Post,
+  Patch,
   Param,
   Query,
   Controller,
@@ -53,9 +53,10 @@ export class UsersController {
   @UseInterceptors(FileInterceptor('avatar', avatarMulter))
   uploadAvatar(
     @ActiveUser() userId: number,
+    @ActiveUser('roles') roles: UserRole[],
     @UploadedFile() file: Express.Multer.File,
   ) {
-    return this.usersService.uploadAvatar(userId, file);
+    return this.usersService.uploadAvatar(userId, roles, file);
   }
 
   @Get()

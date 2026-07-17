@@ -1,6 +1,7 @@
 import { User } from 'src/generated/prisma/client';
 import { CreateUserDto } from './dto/create-user.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { UserRole } from 'src/common/enums/user-role.enum';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { Injectable, NotFoundException } from '@nestjs/common';
@@ -74,6 +75,7 @@ export class UsersService {
 
   public async uploadAvatar(
     userId: number,
+    roles: UserRole[],
     file: Express.Multer.File,
   ): Promise<{ avatarUrl: string }> {
     if (!file) {
@@ -81,6 +83,7 @@ export class UsersService {
     }
     const avatarUrl = await this.uploadProfileAvatarProvider.upload(
       userId,
+      roles,
       file,
     );
     return { avatarUrl };

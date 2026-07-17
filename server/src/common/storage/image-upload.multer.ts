@@ -1,4 +1,5 @@
 import { join } from 'path';
+import { randomUUID } from 'crypto';
 import { diskStorage } from 'multer';
 import { existsSync, mkdirSync } from 'fs';
 import { BadRequestException } from '@nestjs/common';
@@ -7,7 +8,7 @@ const IMAGE_MIME = /^image\/(jpeg|jpg|png|gif|webp)$/i;
 
 /**
  * Disk storage for validated image uploads under `{uploadsRoot}/{subdir}/`.
- * Reuse for products today and user profile images later (different `subdir`).
+ * Filenames are UUID-based — never trust the client original name on disk.
  */
 export function createImageDiskMulterOptions(
   uploadsRoot: string,
@@ -24,9 +25,9 @@ export function createImageDiskMulterOptions(
       },
       filename: (_req, file, cb) => {
         const safeExt =
-          file.originalname.match(/\.[a-zA-Z0-9]{1,8}$/)?.[0] ?? '';
-        const unique = `${Date.now()}-${Math.round(Math.random() * 1e9)}${safeExt}`;
-        cb(null, unique);
+          file.originalname.match(/\.[a-zA-Z0-9]{1,8}$/)?.[0]?.toLowerCase() ??
+          '';
+        cb(null, `${randomUUID()}${safeExt}`);
       },
     }),
     limits: { fileSize: 5 * 1024 * 1024 },

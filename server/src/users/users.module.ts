@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UsersController } from './users.controller';
+import { FilesModule } from 'src/files/files.module';
 import { CryptoModule } from 'src/crypto/crypto.module';
 import { GetUsersProvider } from './providers/get-users.provider';
 import { BlockUserProvider } from './providers/block-user.provider';
@@ -11,7 +12,7 @@ import { ChangePasswordProvider } from './providers/change-password.provider';
 import { UploadProfileAvatarProvider } from './providers/upload-profile-avatar.provider';
 
 @Module({
-  imports: [CryptoModule],
+  imports: [CryptoModule, FilesModule],
   providers: [
     UsersService,
     GetUsersProvider,

@@ -1,6 +1,5 @@
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { FileOwnerModule } from 'src/common/files/file.constants';
 import { findOrdersWithImages } from 'src/common/files/file-query.util';
 import { UserResponse, mapUserToResponse } from '../utils/map-user.util';
 import { USER_ROLES_INCLUDE } from 'src/common/constants/user-roles.constants';
@@ -35,9 +34,10 @@ export class GetUserDetailProvider {
       throw new NotFoundException('User not found');
     }
 
-    const avatar = await this.prisma.storedFile.findFirst({
-      where: { ownerModule: FileOwnerModule.CUSTOMER, ownerId: userId },
+    const avatar = await this.prisma.userFile.findFirst({
+      where: { userId, type: 'AVATAR' },
       orderBy: { sortOrder: 'asc' },
+      include: { file: { select: { urlPath: true } } },
     });
 
     const orders = await findOrdersWithImages(this.prisma, {
@@ -65,10 +65,10 @@ export class GetUserDetailProvider {
       user: mapUserToResponse(user),
       wishlistCount,
       totalOrders: orders.length,
-      profilePhotoUrl: avatar?.urlPath,
       billingAddresses: uniqueAddresses,
       defaultAddress: uniqueAddresses[0],
       shippingAddresses: uniqueAddresses,
+      profilePhotoUrl: avatar?.file.urlPath,
       recentOrders: orderResponses.slice(0, 5),
       totalSpending: Math.round(totalSpending * 100) / 100,
     };

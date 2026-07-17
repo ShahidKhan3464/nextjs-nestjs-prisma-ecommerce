@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { SeedResult } from '../types/seed-result.type.js';
-import { FileOwnerModule } from 'src/common/files/file.constants';
+import { ProductFileType } from 'src/files/constants/file.constants';
 import { SeedCategoriesProvider } from './seed-categories.provider.js';
 import { ProductStatus } from 'src/products/constants/product.constants';
 import { generateProductSlug } from 'src/products/utils/generate-product-slug.util';
@@ -36,6 +36,23 @@ export class SeedProductsProvider {
       };
     }
 
+    const store = await this.prisma.store.findFirst({
+      where: { deletedAt: null },
+      select: { id: true },
+      orderBy: { id: 'asc' },
+    });
+
+    if (!store) {
+      this.logger.warn(
+        'Products seeding skipped — no store exists to attach products to.',
+      );
+      return {
+        created: 0,
+        skipped: true,
+        reason: 'no store available',
+      };
+    }
+
     const categoryMap =
       await this.seedCategoriesProvider.getCategoryMapByName();
     const firstCategoryName = DEMO_PRODUCTS[0]?.categoryName;
@@ -65,11 +82,12 @@ export class SeedProductsProvider {
 
         const product = await tx.product.create({
           data: {
-            categoryId: category.id,
+            storeId: store.id,
             name: productSeed.name,
-            slug: generateProductSlug(productSeed.name),
+            categoryId: category.id,
             status: ProductStatus.ACTIVE,
             description: productSeed.description,
+            slug: generateProductSlug(productSeed.name),
             basePrice: Math.min(
               ...productSeed.variants.map((variant) => variant.price),
             ),
@@ -82,17 +100,29 @@ export class SeedProductsProvider {
             sku: variant.sku,
             size: variant.size,
             color: variant.color,
-            stock: variant.stock,
             price: variant.price,
+            stockQuantity: variant.stock,
           })),
         });
 
-        await tx.storedFile.create({
+        const storedFile = await tx.storedFile.create({
           data: {
+            fileSize: 0,
+            extension: 'jpg',
+            mimeType: 'image/jpeg',
+            storedName: `${productSeed.imageSeed}.jpg`,
+            originalName: `${productSeed.imageSeed}.jpg`,
             urlPath: picsumImageUrl(productSeed.imageSeed),
+            storageKey: `external/demo/${product.id}/${productSeed.imageSeed}.jpg`,
+          },
+        });
+
+        await tx.productFile.create({
+          data: {
             sortOrder: 0,
-            ownerModule: FileOwnerModule.PRODUCT,
-            ownerId: product.id,
+            productId: product.id,
+            fileId: storedFile.id,
+            type: ProductFileType.THUMBNAIL,
           },
         });
 
@@ -103,7 +133,7 @@ export class SeedProductsProvider {
     });
 
     this.logger.log(
-      `Seeded ${createdCount} products with variants and external image URLs.`,
+      `Seeded ${createdCount} products with variants and ProductFile associations.`,
     );
 
     return {

@@ -13,6 +13,11 @@ import {
   SellerStoreSummaryResponseDto,
   SellerDocumentFileResponseDto,
 } from 'src/seller/dto/seller-profile-response.dto';
+import {
+  StoredFileResponseDto,
+  DeleteFileResponseDto,
+  FileAssociationResponseDto,
+} from 'src/files/dto/stored-file-response.dto';
 
 export const SWAGGER_EXTRA_MODELS = [
   UserResponseDto,
@@ -20,9 +25,12 @@ export const SWAGGER_EXTRA_MODELS = [
   UserMeResponseDto,
   RegisterResponseDto,
   AuthenticatedUserDto,
+  StoredFileResponseDto,
+  DeleteFileResponseDto,
   RefreshTokenResponseDto,
   SellerProfileResponseDto,
   SellerDocumentResponseDto,
+  FileAssociationResponseDto,
   SellerStoreSummaryResponseDto,
   SellerDocumentFileResponseDto,
   AuthenticatedUserWithTokensDto,

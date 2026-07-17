@@ -1,51 +1,28 @@
-import { join } from 'path';
-import { unlink } from 'fs/promises';
-import { PrismaService } from 'src/prisma/prisma.service';
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { FileOwnerModule } from 'src/common/files/file.constants';
+import { FilesService } from 'src/files/files.service';
+import { UserRole } from 'src/common/enums/user-role.enum';
+import { Injectable, BadRequestException } from '@nestjs/common';
+import { UserFileType } from 'src/files/constants/file.constants';
 
 @Injectable()
 export class UploadProfileAvatarProvider {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly filesService: FilesService) {}
 
-  async upload(userId: number, file: Express.Multer.File): Promise<string> {
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    if (!user) {
-      throw new NotFoundException('User not found');
+  async upload(
+    userId: number,
+    roles: UserRole[],
+    file: Express.Multer.File,
+  ): Promise<string> {
+    if (!file) {
+      throw new BadRequestException('No file uploaded');
     }
 
-    const existing = await this.prisma.storedFile.findMany({
-      where: { ownerModule: FileOwnerModule.CUSTOMER, ownerId: userId },
-    });
-
-    await Promise.all(
-      existing.map(async (img) => {
-        const relative = img.urlPath.replace(/^\//, '');
-        const abs = join(process.cwd(), relative);
-        try {
-          await unlink(abs);
-        } catch {
-          /* ignore */
-        }
-      }),
+    const association = await this.filesService.uploadMyUserFile(
+      userId,
+      roles,
+      UserFileType.AVATAR,
+      file,
     );
 
-    if (existing.length) {
-      await this.prisma.storedFile.deleteMany({
-        where: { ownerModule: FileOwnerModule.CUSTOMER, ownerId: userId },
-      });
-    }
-
-    const urlPath = `/uploads/customers/${file.filename}`;
-    await this.prisma.storedFile.create({
-      data: {
-        urlPath,
-        sortOrder: 0,
-        ownerModule: FileOwnerModule.CUSTOMER,
-        ownerId: userId,
-      },
-    });
-
-    return urlPath;
+    return association.file.urlPath;
   }
 }

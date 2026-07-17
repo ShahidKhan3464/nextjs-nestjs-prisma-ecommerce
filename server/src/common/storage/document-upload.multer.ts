@@ -1,3 +1,4 @@
+import { randomUUID } from 'crypto';
 import { extname, join } from 'path';
 import { diskStorage } from 'multer';
 import { existsSync, mkdirSync } from 'fs';
@@ -7,7 +8,7 @@ const DOCUMENT_MIME = /^(image\/(jpeg|jpg|png|webp)|application\/pdf)$/i;
 
 /**
  * Disk storage for seller verification documents under `{uploadsRoot}/{subdir}/`.
- * Accepts images and PDF (max 10MB).
+ * Accepts images and PDF (max 10MB). Filenames are UUID-based.
  */
 export function createDocumentDiskMulterOptions(
   uploadsRoot: string,
@@ -24,10 +25,9 @@ export function createDocumentDiskMulterOptions(
       },
       filename: (_req, file, cb) => {
         const safeExt =
-          file.originalname.match(/\.[a-zA-Z0-9]{1,8}$/)?.[0] ??
-          (extname(file.originalname) || '');
-        const unique = `${Date.now()}-${Math.round(Math.random() * 1e9)}${safeExt}`;
-        cb(null, unique);
+          file.originalname.match(/\.[a-zA-Z0-9]{1,8}$/)?.[0]?.toLowerCase() ??
+          (extname(file.originalname).toLowerCase() || '');
+        cb(null, `${randomUUID()}${safeExt}`);
       },
     }),
     limits: { fileSize: 10 * 1024 * 1024 },

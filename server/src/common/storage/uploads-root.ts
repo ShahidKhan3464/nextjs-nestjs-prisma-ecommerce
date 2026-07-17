@@ -10,4 +10,5 @@ export const UploadSubdir = {
   SELLERS: 'sellers',
   PRODUCTS: 'products',
   CUSTOMERS: 'customers',
+  STORES: 'stores',
 } as const;
