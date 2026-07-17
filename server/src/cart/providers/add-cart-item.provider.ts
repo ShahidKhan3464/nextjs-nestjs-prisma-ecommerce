@@ -24,7 +24,7 @@ export class AddCartItemProvider {
       throw new BadRequestException('Product variant not found');
     }
 
-    if (dto.quantity > variant.stock) {
+    if (dto.quantity > variant.stockQuantity) {
       throw new BadRequestException('Insufficient stock');
     }
 
@@ -38,7 +38,10 @@ export class AddCartItemProvider {
     });
 
     if (existing) {
-      const nextQty = Math.min(existing.quantity + dto.quantity, variant.stock);
+      const nextQty = Math.min(
+        existing.quantity + dto.quantity,
+        variant.stockQuantity,
+      );
       await this.prisma.cartItem.update({
         where: { id: existing.id },
         data: { quantity: nextQty },

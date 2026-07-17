@@ -4,9 +4,10 @@ import stripeConfig from 'src/config/stripe.config';
 import type { Stripe as StripeTypes } from 'stripe';
 import { UsersService } from 'src/users/users.service';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { PaymentStatus } from '../constants/order.constants';
 import { MailService } from 'src/mail/providers/mail.service';
 import { CompleteCheckoutDto } from '../dto/complete-checkout.dto';
-import { OrderStatus, PaymentStatus } from '../constants/order.constants';
+import { OrderResponse, mapOrderToResponse } from '../utils/map-order.util';
 import {
   Inject,
   Injectable,
@@ -15,14 +16,13 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import {
-  findOrderWithImages,
+  findOrdersWithImages,
   findCheckoutSessionWithImages,
 } from 'src/common/files/file-query.util';
-import {
-  OrderResponse,
-  mapOrderToResponse,
-  generateOrderNumber,
-} from '../utils/map-order.util';
+
+export type CompleteCheckoutResponse = {
+  orders: OrderResponse[];
+};
 
 @Injectable()
 export class CompleteCheckoutProvider {
@@ -45,7 +45,7 @@ export class CompleteCheckoutProvider {
   async complete(
     userId: number,
     dto: CompleteCheckoutDto,
-  ): Promise<OrderResponse> {
+  ): Promise<CompleteCheckoutResponse> {
     const paymentIntent = await this.stripe.paymentIntents.retrieve(
       dto.paymentIntentId,
       { expand: ['payment_method'] },
@@ -64,14 +64,21 @@ export class CompleteCheckoutProvider {
       throw new BadRequestException('Invalid checkout session');
     }
 
-    const existingOrder = await this.prisma.order.findFirst({
-      where: { stripePaymentIntentId: paymentIntent.id },
+    const existingPaid = await this.prisma.payment.findMany({
+      where: {
+        transactionId: paymentIntent.id,
+        status: PaymentStatus.SUCCEEDED,
+      },
+      select: { orderId: true },
     });
-    if (existingOrder) {
-      const full = await this.loadOrder(existingOrder.id);
-      const response = mapOrderToResponse(full);
-      await this.sendConfirmationEmail(existingOrder.userId, response);
-      return response;
+
+    if (existingPaid.length > 0) {
+      const orders = await this.loadOrders(
+        existingPaid.map((payment) => payment.orderId),
+      );
+      const responses = orders.map(mapOrderToResponse);
+      await this.sendConfirmationEmails(userId, responses);
+      return { orders: responses };
     }
 
     const session = await findCheckoutSessionWithImages(this.prisma, {
@@ -92,93 +99,106 @@ export class CompleteCheckoutProvider {
       throw new BadRequestException('Payment amount mismatch');
     }
 
+    const payments = await this.prisma.payment.findMany({
+      where: {
+        transactionId: paymentIntent.id,
+        status: PaymentStatus.PENDING,
+        order: { userId, status: 'PENDING' },
+      },
+      include: {
+        order: {
+          include: { items: true },
+        },
+      },
+    });
+
+    if (payments.length === 0) {
+      throw new NotFoundException('Pending orders not found for this checkout');
+    }
+
     const paymentSummary = this.formatPaymentSummary(paymentIntent);
-    const orderNumber = generateOrderNumber();
+    const orderIds = payments.map((payment) => payment.orderId);
 
-    const orderId = await this.prisma.$transaction(async (tx) => {
-      for (const item of session.items) {
-        await tx.$executeRaw`
-          SELECT id FROM product_variants WHERE id = ${item.variantId} FOR UPDATE
-        `;
-        const variant = await tx.productVariant.findUnique({
-          where: { id: item.variantId },
-        });
+    await this.prisma.$transaction(async (tx) => {
+      for (const payment of payments) {
+        for (const item of payment.order.items) {
+          await tx.$executeRaw`
+            SELECT id FROM product_variants WHERE id = ${item.variantId} FOR UPDATE
+          `;
+          const variant = await tx.productVariant.findUnique({
+            where: { id: item.variantId },
+          });
 
-        if (!variant || variant.stock < item.quantity) {
-          throw new BadRequestException(
-            `Insufficient stock for variant ${item.variantId}`,
-          );
+          if (!variant || variant.stockQuantity < item.quantity) {
+            throw new BadRequestException(
+              `Insufficient stock for variant ${item.variantId}`,
+            );
+          }
+
+          await tx.productVariant.update({
+            where: { id: item.variantId },
+            data: {
+              stockQuantity: variant.stockQuantity - item.quantity,
+            },
+          });
         }
-
-        await tx.productVariant.update({
-          where: { id: item.variantId },
-          data: { stock: variant.stock - item.quantity },
-        });
       }
 
-      const savedOrder = await tx.order.create({
+      await tx.payment.updateMany({
+        where: { orderId: { in: orderIds } },
         data: {
-          userId,
-          orderNumber,
-          tax: session.tax,
-          subtotal: session.subtotal,
-          status: OrderStatus.PENDING,
-          totalAmount: session.totalAmount,
-          paymentStatus: PaymentStatus.PAID,
-          paymentMethodSummary: paymentSummary,
-          stripePaymentIntentId: paymentIntent.id,
-          shippingAddress: session.shippingAddress,
+          status: PaymentStatus.SUCCEEDED,
+          methodSummary: paymentSummary,
+          paidAt: new Date(),
         },
       });
 
-      await tx.orderItem.createMany({
-        data: session.items.map((sessionItem) => ({
-          orderId: savedOrder.id,
-          quantity: sessionItem.quantity,
-          variantId: sessionItem.variantId,
-          priceAtPurchase: sessionItem.priceAtPurchase,
-          imageUrl: sessionItem.variant?.product?.images?.[0]?.urlPath ?? null,
-        })),
-      });
-
-      await tx.cartItem.deleteMany({ where: { userId } });
       await tx.checkoutSession.delete({ where: { id: session.id } });
-
-      return savedOrder.id;
     });
 
-    const created = await this.loadOrder(orderId);
-    const response = mapOrderToResponse(created);
+    const created = await this.loadOrders(orderIds);
+    const responses = created.map(mapOrderToResponse);
 
-    await this.sendConfirmationEmail(userId, response);
+    await this.sendConfirmationEmails(userId, responses);
 
-    return response;
+    return { orders: responses };
   }
 
-  private async sendConfirmationEmail(
+  private async sendConfirmationEmails(
     userId: number,
-    order: OrderResponse,
+    orders: OrderResponse[],
   ): Promise<void> {
     const customer = await this.usersService.findOneById(userId);
     if (!customer?.email) return;
 
-    try {
-      await this.mailService.sendOrderConfirmationEmail(
-        customer.email,
-        customer.fullName,
-        order,
-      );
-    } catch {
-      /* checkout must succeed even if email fails */
+    for (const order of orders) {
+      try {
+        await this.mailService.sendOrderConfirmationEmail(
+          customer.email,
+          customer.fullName,
+          order,
+        );
+      } catch {
+        /* checkout must succeed even if email fails */
+      }
     }
   }
 
-  private async loadOrder(orderId: number) {
-    const order = await findOrderWithImages(this.prisma, { id: orderId });
-    if (!order) {
+  private async loadOrders(orderIds: number[]) {
+    if (orderIds.length === 0) {
       throw new NotFoundException('Order not found');
     }
-    return order;
+
+    const orders = await findOrdersWithImages(this.prisma, {
+      where: { id: { in: orderIds } },
+      orderBy: { id: 'asc' },
+    });
+
+    if (orders.length === 0) {
+      throw new NotFoundException('Order not found');
+    }
+
+    return orders;
   }
 
   private formatPaymentSummary(

@@ -1,4 +1,5 @@
 import { PrismaService } from 'src/prisma/prisma.service';
+import { OrderStatus, PaymentStatus } from '../constants/order.constants';
 import {
   Injectable,
   NotFoundException,
@@ -22,6 +23,22 @@ export class CancelCheckoutProvider {
       throw new ForbiddenException();
     }
 
-    await this.prisma.checkoutSession.delete({ where: { id: session.id } });
+    await this.prisma.$transaction(async (tx) => {
+      const payments = await tx.payment.findMany({
+        where: {
+          transactionId: paymentIntentId,
+          status: PaymentStatus.PENDING,
+          order: { userId, status: OrderStatus.PENDING },
+        },
+        select: { orderId: true },
+      });
+
+      const orderIds = payments.map((payment) => payment.orderId);
+      if (orderIds.length > 0) {
+        await tx.order.deleteMany({ where: { id: { in: orderIds } } });
+      }
+
+      await tx.checkoutSession.delete({ where: { id: session.id } });
+    });
   }
 }

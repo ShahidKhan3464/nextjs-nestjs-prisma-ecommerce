@@ -17,7 +17,15 @@ export async function findCartItemsWithImages(
     include: {
       variant: {
         include: {
-          product: true,
+          product: {
+            include: {
+              store: {
+                include: {
+                  sellerProfile: true,
+                },
+              },
+            },
+          },
         },
       },
     },
@@ -26,19 +34,41 @@ export async function findCartItemsWithImages(
   const productIds = items.map((item) => item.variant.product.id);
   const imageMap = await loadProductImagesMap(prisma, productIds);
 
-  return items.map((item) => ({
-    id: item.id,
-    userId: item.userId,
-    productVariantId: item.productVariantId,
-    quantity: item.quantity,
-    createdAt: item.createdAt,
-    updatedAt: item.updatedAt,
-    variant: {
-      ...mapPrismaVariant(item.variant),
-      product: attachProductImages(
-        [mapPrismaProduct(item.variant.product)],
-        imageMap,
-      )[0],
-    },
-  }));
+  return items.map((item) => {
+    const product = mapPrismaProduct(item.variant.product);
+    const withImages = attachProductImages([product], imageMap)[0];
+
+    return {
+      id: item.id,
+      userId: item.userId,
+      quantity: item.quantity,
+      createdAt: item.createdAt,
+      updatedAt: item.updatedAt,
+      productVariantId: item.productVariantId,
+      variant: {
+        ...mapPrismaVariant(item.variant),
+        product: {
+          ...withImages,
+          store: item.variant.product.store
+            ? {
+                id: item.variant.product.store.id,
+                name: item.variant.product.store.name,
+                slug: item.variant.product.store.slug,
+                status: item.variant.product.store.status,
+                deletedAt: item.variant.product.store.deletedAt,
+                sellerProfile: item.variant.product.store.sellerProfile
+                  ? {
+                      id: item.variant.product.store.sellerProfile.id,
+                      userId: item.variant.product.store.sellerProfile.userId,
+                      status: item.variant.product.store.sellerProfile.status,
+                      deletedAt:
+                        item.variant.product.store.sellerProfile.deletedAt,
+                    }
+                  : undefined,
+              }
+            : undefined,
+        },
+      },
+    };
+  });
 }

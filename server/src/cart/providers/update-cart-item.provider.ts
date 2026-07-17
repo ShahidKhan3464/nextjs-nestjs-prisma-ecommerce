@@ -30,7 +30,7 @@ export class UpdateCartItemProvider {
       throw new NotFoundException('Cart item not found');
     }
 
-    if (dto.quantity > item.variant.stock) {
+    if (dto.quantity > item.variant.stockQuantity) {
       throw new BadRequestException('Insufficient stock');
     }
 

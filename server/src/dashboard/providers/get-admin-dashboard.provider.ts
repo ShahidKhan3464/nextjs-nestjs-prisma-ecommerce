@@ -77,12 +77,12 @@ export class GetAdminDashboardProvider {
   private async getTotalRevenue(): Promise<{ revenue: string } | undefined> {
     const result = await this.prisma.order.aggregate({
       where: {
-        paymentStatus: PaymentStatus.PAID,
+        payment: { status: PaymentStatus.SUCCEEDED },
         status: { not: OrderStatus.CANCELLED },
       },
       _sum: { totalAmount: true },
     });
-    return { revenue: String(result._sum.totalAmount ?? 0) };
+    return { revenue: String(result._sum?.totalAmount ?? 0) };
   }
 
   private async getRevenueByDay(): Promise<DashboardRevenuePoint[]> {
@@ -91,13 +91,14 @@ export class GetAdminDashboardProvider {
     const rows = await this.prisma.$queryRaw<
       { date: string; revenue: string }[]
     >`
-      SELECT TO_CHAR("createdAt", 'YYYY-MM-DD') AS date,
-             COALESCE(SUM("totalAmount"), 0) AS revenue
-      FROM orders
-      WHERE "createdAt" >= ${start}
-        AND "paymentStatus" = ${PaymentStatus.PAID}::orders_paymentstatus_enum
-        AND status != ${OrderStatus.CANCELLED}::orders_status_enum
-      GROUP BY TO_CHAR("createdAt", 'YYYY-MM-DD')
+      SELECT TO_CHAR(o."createdAt", 'YYYY-MM-DD') AS date,
+             COALESCE(SUM(o."totalAmount"), 0) AS revenue
+      FROM orders o
+      INNER JOIN payments p ON p."orderId" = o.id
+      WHERE o."createdAt" >= ${start}
+        AND p.status = ${PaymentStatus.SUCCEEDED}::payment_status_enum
+        AND o.status != ${OrderStatus.CANCELLED}::orders_status_enum
+      GROUP BY TO_CHAR(o."createdAt", 'YYYY-MM-DD')
     `;
 
     const byDate = new Map(rows.map((row) => [row.date, Number(row.revenue)]));
@@ -123,20 +124,20 @@ export class GetAdminDashboardProvider {
   private async getLowStock(): Promise<DashboardLowStockItem[]> {
     const variants = await this.prisma.productVariant.findMany({
       where: {
-        stock: { lt: LOW_STOCK_THRESHOLD },
+        stockQuantity: { lt: LOW_STOCK_THRESHOLD },
         product: {
           deletedAt: null,
           status: ProductStatus.ACTIVE,
         },
       },
       include: { product: true },
-      orderBy: { stock: 'asc' },
+      orderBy: { stockQuantity: 'asc' },
       take: 10,
     });
 
     return variants.map((variant) => ({
       sku: variant.sku,
-      stock: variant.stock,
+      stock: variant.stockQuantity,
       product: variant.product.name,
     }));
   }

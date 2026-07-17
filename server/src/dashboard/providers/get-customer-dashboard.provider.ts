@@ -58,12 +58,12 @@ export class GetCustomerDashboardProvider {
     const result = await this.prisma.order.aggregate({
       where: {
         userId,
-        paymentStatus: PaymentStatus.PAID,
+        payment: { status: PaymentStatus.SUCCEEDED },
         status: { not: OrderStatus.CANCELLED },
       },
       _sum: { totalAmount: true },
     });
-    return { amount: String(result._sum.totalAmount ?? 0) };
+    return { amount: String(result._sum?.totalAmount ?? 0) };
   }
 
   private async getOrdersByStatus(
@@ -89,14 +89,15 @@ export class GetCustomerDashboardProvider {
     const rows = await this.prisma.$queryRaw<
       { month: string; amount: string }[]
     >`
-      SELECT TO_CHAR("createdAt", 'YYYY-MM') AS month,
-             COALESCE(SUM("totalAmount"), 0) AS amount
-      FROM orders
-      WHERE "userId" = ${userId}
-        AND "createdAt" >= ${start}
-        AND "paymentStatus" = ${PaymentStatus.PAID}::orders_paymentstatus_enum
-        AND status != ${OrderStatus.CANCELLED}::orders_status_enum
-      GROUP BY TO_CHAR("createdAt", 'YYYY-MM')
+      SELECT TO_CHAR(o."createdAt", 'YYYY-MM') AS month,
+             COALESCE(SUM(o."totalAmount"), 0) AS amount
+      FROM orders o
+      INNER JOIN payments p ON p."orderId" = o.id
+      WHERE o."userId" = ${userId}
+        AND o."createdAt" >= ${start}
+        AND p.status = ${PaymentStatus.SUCCEEDED}::payment_status_enum
+        AND o.status != ${OrderStatus.CANCELLED}::orders_status_enum
+      GROUP BY TO_CHAR(o."createdAt", 'YYYY-MM')
     `;
 
     const byMonth = new Map(rows.map((row) => [row.month, Number(row.amount)]));

@@ -1,9 +1,11 @@
 import type { OrderStatus } from 'src/common/enums/order-status.enum';
 import type { PaymentStatus } from 'src/common/enums/payment-status.enum';
 import type { ProductStatus } from 'src/common/enums/product-status.enum';
+import type { PaymentProvider } from 'src/common/enums/payment-provider.enum';
 import type {
   User,
   Order,
+  Payment,
   CartItem,
   Category,
   OrderItem,
@@ -28,6 +30,13 @@ export type ProductWithRelations = {
     name: string;
     slug: string;
     status: string;
+    deletedAt?: Date | null;
+    sellerProfile?: {
+      id: number;
+      userId: number;
+      status: string;
+      deletedAt?: Date | null;
+    };
   };
   images?: StoredFile[];
   status: ProductStatus;
@@ -52,16 +61,26 @@ export type OrderItemWithRelations = Omit<OrderItem, 'priceAtPurchase'> & {
   variant?: ProductVariantWithRelations;
 };
 
+export type PaymentWithRelations = Omit<
+  Payment,
+  'amount' | 'refundedAmount' | 'status' | 'provider'
+> & {
+  amount: number;
+  refundedAmount: number;
+  status: PaymentStatus;
+  provider: PaymentProvider;
+};
+
 export type OrderWithRelations = Omit<
   Order,
-  'status' | 'paymentStatus' | 'totalAmount' | 'subtotal' | 'tax'
+  'status' | 'totalAmount' | 'subtotal' | 'tax'
 > & {
   status: OrderStatus;
-  paymentStatus: PaymentStatus;
   totalAmount: number;
   subtotal: number;
   tax: number;
   user?: User;
+  payment?: PaymentWithRelations | null;
   items?: OrderItemWithRelations[];
 };
 

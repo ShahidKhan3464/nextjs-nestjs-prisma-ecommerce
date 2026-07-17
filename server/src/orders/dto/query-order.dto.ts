@@ -1,4 +1,4 @@
-import { Type } from 'class-transformer';
+import { Type, Transform } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEnum, IsInt, IsOptional } from 'class-validator';
 import { OrderStatus, PaymentStatus } from '../constants/order.constants';
@@ -9,8 +9,14 @@ export class QueryOrderDto {
   @IsEnum(OrderStatus)
   status?: OrderStatus;
 
-  @ApiPropertyOptional({ enum: PaymentStatus })
+  @ApiPropertyOptional({
+    enum: PaymentStatus,
+    description: 'Also accepts legacy PAID (mapped to SUCCEEDED)',
+  })
   @IsOptional()
+  @Transform(({ value }) =>
+    value === 'PAID' || value === 'paid' ? PaymentStatus.SUCCEEDED : value,
+  )
   @IsEnum(PaymentStatus)
   paymentStatus?: PaymentStatus;
 

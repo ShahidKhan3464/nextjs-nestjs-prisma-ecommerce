@@ -61,19 +61,19 @@ export class CancelOrderProvider {
       throw new BadRequestException('Only pending orders can be cancelled');
     }
 
-    if (
-      order.paymentStatus === PaymentStatus.PAID &&
-      order.stripePaymentIntentId
-    ) {
+    const payment = order.payment;
+    const wasPaid = payment?.status === PaymentStatus.SUCCEEDED;
+
+    if (wasPaid && payment?.transactionId) {
       await this.stripe.refunds.create({
-        payment_intent: order.stripePaymentIntentId,
+        payment_intent: payment.transactionId,
       });
     }
 
     await this.prisma.$transaction(async (tx) => {
       const lockedOrder = await tx.order.findUnique({
         where: { id: orderId },
-        include: { items: true },
+        include: { items: true, payment: true },
       });
 
       if (
@@ -83,15 +83,20 @@ export class CancelOrderProvider {
         throw new BadRequestException('Only pending orders can be cancelled');
       }
 
-      for (const item of lockedOrder.items) {
-        const variant = await tx.productVariant.findUnique({
-          where: { id: item.variantId },
-        });
-        if (variant) {
-          await tx.productVariant.update({
-            where: { id: variant.id },
-            data: { stock: variant.stock + item.quantity },
+      // Stock is deducted only after successful payment.
+      if (lockedOrder.payment?.status === PaymentStatus.SUCCEEDED || wasPaid) {
+        for (const item of lockedOrder.items) {
+          const variant = await tx.productVariant.findUnique({
+            where: { id: item.variantId },
           });
+          if (variant) {
+            await tx.productVariant.update({
+              where: { id: variant.id },
+              data: {
+                stockQuantity: variant.stockQuantity + item.quantity,
+              },
+            });
+          }
         }
       }
 
@@ -99,11 +104,19 @@ export class CancelOrderProvider {
         where: { id: orderId },
         data: {
           status: OrderStatus.CANCELLED,
-          paymentStatus: PaymentStatus.REFUNDED,
           cancellationReason: dto.reason.trim(),
           cancelledAt: new Date(),
         },
       });
+
+      if (lockedOrder.payment) {
+        await tx.payment.update({
+          where: { id: lockedOrder.payment.id },
+          data: {
+            status: wasPaid ? PaymentStatus.REFUNDED : PaymentStatus.FAILED,
+          },
+        });
+      }
     });
 
     const updated = await findOrderWithImages(this.prisma, { id: orderId });

@@ -46,14 +46,27 @@ export async function POST(req: Request) {
     return jsonMessage(nestErrorMessage(raw), res.status);
   }
 
-  const envelope = raw as { data?: NestOrderPayload };
-  const orderRaw = envelope?.data;
-  if (!orderRaw) {
+  const envelope = raw as {
+    data?: { orders?: NestOrderPayload[] } | NestOrderPayload;
+  };
+  const payload = envelope?.data;
+  const ordersRaw = Array.isArray(
+    payload && typeof payload === "object" && "orders" in payload
+      ? payload.orders
+      : null,
+  )
+    ? (payload as { orders: NestOrderPayload[] }).orders
+    : payload
+      ? [payload as NestOrderPayload]
+      : [];
+
+  if (ordersRaw.length === 0) {
     return jsonMessage("Invalid completion response", 500);
   }
 
-  const body: ApiResponse<{ order: Order }> = {
-    data: { order: normalizeNestOrderPayload(orderRaw) },
+  const orders = ordersRaw.map(normalizeNestOrderPayload);
+  const body: ApiResponse<{ orders: Order[]; order: Order }> = {
+    data: { orders, order: orders[0] },
   };
   return jsonOk(body);
 }

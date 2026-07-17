@@ -31,9 +31,9 @@ export class SyncCartProvider {
 
     for (const line of dto.items) {
       const variant = variantById.get(line.variantId);
-      if (!variant || variant.stock <= 0) continue;
+      if (!variant || variant.stockQuantity <= 0) continue;
 
-      const qty = Math.min(line.quantity, variant.stock);
+      const qty = Math.min(line.quantity, variant.stockQuantity);
       const current = existingByVariant.get(line.variantId);
 
       if (current) {

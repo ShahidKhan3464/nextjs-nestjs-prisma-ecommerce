@@ -26,7 +26,9 @@ export class GetOrdersProvider {
     }
 
     if (query.paymentStatus) {
-      where.paymentStatus = query.paymentStatus;
+      where.payment = {
+        status: query.paymentStatus,
+      };
     }
 
     return where;

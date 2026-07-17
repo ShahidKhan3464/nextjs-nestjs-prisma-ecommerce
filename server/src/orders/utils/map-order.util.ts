@@ -32,6 +32,7 @@ export type OrderResponse = {
   total: number;
   userId: string;
   status: string;
+  storeId: string;
   subtotal: number;
   createdAt: string;
   shippedAt?: string;
@@ -45,11 +46,21 @@ export type OrderResponse = {
   items: OrderLineItemResponse[];
 };
 
-function formatVariantLabel(variant: ProductVariantWithRelations): string {
-  const parts = [variant.size, variant.color].filter(
+function formatVariantLabel(
+  variant: ProductVariantWithRelations | undefined,
+  item: OrderItemWithRelations,
+): string {
+  if (variant) {
+    const parts = [variant.size, variant.color].filter(
+      (p) => typeof p === 'string' && p.trim().length > 0,
+    );
+    return parts.length > 0 ? parts.join(' / ') : variant.sku;
+  }
+
+  const parts = [item.variantSize, item.variantColor].filter(
     (p) => typeof p === 'string' && p.trim().length > 0,
   );
-  return parts.length > 0 ? parts.join(' / ') : variant.sku;
+  return parts.length > 0 ? parts.join(' / ') : item.variantSku;
 }
 
 function parseShippingAddress(raw: string): OrderAddress {
@@ -67,15 +78,31 @@ function parseShippingAddress(raw: string): OrderAddress {
   }
 }
 
-function mapEnumValue(value: OrderStatus | PaymentStatus): string {
+function mapOrderStatus(value: OrderStatus): string {
   return value.toLowerCase();
+}
+
+/** Maps schema payment status to API values expected by the client. */
+function mapPaymentStatus(value: PaymentStatus | undefined): string {
+  switch (value) {
+    case PaymentStatus.SUCCEEDED:
+      return 'paid';
+    case PaymentStatus.PENDING:
+      return 'pending';
+    case PaymentStatus.FAILED:
+      return 'failed';
+    case PaymentStatus.REFUNDED:
+      return 'refunded';
+    default:
+      return 'pending';
+  }
 }
 
 function mapOrderItem(item: OrderItemWithRelations): OrderLineItemResponse {
   const variant = item.variant;
   const product = variant?.product;
   const image =
-    item.imageUrl ??
+    item.productImageUrl ??
     product?.images?.[0]?.urlPath ??
     (product?.images?.length ? product.images[0].urlPath : undefined);
 
@@ -83,10 +110,10 @@ function mapOrderItem(item: OrderItemWithRelations): OrderLineItemResponse {
     quantity: item.quantity,
     image: image || undefined,
     variantId: String(item.variantId),
-    productName: product?.name ?? 'Product',
     productId: product ? String(product.id) : '',
     priceAtPurchase: Number(item.priceAtPurchase),
-    variantLabel: variant ? formatVariantLabel(variant) : '',
+    variantLabel: formatVariantLabel(variant, item),
+    productName: item.productName || product?.name || 'Product',
   };
 }
 
@@ -95,18 +122,19 @@ export function mapOrderToResponse(order: OrderWithRelations): OrderResponse {
     id: String(order.id),
     tax: Number(order.tax),
     userId: String(order.userId),
+    storeId: String(order.storeId),
     orderNumber: order.orderNumber,
     subtotal: Number(order.subtotal),
     total: Number(order.totalAmount),
-    status: mapEnumValue(order.status),
+    status: mapOrderStatus(order.status),
     createdAt: order.createdAt.toISOString(),
     shippedAt: order.shippedAt?.toISOString(),
     items: (order.items ?? []).map(mapOrderItem),
     deliveredAt: order.deliveredAt?.toISOString(),
     cancelledAt: order.cancelledAt?.toISOString(),
-    paymentStatus: mapEnumValue(order.paymentStatus),
+    paymentStatus: mapPaymentStatus(order.payment?.status),
     cancellationReason: order.cancellationReason ?? undefined,
-    paymentMethodSummary: order.paymentMethodSummary ?? 'Card',
+    paymentMethodSummary: order.payment?.methodSummary ?? 'Card',
     shippingAddress: parseShippingAddress(order.shippingAddress),
   };
 }
