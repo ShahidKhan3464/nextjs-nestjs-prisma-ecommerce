@@ -63,9 +63,28 @@ export class CancelOrderProvider {
     const wasPaid = payment?.status === PaymentStatus.SUCCEEDED;
     let externalRefundId: string | null = null;
 
+    // Multi-store checkouts share one PaymentIntent — refund only this order's
+    // remaining balance so sibling store orders stay charged.
     if (wasPaid && payment?.transactionId) {
+      const refundable =
+        Math.round(
+          (Number(payment.amount) - Number(payment.refundedAmount ?? 0)) * 100,
+        ) / 100;
+
+      if (refundable <= 0) {
+        throw new BadRequestException(
+          'Order payment has already been refunded',
+        );
+      }
+
+      const refundAmountCents = Math.round(refundable * 100);
+      if (refundAmountCents < 1) {
+        throw new BadRequestException('Refundable amount is too small');
+      }
+
       const refund = await this.stripe.refunds.create({
         payment_intent: payment.transactionId,
+        amount: refundAmountCents,
       });
       externalRefundId = refund.id;
     }
@@ -109,9 +128,16 @@ export class CancelOrderProvider {
 
       if (lockedOrder.payment) {
         if (wasPaid) {
+          const refundAmount =
+            Math.round(
+              (Number(lockedOrder.payment.amount) -
+                Number(lockedOrder.payment.refundedAmount ?? 0)) *
+                100,
+            ) / 100;
+
           await this.paymentLifecycleProvider.applyRefund(tx, {
             paymentId: lockedOrder.payment.id,
-            amount: Number(lockedOrder.payment.amount),
+            amount: refundAmount,
             reason: dto.reason.trim(),
             externalRefundId,
           });

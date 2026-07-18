@@ -166,10 +166,11 @@ export class UploadFileProvider {
         roles,
       );
 
-      const meta = this.storage.buildMetaFromMulterFile(
-        file,
-        FileUploadSubdir.USERS,
-      );
+      const subdir =
+        type === UserFileType.DOCUMENT
+          ? FileUploadSubdir.USER_DOCUMENTS
+          : FileUploadSubdir.USERS;
+      const meta = this.storage.buildMetaFromMulterFile(file, subdir);
 
       const { association, removedKeys } = await this.prisma.$transaction(
         async (tx) => {

@@ -1,5 +1,6 @@
 import type { Request } from 'express';
 import { OrdersService } from './orders.service';
+import { SkipThrottle } from '@nestjs/throttler';
 import type { RawBodyRequest } from '@nestjs/common';
 import { QueryOrderDto } from './dto/query-order.dto';
 import { CancelOrderDto } from './dto/cancel-order.dto';
@@ -36,6 +37,7 @@ export class OrdersController {
 
   @Post('webhooks/stripe')
   @Auth(AuthType.NONE)
+  @SkipThrottle()
   @HttpCode(200)
   handleStripeWebhook(
     @Req() req: RawBodyRequest<Request>,

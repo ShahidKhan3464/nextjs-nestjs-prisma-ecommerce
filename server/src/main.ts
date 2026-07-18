@@ -8,12 +8,15 @@ import { ValidationPipe } from '@nestjs/common';
 import type { Request, Response, NextFunction } from 'express';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import { PRIVATE_UPLOAD_SUBDIRS } from './files/constants/file.constants';
 import { SWAGGER_EXTRA_MODELS } from './common/swagger/swagger-extra-models';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     rawBody: true,
   });
+
+  app.enableShutdownHooks();
 
   const configService = app.get(ConfigService);
   const nodeEnv =
@@ -31,12 +34,14 @@ async function bootstrap() {
   });
 
   // Block private upload subdirs from the public static mount.
-  app.use(
-    '/uploads/sellers',
-    (_req: Request, res: Response, _next: NextFunction) => {
-      res.status(404).end();
-    },
-  );
+  for (const subdir of PRIVATE_UPLOAD_SUBDIRS) {
+    app.use(
+      `/uploads/${subdir}`,
+      (_req: Request, res: Response, _next: NextFunction) => {
+        res.status(404).end();
+      },
+    );
+  }
 
   app.useStaticAssets(join(process.cwd(), 'uploads'), {
     prefix: '/uploads/',

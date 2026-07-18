@@ -1,8 +1,16 @@
 import Stripe from 'stripe';
 import type { ConfigType } from '@nestjs/config';
 import stripeConfig from 'src/config/stripe.config';
-import { Inject, Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { CompleteCheckoutProvider } from './complete-checkout.provider';
+import {
+  Inject,
+  Injectable,
+  Logger,
+  HttpException,
+  HttpStatus,
+  BadRequestException,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 
 @Injectable()
 export class StripeWebhookProvider {
@@ -56,13 +64,45 @@ export class StripeWebhookProvider {
           paymentIntent.id,
         );
       } catch (err) {
+        if (this.isPermanentCompletionFailure(err)) {
+          const detail = err instanceof Error ? err.message : String(err);
+          this.logger.warn(
+            `Webhook checkout completion permanently failed for ${paymentIntent.id}: ${detail}`,
+          );
+          return { received: true };
+        }
+
         const detail = err instanceof Error ? err.message : String(err);
-        this.logger.warn(
-          `Webhook checkout completion failed for ${paymentIntent.id}: ${detail}`,
+        this.logger.error(
+          `Webhook checkout completion transient failure for ${paymentIntent.id}: ${detail}`,
+        );
+
+        if (
+          err instanceof HttpException &&
+          err.getStatus() >= HttpStatus.INTERNAL_SERVER_ERROR
+        ) {
+          throw err;
+        }
+
+        throw new ServiceUnavailableException(
+          'Checkout completion temporarily unavailable',
         );
       }
     }
 
     return { received: true };
+  }
+
+  /**
+   * 4xx from completion are treated as permanent (bad metadata, already
+   * cancelled session, insufficient stock, etc.) so Stripe does not retry.
+   * Non-HTTP errors (DB blips, timeouts) are transient.
+   */
+  private isPermanentCompletionFailure(err: unknown): boolean {
+    if (!(err instanceof HttpException)) {
+      return false;
+    }
+    const status = err.getStatus();
+    return status >= 400 && status < 500;
   }
 }

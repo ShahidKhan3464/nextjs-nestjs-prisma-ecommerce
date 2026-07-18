@@ -90,22 +90,12 @@ export class CompleteCheckoutProvider {
       throw new BadRequestException('Invalid checkout session');
     }
 
-    const existingPaid = await this.prisma.payment.findMany({
-      where: {
-        transactionId: paymentIntent.id,
-        status: PaymentStatus.SUCCEEDED,
-      },
-      select: { orderId: true },
-    });
-
-    if (existingPaid.length > 0) {
-      await this.prisma.cartItem.deleteMany({ where: { userId } });
-      const orders = await this.loadOrders(
-        existingPaid.map((payment) => payment.orderId),
-      );
-      const responses = orders.map((order) => mapOrderToResponse(order));
-      await this.sendConfirmationEmails(userId, responses);
-      return { orders: responses };
+    const alreadyCompleted = await this.loadCompletedOrdersForPaymentIntent(
+      userId,
+      paymentIntent.id,
+    );
+    if (alreadyCompleted) {
+      return alreadyCompleted;
     }
 
     const session = await findCheckoutSessionWithImages(this.prisma, {
@@ -115,6 +105,14 @@ export class CompleteCheckoutProvider {
     });
 
     if (!session) {
+      // Another completer may have just finished — treat as idempotent success.
+      const raced = await this.loadCompletedOrdersForPaymentIntent(
+        userId,
+        paymentIntent.id,
+      );
+      if (raced) {
+        return raced;
+      }
       throw new NotFoundException('Checkout session not found or expired');
     }
 
@@ -144,13 +142,37 @@ export class CompleteCheckoutProvider {
     });
 
     if (payments.length === 0) {
+      const raced = await this.loadCompletedOrdersForPaymentIntent(
+        userId,
+        paymentIntent.id,
+      );
+      if (raced) {
+        return raced;
+      }
       throw new NotFoundException('Pending orders not found for this checkout');
     }
 
     const paymentSummary = this.formatPaymentSummary(paymentIntent);
     const orderIds = payments.map((payment) => payment.orderId);
 
+    let claimed = false;
+
     await this.prisma.$transaction(async (tx) => {
+      // Atomic claim: only one completer (client or webhook) wins.
+      const claim = await tx.checkoutSession.updateMany({
+        where: {
+          id: session.id,
+          status: CheckoutSessionStatus.PENDING,
+        },
+        data: { status: CheckoutSessionStatus.COMPLETED },
+      });
+
+      if (claim.count === 0) {
+        return;
+      }
+
+      claimed = true;
+
       const allItems = payments.flatMap((payment) => payment.order.items);
       const qtyByVariant = new Map<number, number>();
       for (const item of allItems) {
@@ -188,19 +210,50 @@ export class CompleteCheckoutProvider {
         methodSummary: paymentSummary,
       });
 
-      await tx.checkoutSession.update({
-        where: { id: session.id },
-        data: { status: CheckoutSessionStatus.COMPLETED },
-      });
-
       await tx.cartItem.deleteMany({ where: { userId } });
     });
+
+    if (!claimed) {
+      const raced = await this.loadCompletedOrdersForPaymentIntent(
+        userId,
+        paymentIntent.id,
+      );
+      if (raced) {
+        return raced;
+      }
+      throw new NotFoundException('Checkout session not found or expired');
+    }
 
     const created = await this.loadOrders(orderIds);
     const responses = created.map((order) => mapOrderToResponse(order));
 
     await this.sendConfirmationEmails(userId, responses);
 
+    return { orders: responses };
+  }
+
+  private async loadCompletedOrdersForPaymentIntent(
+    userId: number,
+    paymentIntentId: string,
+  ): Promise<CompleteCheckoutResponse | null> {
+    const existingPaid = await this.prisma.payment.findMany({
+      where: {
+        transactionId: paymentIntentId,
+        status: PaymentStatus.SUCCEEDED,
+      },
+      select: { orderId: true },
+    });
+
+    if (existingPaid.length === 0) {
+      return null;
+    }
+
+    await this.prisma.cartItem.deleteMany({ where: { userId } });
+    const orders = await this.loadOrders(
+      existingPaid.map((payment) => payment.orderId),
+    );
+    const responses = orders.map((order) => mapOrderToResponse(order));
+    await this.sendConfirmationEmails(userId, responses);
     return { orders: responses };
   }
 

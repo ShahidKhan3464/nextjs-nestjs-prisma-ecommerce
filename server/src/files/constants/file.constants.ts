@@ -24,7 +24,10 @@ export enum SellerDocumentType {
 export const FileUploadSubdir = {
   PRODUCTS: 'products',
   STORES: 'stores',
+  /** Public customer images (avatar / cover). */
   USERS: 'customers',
+  /** Private customer documents — blocked from static /uploads. */
+  USER_DOCUMENTS: 'customer-documents',
   SELLERS: 'sellers',
 } as const;
 
@@ -75,6 +78,7 @@ export const STORED_FILE_SELECT = {
 /** Subdirectories that must never be served via public /uploads static assets. */
 export const PRIVATE_UPLOAD_SUBDIRS: ReadonlySet<string> = new Set([
   FileUploadSubdir.SELLERS,
+  FileUploadSubdir.USER_DOCUMENTS,
 ]);
 
 export function buildSecureFileUrlPath(fileId: number): string {

@@ -9,6 +9,7 @@ import stripeConfig from './config/stripe.config';
 import { UsersModule } from './users/users.module';
 import { FilesModule } from './files/files.module';
 import { StoreModule } from './store/store.module';
+import { HealthModule } from './health/health.module';
 import { OrdersModule } from './orders/orders.module';
 import { SellerModule } from './seller/seller.module';
 import { CommonModule } from './common/common.module';
@@ -38,6 +39,7 @@ import { DataResponseInterceptor } from './common/interceptors/data-response/dat
     UsersModule,
     SellerModule,
     OrdersModule,
+    HealthModule,
     PrismaModule,
     CommonModule,
     SeedersModule,

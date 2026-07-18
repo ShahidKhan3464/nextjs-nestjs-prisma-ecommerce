@@ -8,7 +8,7 @@ const userImageMulter = createFileDiskMulterOptions(
 );
 
 const userDocumentMulter = createFileDiskMulterOptions(
-  FileUploadSubdir.USERS,
+  FileUploadSubdir.USER_DOCUMENTS,
   'document',
 );
 
