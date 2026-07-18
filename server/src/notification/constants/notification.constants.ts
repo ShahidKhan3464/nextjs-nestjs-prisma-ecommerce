@@ -1,1 +1,1 @@
-// Placeholder for notification domain constants.
+export { NotificationType } from 'src/common/enums/notification-type.enum';
