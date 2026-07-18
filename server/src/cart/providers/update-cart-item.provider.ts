@@ -1,5 +1,6 @@
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UpdateCartItemDto } from '../dto/update-cart-item.dto';
+import { assertVariantAvailable } from '../utils/available-variant.util';
 import { findCartItemsWithImages } from 'src/common/files/file-query.util';
 import {
   Injectable,
@@ -29,6 +30,28 @@ export class UpdateCartItemProvider {
     if (!item) {
       throw new NotFoundException('Cart item not found');
     }
+
+    assertVariantAvailable({
+      stockQuantity: item.variant.stockQuantity,
+      product: {
+        deletedAt: item.variant.product.deletedAt,
+        status: item.variant.product.status,
+        store: item.variant.product.store
+          ? {
+              deletedAt: item.variant.product.store.deletedAt ?? null,
+              status: item.variant.product.store.status,
+              sellerProfile: item.variant.product.store.sellerProfile
+                ? {
+                    deletedAt:
+                      item.variant.product.store.sellerProfile.deletedAt ??
+                      null,
+                    status: item.variant.product.store.sellerProfile.status,
+                  }
+                : null,
+            }
+          : null,
+      },
+    });
 
     if (dto.quantity > item.variant.stockQuantity) {
       throw new BadRequestException('Insufficient stock');

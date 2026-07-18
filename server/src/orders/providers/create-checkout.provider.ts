@@ -7,6 +7,7 @@ import { generateOrderNumber } from '../utils/map-order.util';
 import { CreateCheckoutDto } from '../dto/create-checkout.dto';
 import { calculateOrderPricing } from '../utils/order-pricing.util';
 import { Inject, Injectable, BadRequestException } from '@nestjs/common';
+import { lockProductVariants } from '../utils/lock-product-variants.util';
 import { findCartItemsWithImages } from 'src/common/files/file-query.util';
 import { validateAndGroupCheckoutCart } from '../utils/validate-checkout-cart.util';
 import {
@@ -73,22 +74,36 @@ export class CreateCheckoutProvider {
 
     const { sessionId, orderIds } = await this.prisma.$transaction(
       async (tx) => {
-        for (const line of allLines) {
-          await tx.$executeRaw`
-            SELECT id FROM product_variants WHERE id = ${line.variantId} FOR UPDATE
-          `;
-          const variant = await tx.productVariant.findUnique({
-            where: { id: line.variantId },
-            include: {
-              product: {
-                include: {
-                  store: {
-                    include: { sellerProfile: true },
+        const variantIds = allLines.map((line) => line.variantId);
+        await lockProductVariants(tx, variantIds);
+
+        const lockedVariants = await tx.productVariant.findMany({
+          where: { id: { in: variantIds } },
+          select: {
+            id: true,
+            sku: true,
+            stockQuantity: true,
+            product: {
+              select: {
+                deletedAt: true,
+                status: true,
+                store: {
+                  select: {
+                    deletedAt: true,
+                    status: true,
+                    sellerProfile: {
+                      select: { deletedAt: true },
+                    },
                   },
                 },
               },
             },
-          });
+          },
+        });
+        const variantById = new Map(lockedVariants.map((v) => [v.id, v]));
+
+        for (const line of allLines) {
+          const variant = variantById.get(line.variantId);
 
           if (!variant) {
             throw new BadRequestException(

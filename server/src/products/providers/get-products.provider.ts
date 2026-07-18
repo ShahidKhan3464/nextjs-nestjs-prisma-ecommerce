@@ -5,9 +5,13 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { mapProductToResponse } from '../utils/map-product.util';
 import { ProductWithRelations } from 'src/common/types/domain.types';
 import { ProductOwnershipProvider } from './product-ownership.provider';
-import { PRODUCT_INCLUDE, ProductStatus } from '../constants/product.constants';
 import { PaginationProviders } from 'src/common/pagination/providers/pagination.providers';
 import { PaginateQueryResult } from 'src/common/pagination/interfaces/paginated.interfaces';
+import {
+  ProductStatus,
+  PRODUCT_INCLUDE,
+  PRODUCT_LIST_INCLUDE,
+} from '../constants/product.constants';
 
 @Injectable()
 export class GetProductsProvider {
@@ -105,7 +109,7 @@ export class GetProductsProvider {
     const total = await this.prisma.product.count({ where });
     const products = await this.prisma.product.findMany({
       where,
-      include: PRODUCT_INCLUDE,
+      include: PRODUCT_LIST_INCLUDE,
       orderBy: { createdAt: 'desc' },
       skip,
       take: limit,

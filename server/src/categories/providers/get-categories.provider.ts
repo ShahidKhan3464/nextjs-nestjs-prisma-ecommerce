@@ -71,7 +71,9 @@ export class GetCategoriesProvider {
   }
 
   public async findOne(id: number): Promise<Category> {
-    const category = await this.prisma.category.findUnique({ where: { id } });
+    const category = await this.prisma.category.findFirst({
+      where: { id, deletedAt: null },
+    });
     if (!category) {
       throw new NotFoundException('Category not found');
     }

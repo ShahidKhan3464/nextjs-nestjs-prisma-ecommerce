@@ -9,6 +9,7 @@ import { UserRole } from 'src/common/enums/user-role.enum';
 import { MailService } from 'src/mail/providers/mail.service';
 import { OrderOwnershipProvider } from './order-ownership.provider';
 import { findOrderWithImages } from 'src/common/files/file-query.util';
+import { lockProductVariants } from '../utils/lock-product-variants.util';
 import { OrderStatus, PaymentStatus } from '../constants/order.constants';
 import { OrderResponse, mapOrderToResponse } from '../utils/map-order.util';
 import { PaymentFailureReason } from 'src/payments/constants/payment.constants';
@@ -84,19 +85,17 @@ export class CancelOrderProvider {
 
       // Stock is deducted only after successful payment.
       if (lockedOrder.payment?.status === PaymentStatus.SUCCEEDED || wasPaid) {
-        for (const item of lockedOrder.items) {
-          const variant = await tx.productVariant.findUnique({
-            where: { id: item.variantId },
-          });
-          if (variant) {
-            await tx.productVariant.update({
-              where: { id: variant.id },
-              data: {
-                stockQuantity: variant.stockQuantity + item.quantity,
-              },
-            });
-          }
-        }
+        const variantIds = lockedOrder.items.map((item) => item.variantId);
+        await lockProductVariants(tx, variantIds);
+
+        await Promise.all(
+          lockedOrder.items.map((item) =>
+            tx.productVariant.update({
+              where: { id: item.variantId },
+              data: { stockQuantity: { increment: item.quantity } },
+            }),
+          ),
+        );
       }
 
       await tx.order.update({

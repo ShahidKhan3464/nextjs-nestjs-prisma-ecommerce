@@ -1,5 +1,6 @@
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Injectable, BadRequestException } from '@nestjs/common';
+import { ProductStatus } from 'src/common/enums/product-status.enum';
 
 @Injectable()
 export class ToggleWishlistItemProvider {
@@ -9,13 +10,6 @@ export class ToggleWishlistItemProvider {
     userId: number,
     productId: number,
   ): Promise<{ productIds: number[]; added: boolean }> {
-    const product = await this.prisma.product.findFirst({
-      where: { id: productId, deletedAt: null },
-    });
-    if (!product) {
-      throw new BadRequestException('Product not found');
-    }
-
     const existing = await this.prisma.wishlistItem.findUnique({
       where: {
         userId_productId: { userId, productId },
@@ -28,6 +22,17 @@ export class ToggleWishlistItemProvider {
         where: { userId_productId: { userId, productId } },
       });
     } else {
+      const product = await this.prisma.product.findFirst({
+        where: {
+          id: productId,
+          deletedAt: null,
+          status: ProductStatus.ACTIVE,
+        },
+      });
+      if (!product) {
+        throw new BadRequestException('Product not found');
+      }
+
       await this.prisma.wishlistItem.create({
         data: { userId, productId },
       });
@@ -37,6 +42,7 @@ export class ToggleWishlistItemProvider {
     const items = await this.prisma.wishlistItem.findMany({
       where: { userId },
       orderBy: { createdAt: 'desc' },
+      select: { productId: true },
     });
 
     return {

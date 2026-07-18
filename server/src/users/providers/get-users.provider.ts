@@ -26,6 +26,7 @@ export class GetUsersProvider {
     query: FindUsersQuery,
   ): Promise<PaginateQueryResult<UserResponse>> {
     const where = {
+      deletedAt: null,
       NOT: {
         userRoles: { some: { role: UserRole.SUPER_ADMIN } },
       },
@@ -63,6 +64,7 @@ export class GetUsersProvider {
       where,
       skip,
       take: limit,
+      orderBy: { createdAt: 'desc' },
       include: USER_ROLES_INCLUDE,
     });
 
@@ -75,8 +77,8 @@ export class GetUsersProvider {
   }
 
   public async findOne(id: number): Promise<UserResponse> {
-    const user = await this.prisma.user.findUnique({
-      where: { id },
+    const user = await this.prisma.user.findFirst({
+      where: { id, deletedAt: null },
       include: USER_ROLES_INCLUDE,
     });
     if (!user) {
@@ -86,8 +88,8 @@ export class GetUsersProvider {
   }
 
   public async findMeWithAvatar(id: number): Promise<UserMeResponse> {
-    const user = await this.prisma.user.findUnique({
-      where: { id },
+    const user = await this.prisma.user.findFirst({
+      where: { id, deletedAt: null },
       include: USER_ROLES_INCLUDE,
     });
     if (!user) {

@@ -49,3 +49,46 @@ export const PRODUCT_INCLUDE = {
     },
   },
 } as const;
+
+/** Lighter include for product list endpoints. */
+export const PRODUCT_LIST_INCLUDE = {
+  category: {
+    select: {
+      id: true,
+      name: true,
+      description: true,
+      createdAt: true,
+      updatedAt: true,
+      deletedAt: true,
+    },
+  },
+  variants: {
+    select: {
+      id: true,
+      sku: true,
+      size: true,
+      color: true,
+      price: true,
+      productId: true,
+      stockQuantity: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  },
+  store: {
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      status: true,
+    },
+  },
+  files: {
+    orderBy: { sortOrder: 'asc' as const },
+    include: {
+      file: {
+        select: PRODUCT_FILE_SELECT,
+      },
+    },
+  },
+} as const;

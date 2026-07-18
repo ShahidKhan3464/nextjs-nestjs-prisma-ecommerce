@@ -180,16 +180,18 @@ export class UpdateProductProvider {
     );
     const incomingSkus = new Set(incoming.map((variant) => variant.sku));
 
-    for (const variant of incoming) {
-      if (existingBySku.has(variant.sku)) {
-        continue;
-      }
-
-      const skuExists = await tx.productVariant.findUnique({
-        where: { sku: variant.sku },
+    const newSkus = incoming
+      .map((variant) => variant.sku)
+      .filter((sku) => !existingBySku.has(sku));
+    if (newSkus.length > 0) {
+      const skuConflicts = await tx.productVariant.findMany({
+        where: { sku: { in: newSkus } },
+        select: { sku: true },
       });
-      if (skuExists) {
-        throw new ConflictException(`SKU "${variant.sku}" is already in use`);
+      if (skuConflicts.length > 0) {
+        throw new ConflictException(
+          `SKU "${skuConflicts[0].sku}" is already in use`,
+        );
       }
     }
 
@@ -220,21 +222,24 @@ export class UpdateProductProvider {
       });
     }
 
-    for (const variant of existing) {
-      if (incomingSkus.has(variant.sku)) {
-        continue;
-      }
-
-      const referenced = await tx.orderItem.findFirst({
-        where: { variantId: variant.id },
+    const toRemove = existing.filter(
+      (variant) => !incomingSkus.has(variant.sku),
+    );
+    if (toRemove.length > 0) {
+      const referenced = await tx.orderItem.findMany({
+        where: { variantId: { in: toRemove.map((variant) => variant.id) } },
+        select: { variantId: true },
       });
-      if (referenced) {
-        throw new BadRequestException(
-          `Cannot delete variant "${variant.sku}" because it is already used in existing orders.`,
-        );
-      }
+      const referencedIds = new Set(referenced.map((row) => row.variantId));
 
-      await tx.productVariant.delete({ where: { id: variant.id } });
+      for (const variant of toRemove) {
+        if (referencedIds.has(variant.id)) {
+          throw new BadRequestException(
+            `Cannot delete variant "${variant.sku}" because it is already used in existing orders.`,
+          );
+        }
+        await tx.productVariant.delete({ where: { id: variant.id } });
+      }
     }
   }
 }

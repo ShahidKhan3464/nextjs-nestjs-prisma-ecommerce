@@ -101,25 +101,25 @@ export class UsersService {
   }
 
   public async findOneById(id: number): Promise<User | null> {
-    return this.prisma.user.findUnique({ where: { id } });
+    return this.prisma.user.findFirst({ where: { id, deletedAt: null } });
   }
 
   public async findOneByEmail(email: string): Promise<User | null> {
-    return this.prisma.user.findUnique({ where: { email } });
+    return this.prisma.user.findFirst({ where: { email, deletedAt: null } });
   }
 
   public async findOneForAuthById(
     id: number,
   ): Promise<AuthUserWithRoles | null> {
-    return this.prisma.user.findUnique({
-      where: { id },
+    return this.prisma.user.findFirst({
+      where: { id, deletedAt: null },
       select: AUTH_USER_SELECT,
     });
   }
 
   public async findOneByIdWithRoles(id: number): Promise<UserWithRoles | null> {
-    return this.prisma.user.findUnique({
-      where: { id },
+    return this.prisma.user.findFirst({
+      where: { id, deletedAt: null },
       include: USER_ROLES_INCLUDE,
     });
   }
@@ -127,8 +127,8 @@ export class UsersService {
   public async findOneByEmailWithRoles(
     email: string,
   ): Promise<UserWithRoles | null> {
-    return this.prisma.user.findUnique({
-      where: { email },
+    return this.prisma.user.findFirst({
+      where: { email, deletedAt: null },
       include: USER_ROLES_INCLUDE,
     });
   }

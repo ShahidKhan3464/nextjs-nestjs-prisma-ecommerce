@@ -6,6 +6,61 @@ import {
   loadProductImagesMap,
 } from './shared/product-image-map.util';
 
+const CART_ITEM_SELECT = {
+  id: true,
+  userId: true,
+  quantity: true,
+  createdAt: true,
+  updatedAt: true,
+  productVariantId: true,
+  variant: {
+    select: {
+      id: true,
+      sku: true,
+      size: true,
+      color: true,
+      price: true,
+      productId: true,
+      stockQuantity: true,
+      createdAt: true,
+      updatedAt: true,
+      product: {
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          status: true,
+          storeId: true,
+          categoryId: true,
+          deletedAt: true,
+          description: true,
+          basePrice: true,
+          createdAt: true,
+          updatedAt: true,
+          publishedAt: true,
+          store: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+              status: true,
+              deletedAt: true,
+              sellerProfile: {
+                select: {
+                  id: true,
+                  userId: true,
+                  status: true,
+                  deletedAt: true,
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  },
+} as const;
+
 export async function findCartItemsWithImages(
   prisma: PrismaService,
   where: { userId: number; productVariantId?: number },
@@ -14,21 +69,7 @@ export async function findCartItemsWithImages(
   const items = await prisma.cartItem.findMany({
     where,
     orderBy,
-    include: {
-      variant: {
-        include: {
-          product: {
-            include: {
-              store: {
-                include: {
-                  sellerProfile: true,
-                },
-              },
-            },
-          },
-        },
-      },
-    },
+    select: CART_ITEM_SELECT,
   });
 
   const productIds = items.map((item) => item.variant.product.id);

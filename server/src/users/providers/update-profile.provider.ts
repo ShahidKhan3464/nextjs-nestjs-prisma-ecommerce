@@ -9,7 +9,9 @@ export class UpdateProfileProvider {
   constructor(private readonly prisma: PrismaService) {}
 
   async update(userId: number, dto: UpdateProfileDto): Promise<UserResponse> {
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    const user = await this.prisma.user.findFirst({
+      where: { id: userId, deletedAt: null },
+    });
     if (!user) {
       throw new NotFoundException('User not found');
     }

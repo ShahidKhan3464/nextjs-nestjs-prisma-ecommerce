@@ -6,6 +6,7 @@ import { UsersService } from 'src/users/users.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { MailService } from 'src/mail/providers/mail.service';
 import { CompleteCheckoutDto } from '../dto/complete-checkout.dto';
+import { lockProductVariants } from '../utils/lock-product-variants.util';
 import { OrderResponse, mapOrderToResponse } from '../utils/map-order.util';
 import { PaymentLifecycleProvider } from 'src/payments/providers/payment-lifecycle.provider';
 import {
@@ -58,9 +59,8 @@ export class CompleteCheckoutProvider {
   async completeFromWebhook(
     paymentIntentId: string,
   ): Promise<CompleteCheckoutResponse> {
-    const paymentIntent = await this.stripe.paymentIntents.retrieve(
-      paymentIntentId,
-    );
+    const paymentIntent =
+      await this.stripe.paymentIntents.retrieve(paymentIntentId);
     const userId = Number(paymentIntent.metadata?.userId);
     if (!Number.isFinite(userId)) {
       throw new BadRequestException('Invalid checkout payment metadata');
@@ -151,28 +151,36 @@ export class CompleteCheckoutProvider {
     const orderIds = payments.map((payment) => payment.orderId);
 
     await this.prisma.$transaction(async (tx) => {
-      for (const payment of payments) {
-        for (const item of payment.order.items) {
-          await tx.$executeRaw`
-            SELECT id FROM product_variants WHERE id = ${item.variantId} FOR UPDATE
-          `;
-          const variant = await tx.productVariant.findUnique({
-            where: { id: item.variantId },
-          });
+      const allItems = payments.flatMap((payment) => payment.order.items);
+      const qtyByVariant = new Map<number, number>();
+      for (const item of allItems) {
+        qtyByVariant.set(
+          item.variantId,
+          (qtyByVariant.get(item.variantId) ?? 0) + item.quantity,
+        );
+      }
 
-          if (!variant || variant.stockQuantity < item.quantity) {
-            throw new BadRequestException(
-              `Insufficient stock for variant ${item.variantId}`,
-            );
-          }
+      const variantIds = [...qtyByVariant.keys()];
+      await lockProductVariants(tx, variantIds);
 
-          await tx.productVariant.update({
-            where: { id: item.variantId },
-            data: {
-              stockQuantity: variant.stockQuantity - item.quantity,
-            },
-          });
+      const variants = await tx.productVariant.findMany({
+        where: { id: { in: variantIds } },
+        select: { id: true, stockQuantity: true },
+      });
+      const variantById = new Map(variants.map((v) => [v.id, v]));
+
+      for (const [variantId, quantity] of qtyByVariant) {
+        const variant = variantById.get(variantId);
+        if (!variant || variant.stockQuantity < quantity) {
+          throw new BadRequestException(
+            `Insufficient stock for variant ${variantId}`,
+          );
         }
+
+        await tx.productVariant.update({
+          where: { id: variantId },
+          data: { stockQuantity: { decrement: quantity } },
+        });
       }
 
       await this.paymentLifecycleProvider.markSucceededMany(tx, {

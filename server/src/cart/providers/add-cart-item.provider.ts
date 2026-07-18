@@ -3,6 +3,10 @@ import { AddCartItemDto } from '../dto/add-cart-item.dto';
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { findCartItemsWithImages } from 'src/common/files/file-query.util';
 import {
+  AVAILABLE_VARIANT_INCLUDE,
+  assertVariantAvailable,
+} from '../utils/available-variant.util';
+import {
   CartItemResponse,
   mapCartItemToResponse,
 } from '../utils/map-cart-item.util';
@@ -17,12 +21,14 @@ export class AddCartItemProvider {
   ): Promise<CartItemResponse> {
     const variant = await this.prisma.productVariant.findUnique({
       where: { id: dto.variantId },
-      include: { product: true },
+      include: AVAILABLE_VARIANT_INCLUDE,
     });
 
     if (!variant) {
       throw new BadRequestException('Product variant not found');
     }
+
+    assertVariantAvailable(variant);
 
     if (dto.quantity > variant.stockQuantity) {
       throw new BadRequestException('Insufficient stock');

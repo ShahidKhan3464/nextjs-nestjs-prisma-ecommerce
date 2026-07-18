@@ -54,14 +54,15 @@ export class CreateProductProvider {
         throw new NotFoundException('Category not found');
       }
 
-      for (const variant of dto.variants) {
-        const skuExists = await tx.productVariant.findUnique({
-          where: { sku: variant.sku },
-        });
-
-        if (skuExists) {
-          throw new ConflictException(`SKU "${variant.sku}" is already in use`);
-        }
+      const skus = dto.variants.map((variant) => variant.sku);
+      const skuConflicts = await tx.productVariant.findMany({
+        where: { sku: { in: skus } },
+        select: { sku: true },
+      });
+      if (skuConflicts.length > 0) {
+        throw new ConflictException(
+          `SKU "${skuConflicts[0].sku}" is already in use`,
+        );
       }
 
       const baseSlug = generateProductSlug(dto.name);

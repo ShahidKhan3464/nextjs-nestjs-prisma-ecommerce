@@ -21,57 +21,85 @@ export type UserDetailResponse = {
   shippingAddresses: OrderAddress[];
 };
 
+const RECENT_ORDERS_LIMIT = 5;
+const ADDRESS_SCAN_LIMIT = 50;
+
 @Injectable()
 export class GetUserDetailProvider {
   constructor(private readonly prisma: PrismaService) {}
 
   async getDetail(userId: number): Promise<UserDetailResponse> {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
+    const user = await this.prisma.user.findFirst({
+      where: { id: userId, deletedAt: null },
       include: USER_ROLES_INCLUDE,
     });
     if (!user) {
       throw new NotFoundException('User not found');
     }
 
-    const avatar = await this.prisma.userFile.findFirst({
-      where: { userId, type: 'AVATAR' },
-      orderBy: { sortOrder: 'asc' },
-      include: { file: { select: { urlPath: true } } },
-    });
+    const [
+      avatar,
+      totalOrders,
+      spendingAgg,
+      recentOrders,
+      addressRows,
+      wishlistCount,
+    ] = await Promise.all([
+      this.prisma.userFile.findFirst({
+        where: { userId, type: 'AVATAR' },
+        orderBy: { sortOrder: 'asc' },
+        include: { file: { select: { urlPath: true } } },
+      }),
+      this.prisma.order.count({ where: { userId } }),
+      this.prisma.order.aggregate({
+        where: { userId },
+        _sum: { totalAmount: true },
+      }),
+      findOrdersWithImages(this.prisma, {
+        where: { userId },
+        orderBy: { createdAt: 'desc' },
+        take: RECENT_ORDERS_LIMIT,
+      }),
+      this.prisma.order.findMany({
+        where: { userId },
+        select: { shippingAddress: true },
+        orderBy: { createdAt: 'desc' },
+        take: ADDRESS_SCAN_LIMIT,
+      }),
+      this.prisma.wishlistItem.count({ where: { userId } }),
+    ]);
 
-    const orders = await findOrdersWithImages(this.prisma, {
-      where: { userId },
-      orderBy: { createdAt: 'desc' },
-    });
-
-    const orderResponses = orders.map((order) => mapOrderToResponse(order));
-    const totalSpending = orders.reduce(
-      (sum, order) => sum + Number(order.totalAmount),
-      0,
+    const uniqueAddresses = this.dedupeAddresses(
+      this.parseAddresses(addressRows.map((row) => row.shippingAddress)),
     );
 
-    const addresses = orderResponses
-      .map((o) => o.shippingAddress)
-      .filter((addr) => addr.line1?.trim());
-
-    const uniqueAddresses = this.dedupeAddresses(addresses);
-
-    const wishlistCount = await this.prisma.wishlistItem.count({
-      where: { userId },
-    });
-
     return {
-      user: mapUserToResponse(user),
+      totalOrders,
       wishlistCount,
-      totalOrders: orders.length,
+      user: mapUserToResponse(user),
       billingAddresses: uniqueAddresses,
       defaultAddress: uniqueAddresses[0],
       shippingAddresses: uniqueAddresses,
       profilePhotoUrl: avatar?.file.urlPath,
-      recentOrders: orderResponses.slice(0, 5),
-      totalSpending: Math.round(totalSpending * 100) / 100,
+      recentOrders: recentOrders.map((order) => mapOrderToResponse(order)),
+      totalSpending:
+        Math.round(Number(spendingAgg._sum.totalAmount ?? 0) * 100) / 100,
     };
+  }
+
+  private parseAddresses(raw: string[]): OrderAddress[] {
+    const result: OrderAddress[] = [];
+    for (const value of raw) {
+      try {
+        const parsed = JSON.parse(value) as OrderAddress;
+        if (parsed?.line1?.trim()) {
+          result.push(parsed);
+        }
+      } catch {
+        /* skip malformed historical addresses */
+      }
+    }
+    return result;
   }
 
   private dedupeAddresses(addresses: OrderAddress[]): OrderAddress[] {

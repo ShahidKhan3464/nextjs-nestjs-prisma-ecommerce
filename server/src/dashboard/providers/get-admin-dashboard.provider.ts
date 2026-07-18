@@ -44,9 +44,12 @@ export class GetAdminDashboardProvider {
       this.prisma.product.count({
         where: { status: ProductStatus.ACTIVE, deletedAt: null },
       }),
-      this.prisma.productVariant.count(),
+      this.prisma.productVariant.count({
+        where: { product: { deletedAt: null } },
+      }),
       this.prisma.user.count({
         where: {
+          deletedAt: null,
           userRoles: { some: { role: UserRole.BUYER } },
           isBlocked: false,
         },
