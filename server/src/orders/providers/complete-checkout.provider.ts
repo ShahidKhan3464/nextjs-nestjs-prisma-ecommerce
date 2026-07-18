@@ -7,6 +7,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { MailService } from 'src/mail/providers/mail.service';
 import { CompleteCheckoutDto } from '../dto/complete-checkout.dto';
 import { OrderResponse, mapOrderToResponse } from '../utils/map-order.util';
+import { PaymentLifecycleProvider } from 'src/payments/providers/payment-lifecycle.provider';
 import {
   PaymentStatus,
   CheckoutSessionStatus,
@@ -35,6 +36,7 @@ export class CompleteCheckoutProvider {
     private readonly prisma: PrismaService,
     private readonly mailService: MailService,
     private readonly usersService: UsersService,
+    private readonly paymentLifecycleProvider: PaymentLifecycleProvider,
     @Inject(stripeConfig.KEY)
     private readonly stripeConfiguration: ConfigType<typeof stripeConfig>,
   ) {
@@ -148,13 +150,9 @@ export class CompleteCheckoutProvider {
         }
       }
 
-      await tx.payment.updateMany({
-        where: { orderId: { in: orderIds } },
-        data: {
-          status: PaymentStatus.SUCCEEDED,
-          methodSummary: paymentSummary,
-          paidAt: new Date(),
-        },
+      await this.paymentLifecycleProvider.markSucceededMany(tx, {
+        orderIds,
+        methodSummary: paymentSummary,
       });
 
       await tx.checkoutSession.update({

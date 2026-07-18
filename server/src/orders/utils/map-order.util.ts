@@ -53,12 +53,12 @@ export type OrderResponse = {
   deliveredAt?: string;
   cancelledAt?: string;
   paymentStatus: string;
+  store?: OrderStoreResponse;
+  buyer?: OrderBuyerResponse;
   cancellationReason?: string;
   paymentMethodSummary: string;
   shippingAddress: OrderAddress;
   items: OrderLineItemResponse[];
-  store?: OrderStoreResponse;
-  buyer?: OrderBuyerResponse;
 };
 
 export type MapOrderOptions = {
@@ -99,10 +99,16 @@ function mapPaymentStatus(value: PaymentStatus | undefined): string {
       return 'paid';
     case PaymentStatus.PENDING:
       return 'pending';
+    case PaymentStatus.PROCESSING:
+      return 'processing';
     case PaymentStatus.FAILED:
       return 'failed';
+    case PaymentStatus.CANCELLED:
+      return 'cancelled';
     case PaymentStatus.REFUNDED:
       return 'refunded';
+    case PaymentStatus.PARTIALLY_REFUNDED:
+      return 'partially_refunded';
     default:
       return 'pending';
   }
@@ -110,13 +116,13 @@ function mapPaymentStatus(value: PaymentStatus | undefined): string {
 
 function mapOrderItem(item: OrderItemWithRelations): OrderLineItemResponse {
   return {
-    quantity: item.quantity,
     sku: item.variantSku,
+    quantity: item.quantity,
     productName: item.productName,
     variantId: String(item.variantId),
-    priceAtPurchase: Number(item.priceAtPurchase),
     variantLabel: formatVariantLabel(item),
     image: item.productImageUrl || undefined,
+    priceAtPurchase: Number(item.priceAtPurchase),
     productId: item.variant ? String(item.variant.productId) : '',
   };
 }

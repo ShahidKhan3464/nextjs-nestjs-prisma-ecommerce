@@ -89,10 +89,13 @@ export async function findOrdersWithImages(
           createdAt: order.payment.createdAt,
           updatedAt: order.payment.updatedAt,
           amount: Number(order.payment.amount),
+          refundedAt: order.payment.refundedAt,
+          refundReason: order.payment.refundReason,
           transactionId: order.payment.transactionId,
           failureReason: order.payment.failureReason,
           methodSummary: order.payment.methodSummary,
           status: order.payment.status as PaymentStatus,
+          externalRefundId: order.payment.externalRefundId,
           provider: order.payment.provider as PaymentProvider,
           refundedAmount: Number(order.payment.refundedAmount),
         }

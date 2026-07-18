@@ -11,6 +11,8 @@ import { OrderOwnershipProvider } from './order-ownership.provider';
 import { findOrderWithImages } from 'src/common/files/file-query.util';
 import { OrderStatus, PaymentStatus } from '../constants/order.constants';
 import { OrderResponse, mapOrderToResponse } from '../utils/map-order.util';
+import { PaymentFailureReason } from 'src/payments/constants/payment.constants';
+import { PaymentLifecycleProvider } from 'src/payments/providers/payment-lifecycle.provider';
 import {
   Inject,
   Injectable,
@@ -27,6 +29,7 @@ export class CancelOrderProvider {
     private readonly mailService: MailService,
     private readonly usersService: UsersService,
     private readonly orderOwnershipProvider: OrderOwnershipProvider,
+    private readonly paymentLifecycleProvider: PaymentLifecycleProvider,
     @Inject(stripeConfig.KEY)
     private readonly stripeConfiguration: ConfigType<typeof stripeConfig>,
   ) {
@@ -57,11 +60,13 @@ export class CancelOrderProvider {
 
     const payment = order.payment;
     const wasPaid = payment?.status === PaymentStatus.SUCCEEDED;
+    let externalRefundId: string | null = null;
 
     if (wasPaid && payment?.transactionId) {
-      await this.stripe.refunds.create({
+      const refund = await this.stripe.refunds.create({
         payment_intent: payment.transactionId,
       });
+      externalRefundId = refund.id;
     }
 
     await this.prisma.$transaction(async (tx) => {
@@ -104,12 +109,20 @@ export class CancelOrderProvider {
       });
 
       if (lockedOrder.payment) {
-        await tx.payment.update({
-          where: { id: lockedOrder.payment.id },
-          data: {
-            status: wasPaid ? PaymentStatus.REFUNDED : PaymentStatus.FAILED,
-          },
-        });
+        if (wasPaid) {
+          await this.paymentLifecycleProvider.applyRefund(tx, {
+            paymentId: lockedOrder.payment.id,
+            amount: Number(lockedOrder.payment.amount),
+            reason: dto.reason.trim(),
+            externalRefundId,
+          });
+        } else {
+          await this.paymentLifecycleProvider.markFailedOrKeep(
+            tx,
+            lockedOrder.payment.id,
+            PaymentFailureReason.PAYMENT_CANCELLED,
+          );
+        }
       }
     });
 

@@ -305,23 +305,27 @@ model OrderItem {
 }
 
 model Payment {
-  id             Int                   @id(map: "PK_payments") @default(autoincrement())
-  orderId        Int                   @unique(map: "UQ_payments_order_id")
-  provider       payment_provider_enum @default(STRIPE)
-  transactionId  String?               @db.VarChar(255)
-  failureReason  String?               @db.VarChar(255)
-  amount         Decimal               @db.Decimal(10, 2)
-  currency       String                @default("usd") @db.VarChar(3)
-  status         payment_status_enum   @default(PENDING)
-  methodSummary  String?               @db.VarChar(255)
-  paidAt         DateTime?             @db.Timestamp(6)
-  refundedAmount Decimal               @default(0) @db.Decimal(10, 2)
-  createdAt      DateTime              @default(now()) @db.Timestamp(6)
-  updatedAt      DateTime              @default(now()) @updatedAt @db.Timestamp(6)
-  order          Order                 @relation(fields: [orderId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_payments_order_id")
+  id               Int                   @id(map: "PK_payments") @default(autoincrement())
+  orderId          Int                   @unique(map: "UQ_payments_order_id")
+  provider         payment_provider_enum @default(STRIPE)
+  transactionId    String?               @db.VarChar(255)
+  failureReason    String?               @db.VarChar(255)
+  amount           Decimal               @db.Decimal(10, 2)
+  currency         String                @default("usd") @db.VarChar(3)
+  status           payment_status_enum   @default(PENDING)
+  methodSummary    String?               @db.VarChar(255)
+  paidAt           DateTime?             @db.Timestamp(6)
+  refundedAmount   Decimal               @default(0) @db.Decimal(10, 2)
+  refundReason     String?               @db.VarChar(255)
+  refundedAt       DateTime?             @db.Timestamp(6)
+  externalRefundId String?               @db.VarChar(255)
+  createdAt        DateTime              @default(now()) @db.Timestamp(6)
+  updatedAt        DateTime              @default(now()) @updatedAt @db.Timestamp(6)
+  order            Order                 @relation(fields: [orderId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_payments_order_id")
 
   @@index([transactionId], map: "IDX_payments_transaction_id")
   @@index([status], map: "IDX_payments_status")
+  @@index([provider], map: "IDX_payments_provider")
   @@map("payments")
 }
 
@@ -426,9 +430,12 @@ enum payment_provider_enum {
 
 enum payment_status_enum {
   PENDING
+  PROCESSING
   SUCCEEDED
   FAILED
+  CANCELLED
   REFUNDED
+  PARTIALLY_REFUNDED
 }
 
 enum checkout_session_status_enum {

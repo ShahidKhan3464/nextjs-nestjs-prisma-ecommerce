@@ -17,6 +17,7 @@ import { SeedersModule } from './seeders/seeders.module';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { WishlistModule } from './wishlist/wishlist.module';
 import { ProductsModule } from './products/products.module';
+import { PaymentsModule } from './payments/payments.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { CategoriesModule } from './categories/categories.module';
 import environmentValidation from './config/environment.validation';
@@ -41,6 +42,7 @@ import { DataResponseInterceptor } from './common/interceptors/data-response/dat
     SeedersModule,
     WishlistModule,
     ProductsModule,
+    PaymentsModule,
     DashboardModule,
     PaginationModule,
     CategoriesModule,

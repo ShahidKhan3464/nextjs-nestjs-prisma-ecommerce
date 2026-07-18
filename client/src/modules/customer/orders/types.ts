@@ -1,5 +1,12 @@
 export type OrderStatus = "pending" | "shipped" | "delivered" | "cancelled";
-export type PaymentStatus = "paid" | "failed" | "refunded";
+export type PaymentStatus =
+  | "paid"
+  | "pending"
+  | "processing"
+  | "failed"
+  | "cancelled"
+  | "refunded"
+  | "partially_refunded";
 
 export type OrderLineItem = {
   image?: string;
