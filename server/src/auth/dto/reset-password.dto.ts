@@ -1,5 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
+  PASSWORD_MAX_LENGTH,
+  PASSWORD_MIN_LENGTH,
+  PASSWORD_COMPLEXITY_REGEX,
+  PASSWORD_COMPLEXITY_MESSAGE,
+} from 'src/common/constants/password.constants';
+import {
   IsString,
   MaxLength,
   MinLength,
@@ -19,29 +25,30 @@ export class ResetPasswordDto {
   @ApiProperty({
     example: 'Password1!',
     description: 'New password',
-    minLength: 8,
+    minLength: PASSWORD_MIN_LENGTH,
+    maxLength: PASSWORD_MAX_LENGTH,
   })
   @IsString()
-  @MinLength(8)
-  @MaxLength(30)
+  @MinLength(PASSWORD_MIN_LENGTH)
+  @MaxLength(PASSWORD_MAX_LENGTH)
   @IsNotEmpty()
+  @Matches(PASSWORD_COMPLEXITY_REGEX, {
+    message: PASSWORD_COMPLEXITY_MESSAGE,
+  })
   password: string;
 
   @ApiProperty({
     example: 'Password1!',
-    description: 'Must match password; same strength rules as registration',
-    minLength: 8,
+    description: 'Must match password',
+    minLength: PASSWORD_MIN_LENGTH,
+    maxLength: PASSWORD_MAX_LENGTH,
   })
   @IsString()
-  @MinLength(8)
-  @MaxLength(30)
+  @MinLength(PASSWORD_MIN_LENGTH)
+  @MaxLength(PASSWORD_MAX_LENGTH)
   @IsNotEmpty()
-  @Matches(
-    /(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}/,
-    {
-      message:
-        'Password must contain at least one uppercase letter, one lowercase letter, one number and one special character',
-    },
-  )
+  @Matches(PASSWORD_COMPLEXITY_REGEX, {
+    message: PASSWORD_COMPLEXITY_MESSAGE,
+  })
   confirmPassword: string;
 }

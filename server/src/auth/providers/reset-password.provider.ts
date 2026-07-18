@@ -2,7 +2,10 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { UsersService } from 'src/users/users.service';
 import { ResetPasswordDto } from '../dto/reset-password.dto';
+import { JwtTokenType } from '../constants/jwt-token-type.enum';
 import { HashingProvider } from 'src/crypto/providers/hashing.provider';
+import { RefreshTokenStoreProvider } from './refresh-token-store.provider';
+import { JwtPasswordResetPayload } from 'src/common/types/jwt-payload.type';
 import {
   Logger,
   Injectable,
@@ -11,8 +14,6 @@ import {
   UnauthorizedException,
   RequestTimeoutException,
 } from '@nestjs/common';
-
-const PASSWORD_RESET_PURPOSE = 'password-reset';
 
 @Injectable()
 export class ResetPasswordProvider {
@@ -23,6 +24,7 @@ export class ResetPasswordProvider {
     private readonly usersService: UsersService,
     private readonly configService: ConfigService,
     private readonly hashingProvider: HashingProvider,
+    private readonly refreshTokenStore: RefreshTokenStoreProvider,
   ) {}
 
   public async resetPassword(dto: ResetPasswordDto): Promise<{ reset: true }> {
@@ -31,23 +33,20 @@ export class ResetPasswordProvider {
     }
 
     const secret = this.configService.getOrThrow<string>('jwt.secret');
-    let payload: { sub?: unknown; purpose?: unknown };
+    let payload: JwtPasswordResetPayload;
+
     try {
-      payload = await this.jwtService.verifyAsync<{
-        sub: number;
-        purpose: string;
-      }>(dto.token, { secret });
+      payload = await this.jwtService.verifyAsync<JwtPasswordResetPayload>(
+        dto.token,
+        { secret },
+      );
     } catch (err) {
       const detail = err instanceof Error ? err.message : String(err);
       this.logger.debug(`Reset token verification failed: ${detail}`);
       throw new UnauthorizedException('Invalid or expired reset link');
     }
 
-    if (
-      payload.purpose !== PASSWORD_RESET_PURPOSE ||
-      payload.sub === undefined ||
-      payload.sub === null
-    ) {
+    if (payload.typ !== JwtTokenType.PASSWORD_RESET) {
       throw new UnauthorizedException('Invalid or expired reset link');
     }
 
@@ -57,16 +56,10 @@ export class ResetPasswordProvider {
     }
 
     const passwordHash = await this.hashingProvider.hash(dto.password);
-    const confirmPasswordHash = await this.hashingProvider.hash(
-      dto.confirmPassword,
-    );
 
     try {
-      await this.usersService.updatePassword(
-        userId,
-        passwordHash,
-        confirmPasswordHash,
-      );
+      await this.usersService.updatePassword(userId, passwordHash);
+      await this.refreshTokenStore.revokeAllForUser(userId);
     } catch (err) {
       if (err instanceof NotFoundException) {
         throw err;

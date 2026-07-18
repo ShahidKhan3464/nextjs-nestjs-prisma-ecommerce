@@ -2,10 +2,10 @@ import { Prisma } from '../../generated/prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { QueryProductDto } from '../dto/query-product.dto';
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { PRODUCT_INCLUDE } from '../constants/product.constants';
 import { mapProductToResponse } from '../utils/map-product.util';
 import { ProductWithRelations } from 'src/common/types/domain.types';
 import { ProductOwnershipProvider } from './product-ownership.provider';
+import { PRODUCT_INCLUDE, ProductStatus } from '../constants/product.constants';
 import { PaginationProviders } from 'src/common/pagination/providers/pagination.providers';
 import { PaginateQueryResult } from 'src/common/pagination/interfaces/paginated.interfaces';
 
@@ -19,13 +19,16 @@ export class GetProductsProvider {
 
   private buildWhere(
     query: QueryProductDto,
-    scope?: { storeId?: number },
+    scope?: { storeId?: number; allowLifeCycle?: boolean },
   ): Prisma.ProductWhereInput {
     const where: Prisma.ProductWhereInput = {};
+    const allowLifeCycle = scope?.allowLifeCycle === true;
 
-    if (query.lifeCycle === 'removed') {
+    if (allowLifeCycle && query.lifeCycle === 'removed') {
       where.deletedAt = { not: null };
-    } else if (query.lifeCycle !== 'all') {
+    } else if (allowLifeCycle && query.lifeCycle === 'all') {
+      /* no deletedAt filter */
+    } else {
       where.deletedAt = null;
     }
 
@@ -39,8 +42,13 @@ export class GetProductsProvider {
       where.categoryId = query.categoryId;
     }
 
-    if (query.status) {
-      where.status = query.status;
+    if (scope?.storeId !== undefined) {
+      if (query.status) {
+        where.status = query.status;
+      }
+    } else {
+      // Public catalog: only ACTIVE products; ignore client status/lifeCycle bypass.
+      where.status = ProductStatus.ACTIVE;
     }
 
     if (query.search?.trim()) {
@@ -84,12 +92,12 @@ export class GetProductsProvider {
   ): Promise<PaginateQueryResult<ProductWithRelations>> {
     const store =
       await this.productOwnershipProvider.findOwnedStoreOrThrow(userId);
-    return this.paginate(query, { storeId: store.id });
+    return this.paginate(query, { storeId: store.id, allowLifeCycle: true });
   }
 
   private async paginate(
     query: QueryProductDto,
-    scope?: { storeId?: number },
+    scope?: { storeId?: number; allowLifeCycle?: boolean },
   ): Promise<PaginateQueryResult<ProductWithRelations>> {
     const { page, limit, skip } = this.paginationProviders.resolvePaging(query);
     const where = this.buildWhere(query, scope);
@@ -113,7 +121,11 @@ export class GetProductsProvider {
 
   public async findOne(id: number): Promise<ProductWithRelations> {
     const product = await this.prisma.product.findFirst({
-      where: { id, deletedAt: null },
+      where: {
+        id,
+        deletedAt: null,
+        status: ProductStatus.ACTIVE,
+      },
       include: PRODUCT_INCLUDE,
     });
 
@@ -126,7 +138,11 @@ export class GetProductsProvider {
 
   public async findBySlug(slug: string): Promise<ProductWithRelations> {
     const product = await this.prisma.product.findFirst({
-      where: { slug, deletedAt: null },
+      where: {
+        slug,
+        deletedAt: null,
+        status: ProductStatus.ACTIVE,
+      },
       include: PRODUCT_INCLUDE,
     });
 

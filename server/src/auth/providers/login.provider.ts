@@ -39,7 +39,7 @@ export class LoginProvider {
         );
       });
 
-    if (!user) {
+    if (!user || user.deletedAt) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
@@ -61,6 +61,7 @@ export class LoginProvider {
       refreshToken,
       user: loggedInUser,
     } = await this.generateTokensProvider.generateTokens(user);
+
     return {
       user: {
         accessToken,

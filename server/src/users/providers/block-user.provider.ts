@@ -2,10 +2,14 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { UserResponse, mapUserToResponse } from '../utils/map-user.util';
 import { USER_ROLES_INCLUDE } from 'src/common/constants/user-roles.constants';
+import { RefreshTokenStoreProvider } from 'src/auth/providers/refresh-token-store.provider';
 
 @Injectable()
 export class BlockUserProvider {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly refreshTokenStore: RefreshTokenStoreProvider,
+  ) {}
 
   public async blockUser(
     id: number,
@@ -17,6 +21,11 @@ export class BlockUserProvider {
         data: { isBlocked },
         include: USER_ROLES_INCLUDE,
       });
+
+      if (isBlocked) {
+        await this.refreshTokenStore.revokeAllForUser(id);
+      }
+
       return mapUserToResponse(saved);
     } catch {
       throw new NotFoundException('User not found');

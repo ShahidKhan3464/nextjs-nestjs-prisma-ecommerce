@@ -5,6 +5,7 @@ import { ResetPasswordDto } from './dto/reset-password.dto';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { RegisterProvider } from './providers/register.provider';
+import { LogoutProvider } from './providers/logout.provider';
 import { LoggedInUser, LoginProvider } from './providers/login.provider';
 import { ResetPasswordProvider } from './providers/reset-password.provider';
 import { RefreshTokensProvider } from './providers/refresh-tokens.provider';
@@ -14,6 +15,7 @@ import { ForgotPasswordProvider } from './providers/forgot-password.provider';
 export class AuthService {
   constructor(
     private readonly loginProvider: LoginProvider,
+    private readonly logoutProvider: LogoutProvider,
     private readonly registerProvider: RegisterProvider,
     private readonly refreshTokensProvider: RefreshTokensProvider,
     private readonly resetPasswordProvider: ResetPasswordProvider,
@@ -50,5 +52,9 @@ export class AuthService {
         ...user,
       },
     };
+  }
+
+  public async logout(dto: RefreshTokenDto): Promise<{ loggedOut: true }> {
+    return this.logoutProvider.logout(dto);
   }
 }

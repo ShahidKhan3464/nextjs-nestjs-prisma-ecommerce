@@ -3,6 +3,7 @@ import { UsersService } from './users.service';
 import { UsersController } from './users.controller';
 import { FilesModule } from 'src/files/files.module';
 import { CryptoModule } from 'src/crypto/crypto.module';
+import { AuthTokensModule } from 'src/auth/auth-tokens.module';
 import { GetUsersProvider } from './providers/get-users.provider';
 import { BlockUserProvider } from './providers/block-user.provider';
 import { CreateUserProvider } from './providers/create-user.provider';
@@ -12,7 +13,7 @@ import { ChangePasswordProvider } from './providers/change-password.provider';
 import { UploadProfileAvatarProvider } from './providers/upload-profile-avatar.provider';
 
 @Module({
-  imports: [CryptoModule, FilesModule],
+  imports: [CryptoModule, FilesModule, AuthTokensModule],
   providers: [
     UsersService,
     GetUsersProvider,

@@ -1,6 +1,7 @@
 import { PrismaService } from 'src/prisma/prisma.service';
 import { ChangePasswordDto } from '../dto/change-password.dto';
 import { HashingProvider } from 'src/crypto/providers/hashing.provider';
+import { RefreshTokenStoreProvider } from 'src/auth/providers/refresh-token-store.provider';
 import {
   Injectable,
   NotFoundException,
@@ -12,6 +13,7 @@ export class ChangePasswordProvider {
   constructor(
     private readonly prisma: PrismaService,
     private readonly hashingProvider: HashingProvider,
+    private readonly refreshTokenStore: RefreshTokenStoreProvider,
   ) {}
 
   async change(userId: number, dto: ChangePasswordDto): Promise<void> {
@@ -19,7 +21,9 @@ export class ChangePasswordProvider {
       throw new BadRequestException('Passwords do not match');
     }
 
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    const user = await this.prisma.user.findFirst({
+      where: { id: userId, deletedAt: null },
+    });
     if (!user) {
       throw new NotFoundException('User not found');
     }
@@ -35,10 +39,9 @@ export class ChangePasswordProvider {
     const hashed = await this.hashingProvider.hash(dto.newPassword);
     await this.prisma.user.update({
       where: { id: userId },
-      data: {
-        password: hashed,
-        confirmPassword: hashed,
-      },
+      data: { password: hashed },
     });
+
+    await this.refreshTokenStore.revokeAllForUser(userId);
   }
 }

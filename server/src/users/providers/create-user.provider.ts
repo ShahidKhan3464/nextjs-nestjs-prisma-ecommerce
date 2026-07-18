@@ -23,6 +23,10 @@ export class CreateUserProvider {
     dto: CreateUserDto,
     tx?: TransactionClient,
   ): Promise<User> {
+    if (dto.password !== dto.confirmPassword) {
+      throw new BadRequestException('Passwords do not match');
+    }
+
     const db = tx ?? this.prisma;
 
     const existingUser = await db.user.findUnique({
@@ -35,9 +39,10 @@ export class CreateUserProvider {
 
     const savedUser = await db.user.create({
       data: {
-        ...dto,
+        email: dto.email,
+        fullName: dto.fullName,
+        phoneNumber: dto.phoneNumber,
         password: await this.hashingProvider.hash(dto.password),
-        confirmPassword: await this.hashingProvider.hash(dto.confirmPassword),
       },
     });
 

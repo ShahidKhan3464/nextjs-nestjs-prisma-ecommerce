@@ -1,8 +1,12 @@
+import type { Request } from 'express';
 import { OrdersService } from './orders.service';
+import type { RawBodyRequest } from '@nestjs/common';
 import { QueryOrderDto } from './dto/query-order.dto';
 import { CancelOrderDto } from './dto/cancel-order.dto';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { Auth } from 'src/auth/decorators/auth.decorator';
 import { UserRole } from 'src/common/enums/user-role.enum';
+import { AuthType } from 'src/auth/constants/auth.constants';
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { CreateCheckoutDto } from './dto/create-checkout.dto';
 import { CancelCheckoutDto } from './dto/cancel-checkout.dto';
@@ -11,13 +15,17 @@ import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 import { ActiveUser } from 'src/common/decorators/active-user.decorator';
 import {
   Get,
+  Req,
   Post,
   Body,
   Patch,
   Param,
   Query,
+  Headers,
+  HttpCode,
   Controller,
   ParseIntPipe,
+  BadRequestException,
 } from '@nestjs/common';
 
 @ApiTags('orders')
@@ -25,6 +33,19 @@ import {
 @Controller('orders')
 export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
+
+  @Post('webhooks/stripe')
+  @Auth(AuthType.NONE)
+  @HttpCode(200)
+  handleStripeWebhook(
+    @Req() req: RawBodyRequest<Request>,
+    @Headers('stripe-signature') signature: string | undefined,
+  ) {
+    if (!req.rawBody) {
+      throw new BadRequestException('Missing raw request body');
+    }
+    return this.ordersService.handleStripeWebhook(req.rawBody, signature);
+  }
 
   @Get()
   findMine(@ActiveUser() userId: number, @Query() query: QueryOrderDto) {

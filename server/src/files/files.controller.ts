@@ -1,3 +1,4 @@
+import type { Response } from 'express';
 import { FilesService } from './files.service';
 import { UserRole } from 'src/common/enums/user-role.enum';
 import { Roles } from 'src/common/decorators/roles.decorator';
@@ -17,6 +18,7 @@ import {
 } from './dto/stored-file-response.dto';
 import {
   Get,
+  Res,
   Post,
   Body,
   Param,
@@ -40,6 +42,17 @@ import {
 @Controller('files')
 export class FilesController {
   constructor(private readonly filesService: FilesService) {}
+
+  @Get('secure/:fileId')
+  @ApiOkResponse({ description: 'Authenticated download of a private file' })
+  downloadSecureFile(
+    @Param('fileId', ParseIntPipe) fileId: number,
+    @ActiveUser() userId: number,
+    @ActiveUser('roles') roles: UserRole[],
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    return this.filesService.streamSecureFile(fileId, userId, roles, res);
+  }
 
   // ── Product files ──────────────────────────────────────────────
 

@@ -1,5 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { STORED_FILE_SELECT } from '../constants/file.constants';
+import {
+  STORED_FILE_SELECT,
+  isPrivateStorageKey,
+  buildSecureFileUrlPath,
+  isPrivateAssociationType,
+} from '../constants/file.constants';
 
 export type StoredFileMapped = {
   id: number;
@@ -28,12 +33,30 @@ type StoredFileSelectRow = {
   createdAt: Date;
   originalName: string;
   storedName: string;
+  storageKey?: string;
 };
 
-export function mapStoredFile(file: StoredFileSelectRow): StoredFileMapped {
+function resolveUrlPath(
+  file: StoredFileSelectRow,
+  associationType?: string,
+): string {
+  if (
+    (associationType && isPrivateAssociationType(associationType)) ||
+    (file.storageKey && isPrivateStorageKey(file.storageKey))
+  ) {
+    return buildSecureFileUrlPath(file.id);
+  }
+
+  return file.urlPath;
+}
+
+export function mapStoredFile(
+  file: StoredFileSelectRow,
+  associationType?: string,
+): StoredFileMapped {
   return {
     id: file.id,
-    urlPath: file.urlPath,
+    urlPath: resolveUrlPath(file, associationType),
     mimeType: file.mimeType,
     fileSize: file.fileSize,
     extension: file.extension,
@@ -53,7 +76,7 @@ export function mapAssociation(entry: {
     id: entry.id,
     type: entry.type,
     sortOrder: entry.sortOrder,
-    file: mapStoredFile(entry.file),
+    file: mapStoredFile(entry.file, entry.type),
   };
 }
 

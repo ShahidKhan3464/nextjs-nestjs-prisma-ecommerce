@@ -7,6 +7,8 @@ export default Joi.object({
   DATABASE_URL: Joi.string().required(),
   API_VERSION: Joi.string().default('v1'),
   STRIPE_SECRET_KEY: Joi.string().required(),
+  STRIPE_WEBHOOK_SECRET: Joi.string().optional(),
+  SWAGGER_ENABLED: Joi.boolean().truthy('true').falsy('false').default(false),
   JWT_SECRET: Joi.string()
     .required()
     .min(16)
@@ -18,16 +20,16 @@ export default Joi.object({
       'jwt-secret',
       'supersecret',
     ),
-  JWT_ACCESS_TOKEN_TTL: Joi.string().default('2d'),
-  JWT_REFRESH_TOKEN_TTL: Joi.string().default('7d'),
   MAIL_HOST: Joi.string().required(),
   SMTP_USERNAME: Joi.string().required(),
   SMTP_PASSWORD: Joi.string().required(),
   MAIL_SECURE: Joi.boolean().default(false),
-  MAIL_PORT: Joi.number().integer().min(1).max(65535).default(2525),
   ADMIN_EMAIL: Joi.string().email().optional(),
+  JWT_ACCESS_TOKEN_TTL: Joi.string().default('2d'),
+  JWT_REFRESH_TOKEN_TTL: Joi.string().default('7d'),
   ADMIN_NAME: Joi.string().min(5).max(30).optional(),
   ADMIN_PHONE: Joi.string().min(10).max(15).optional(),
   ADMIN_PASSWORD: Joi.string().min(8).max(30).optional(),
+  MAIL_PORT: Joi.number().integer().min(1).max(65535).default(2525),
   SEED_DEMO_DATA: Joi.boolean().truthy('true').falsy('false').default(false),
 });

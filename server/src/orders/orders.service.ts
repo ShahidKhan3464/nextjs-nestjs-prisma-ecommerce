@@ -9,6 +9,7 @@ import { GetOrderProvider } from './providers/get-order.provider';
 import { GetOrdersProvider } from './providers/get-orders.provider';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 import { CancelOrderProvider } from './providers/cancel-order.provider';
+import { StripeWebhookProvider } from './providers/stripe-webhook.provider';
 import { CreateCheckoutProvider } from './providers/create-checkout.provider';
 import { CancelCheckoutProvider } from './providers/cancel-checkout.provider';
 import { CompleteCheckoutProvider } from './providers/complete-checkout.provider';
@@ -20,6 +21,7 @@ export class OrdersService {
     private readonly getOrderProvider: GetOrderProvider,
     private readonly getOrdersProvider: GetOrdersProvider,
     private readonly cancelOrderProvider: CancelOrderProvider,
+    private readonly stripeWebhookProvider: StripeWebhookProvider,
     private readonly createCheckoutProvider: CreateCheckoutProvider,
     private readonly cancelCheckoutProvider: CancelCheckoutProvider,
     private readonly completeCheckoutProvider: CompleteCheckoutProvider,
@@ -52,6 +54,10 @@ export class OrdersService {
 
   completeCheckout(userId: number, dto: CompleteCheckoutDto) {
     return this.completeCheckoutProvider.complete(userId, dto);
+  }
+
+  handleStripeWebhook(rawBody: Buffer, signature: string | undefined) {
+    return this.stripeWebhookProvider.handle(rawBody, signature);
   }
 
   updateStatus(

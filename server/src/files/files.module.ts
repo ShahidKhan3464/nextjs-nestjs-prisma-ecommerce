@@ -8,6 +8,7 @@ import { LocalStorageProvider } from './providers/local-storage.provider';
 import { STORAGE_PROVIDER } from './interfaces/storage-provider.interface';
 import { FileValidationProvider } from './providers/file-validation.provider';
 import { FileAssociationProvider } from './providers/file-association.provider';
+import { SecureFileAccessProvider } from './providers/secure-file-access.provider';
 import { FileAuthorizationProvider } from './providers/file-authorization.provider';
 
 @Module({
@@ -20,6 +21,7 @@ import { FileAuthorizationProvider } from './providers/file-authorization.provid
     LocalStorageProvider,
     FileValidationProvider,
     FileAssociationProvider,
+    SecureFileAccessProvider,
     FileAuthorizationProvider,
     {
       provide: STORAGE_PROVIDER,

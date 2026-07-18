@@ -1,3 +1,7 @@
+import Stripe from 'stripe';
+import type { ConfigType } from '@nestjs/config';
+import type { Stripe as StripeTypes } from 'stripe';
+import stripeConfig from 'src/config/stripe.config';
 import { PrismaService } from 'src/prisma/prisma.service';
 import {
   OrderStatus,
@@ -5,6 +9,7 @@ import {
   CheckoutSessionStatus,
 } from '../constants/order.constants';
 import {
+  Inject,
   Injectable,
   NotFoundException,
   ForbiddenException,
@@ -13,7 +18,19 @@ import {
 
 @Injectable()
 export class CancelCheckoutProvider {
-  constructor(private readonly prisma: PrismaService) {}
+  private stripe: StripeTypes;
+
+  constructor(
+    private readonly prisma: PrismaService,
+    @Inject(stripeConfig.KEY)
+    private readonly stripeConfiguration: ConfigType<typeof stripeConfig>,
+  ) {
+    const secretKey = this.stripeConfiguration.secretKey;
+    if (!secretKey) {
+      throw new Error('STRIPE_SECRET_KEY is not configured');
+    }
+    this.stripe = new Stripe(secretKey);
+  }
 
   async cancel(paymentIntentId: string, userId: number): Promise<void> {
     const session = await this.prisma.checkoutSession.findFirst({
@@ -29,6 +46,28 @@ export class CancelCheckoutProvider {
 
     if (session.userId !== userId) {
       throw new ForbiddenException();
+    }
+
+    try {
+      const paymentIntent =
+        await this.stripe.paymentIntents.retrieve(paymentIntentId);
+
+      if (paymentIntent.status === 'succeeded') {
+        throw new BadRequestException(
+          'Payment already succeeded; complete checkout instead',
+        );
+      }
+
+      if (paymentIntent.status !== 'canceled') {
+        await this.stripe.paymentIntents.cancel(paymentIntentId).catch(() => {
+          /* best-effort cancel */
+        });
+      }
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      /* continue local cleanup if Stripe cancel fails */
     }
 
     await this.prisma.$transaction(async (tx) => {

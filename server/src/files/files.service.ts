@@ -1,9 +1,12 @@
+import type { Response } from 'express';
 import { Injectable } from '@nestjs/common';
+import { StreamableFile } from '@nestjs/common';
 import { UserRole } from 'src/common/enums/user-role.enum';
 import { DeleteFileResult } from './providers/delete-file.provider';
 import { UploadFileProvider } from './providers/upload-file.provider';
 import { DeleteFileProvider } from './providers/delete-file.provider';
 import { FileAssociationProvider } from './providers/file-association.provider';
+import { SecureFileAccessProvider } from './providers/secure-file-access.provider';
 import { FileAuthorizationProvider } from './providers/file-authorization.provider';
 import {
   UserFileType,
@@ -23,7 +26,17 @@ export class FilesService {
     private readonly uploadFileProvider: UploadFileProvider,
     private readonly deleteFileProvider: DeleteFileProvider,
     private readonly authorization: FileAuthorizationProvider,
+    private readonly secureFileAccess: SecureFileAccessProvider,
   ) {}
+
+  public streamSecureFile(
+    fileId: number,
+    userId: number,
+    roles: UserRole[],
+    res: Response,
+  ): Promise<StreamableFile> {
+    return this.secureFileAccess.streamSecureFile(fileId, userId, roles, res);
+  }
 
   public uploadProductFile(
     productId: number,

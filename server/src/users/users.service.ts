@@ -133,17 +133,12 @@ export class UsersService {
     });
   }
 
-  public async updatePassword(
-    id: number,
-    password: string,
-    confirmPassword: string,
-  ): Promise<void> {
-    try {
-      await this.prisma.user.update({
-        where: { id },
-        data: { password, confirmPassword },
-      });
-    } catch {
+  public async updatePassword(id: number, password: string): Promise<void> {
+    const result = await this.prisma.user.updateMany({
+      where: { id, deletedAt: null },
+      data: { password },
+    });
+    if (result.count === 0) {
       throw new NotFoundException('User not found');
     }
   }

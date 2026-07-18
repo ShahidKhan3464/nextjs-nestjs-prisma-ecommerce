@@ -69,4 +69,27 @@ export const STORED_FILE_SELECT = {
   createdAt: true,
   originalName: true,
   storedName: true,
+  storageKey: true,
 } as const;
+
+/** Subdirectories that must never be served via public /uploads static assets. */
+export const PRIVATE_UPLOAD_SUBDIRS: ReadonlySet<string> = new Set([
+  FileUploadSubdir.SELLERS,
+]);
+
+export function buildSecureFileUrlPath(fileId: number): string {
+  return `/files/secure/${fileId}`;
+}
+
+export function isPrivateAssociationType(type: string): boolean {
+  return (
+    type === UserFileType.DOCUMENT ||
+    type === SellerDocumentType.BUSINESS_LICENSE ||
+    type === SellerDocumentType.TAX_DOCUMENT
+  );
+}
+
+export function isPrivateStorageKey(storageKey: string): boolean {
+  const subdir = storageKey.split('/')[0] ?? '';
+  return PRIVATE_UPLOAD_SUBDIRS.has(subdir);
+}

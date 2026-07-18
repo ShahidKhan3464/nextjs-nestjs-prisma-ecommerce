@@ -49,7 +49,16 @@ export class AuthController {
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
   @Auth(AuthType.NONE)
+  @Throttle({ default: { limit: 20, ttl: 60_000 } })
   async refresh(@Body() dto: RefreshTokenDto) {
     return this.authService.refreshTokens(dto);
+  }
+
+  @Post('logout')
+  @HttpCode(HttpStatus.OK)
+  @Auth(AuthType.NONE)
+  @Throttle({ default: { limit: 20, ttl: 60_000 } })
+  async logout(@Body() dto: RefreshTokenDto) {
+    return this.authService.logout(dto);
   }
 }

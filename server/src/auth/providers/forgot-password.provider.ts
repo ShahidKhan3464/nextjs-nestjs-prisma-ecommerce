@@ -1,25 +1,20 @@
-import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { User } from 'src/generated/prisma/client';
 import { UsersService } from 'src/users/users.service';
 import { MailService } from 'src/mail/providers/mail.service';
 import { ForgotPasswordDto } from '../dto/forgot-password.dto';
-import {
-  Logger,
-  Injectable,
-  NotFoundException,
-  RequestTimeoutException,
-} from '@nestjs/common';
+import { GenerateTokensProvider } from './generate-tokens.provider';
+import { Logger, Injectable, RequestTimeoutException } from '@nestjs/common';
 
 @Injectable()
 export class ForgotPasswordProvider {
   private readonly logger = new Logger(ForgotPasswordProvider.name);
 
   constructor(
-    private readonly jwtService: JwtService,
     private readonly mailService: MailService,
     private readonly usersService: UsersService,
     private readonly configService: ConfigService,
+    private readonly generateTokensProvider: GenerateTokensProvider,
   ) {}
 
   public async forgotPassword(
@@ -35,14 +30,13 @@ export class ForgotPasswordProvider {
       );
     }
 
-    if (!user) {
-      throw new NotFoundException('User not found');
+    // Always return the same response to avoid email enumeration.
+    if (!user || user.deletedAt || user.isBlocked) {
+      return { sent: true };
     }
 
-    const secret = this.configService.getOrThrow<string>('jwt.secret');
-    const token = await this.jwtService.signAsync(
-      { sub: user.id, purpose: 'password-reset' },
-      { expiresIn: '1h', secret },
+    const token = await this.generateTokensProvider.signPasswordResetToken(
+      user.id,
     );
 
     const base = (

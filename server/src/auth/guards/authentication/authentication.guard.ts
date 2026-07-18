@@ -4,6 +4,7 @@ import { AUTH_TYPES_KEY, AuthType } from 'src/auth/constants/auth.constants';
 import {
   Injectable,
   CanActivate,
+  HttpException,
   ExecutionContext,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -12,6 +13,7 @@ import {
 export class AuthenticationGuard implements CanActivate {
   private static readonly defaultAuthType = AuthType.BEARER;
   private readonly authTypeGuardMap: Record<string, CanActivate>;
+
   constructor(
     private readonly reflector: Reflector,
     private readonly accessTokenGuard: AccessTokenGuard,
@@ -23,27 +25,34 @@ export class AuthenticationGuard implements CanActivate {
       },
     };
   }
+
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    void context;
     const authTypes = this.reflector.getAllAndOverride<AuthType[]>(
       AUTH_TYPES_KEY,
       [context.getHandler(), context.getClass()],
     ) ?? [AuthenticationGuard.defaultAuthType];
 
     const guards = authTypes.map((type) => this.authTypeGuardMap[type]).flat();
-
-    const error = new UnauthorizedException();
+    let lastError: unknown = new UnauthorizedException();
 
     for (const guard of guards) {
-      const canActivate = await Promise.resolve(
-        guard.canActivate(context),
-      ).catch(() => {
-        throw error;
-      });
-      if (canActivate) {
-        return true;
+      try {
+        const canActivate = await Promise.resolve(guard.canActivate(context));
+        if (canActivate) {
+          return true;
+        }
+      } catch (error) {
+        lastError = error;
+        if (error instanceof HttpException) {
+          throw error;
+        }
       }
     }
-    throw error;
+
+    if (lastError instanceof HttpException) {
+      throw lastError;
+    }
+
+    throw new UnauthorizedException();
   }
 }

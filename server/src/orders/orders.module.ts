@@ -8,6 +8,7 @@ import { PaymentsModule } from 'src/payments/payments.module';
 import { GetOrderProvider } from './providers/get-order.provider';
 import { GetOrdersProvider } from './providers/get-orders.provider';
 import { CancelOrderProvider } from './providers/cancel-order.provider';
+import { StripeWebhookProvider } from './providers/stripe-webhook.provider';
 import { CreateCheckoutProvider } from './providers/create-checkout.provider';
 import { CancelCheckoutProvider } from './providers/cancel-checkout.provider';
 import { OrderOwnershipProvider } from './providers/order-ownership.provider';
@@ -22,6 +23,7 @@ import { UpdateOrderStatusProvider } from './providers/update-order-status.provi
     GetOrderProvider,
     GetOrdersProvider,
     CancelOrderProvider,
+    StripeWebhookProvider,
     OrderOwnershipProvider,
     CreateCheckoutProvider,
     CancelCheckoutProvider,

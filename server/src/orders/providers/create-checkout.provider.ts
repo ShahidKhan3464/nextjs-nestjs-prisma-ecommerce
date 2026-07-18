@@ -226,8 +226,6 @@ export class CreateCheckoutProvider {
         where: { orderId: { in: orderIds } },
         data: { transactionId: paymentIntent.id },
       });
-
-      await tx.cartItem.deleteMany({ where: { userId } });
     });
 
     return {
@@ -256,7 +254,47 @@ export class CreateCheckoutProvider {
       return;
     }
 
-    const transactionIds = existingSessions
+    const protectedSessionIds = new Set<number>();
+
+    for (const session of existingSessions) {
+      const piId = session.stripePaymentIntentId;
+      if (!piId || piId === 'pending') {
+        continue;
+      }
+
+      try {
+        const paymentIntent = await this.stripe.paymentIntents.retrieve(piId);
+        if (
+          paymentIntent.status === 'succeeded' ||
+          paymentIntent.status === 'processing'
+        ) {
+          // Do not delete orders that may already be paid — leave for complete/webhook.
+          protectedSessionIds.add(session.id);
+          continue;
+        }
+
+        if (
+          paymentIntent.status === 'requires_payment_method' ||
+          paymentIntent.status === 'requires_confirmation' ||
+          paymentIntent.status === 'requires_action' ||
+          paymentIntent.status === 'requires_capture'
+        ) {
+          await this.stripe.paymentIntents.cancel(piId).catch(() => undefined);
+        }
+      } catch {
+        /* continue cleanup for unreachable PI lookups */
+      }
+    }
+
+    const sessionsToExpire = existingSessions.filter(
+      (session) => !protectedSessionIds.has(session.id),
+    );
+
+    if (sessionsToExpire.length === 0) {
+      return;
+    }
+
+    const transactionIds = sessionsToExpire
       .map((session) => session.stripePaymentIntentId)
       .filter((id) => id && id !== 'pending');
 
@@ -282,7 +320,7 @@ export class CreateCheckoutProvider {
 
       await tx.checkoutSession.updateMany({
         where: {
-          id: { in: existingSessions.map((session) => session.id) },
+          id: { in: sessionsToExpire.map((session) => session.id) },
           status: CheckoutSessionStatus.PENDING,
         },
         data: { status: CheckoutSessionStatus.EXPIRED },

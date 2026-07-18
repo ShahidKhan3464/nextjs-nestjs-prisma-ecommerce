@@ -51,8 +51,29 @@ export class CompleteCheckoutProvider {
     userId: number,
     dto: CompleteCheckoutDto,
   ): Promise<CompleteCheckoutResponse> {
+    return this.completePaymentIntent(userId, dto.paymentIntentId);
+  }
+
+  /** Used by Stripe webhooks — trusts PaymentIntent metadata.userId. */
+  async completeFromWebhook(
+    paymentIntentId: string,
+  ): Promise<CompleteCheckoutResponse> {
     const paymentIntent = await this.stripe.paymentIntents.retrieve(
-      dto.paymentIntentId,
+      paymentIntentId,
+    );
+    const userId = Number(paymentIntent.metadata?.userId);
+    if (!Number.isFinite(userId)) {
+      throw new BadRequestException('Invalid checkout payment metadata');
+    }
+    return this.completePaymentIntent(userId, paymentIntentId);
+  }
+
+  private async completePaymentIntent(
+    userId: number,
+    paymentIntentId: string,
+  ): Promise<CompleteCheckoutResponse> {
+    const paymentIntent = await this.stripe.paymentIntents.retrieve(
+      paymentIntentId,
       { expand: ['payment_method'] },
     );
 
@@ -78,6 +99,7 @@ export class CompleteCheckoutProvider {
     });
 
     if (existingPaid.length > 0) {
+      await this.prisma.cartItem.deleteMany({ where: { userId } });
       const orders = await this.loadOrders(
         existingPaid.map((payment) => payment.orderId),
       );
@@ -101,7 +123,10 @@ export class CompleteCheckoutProvider {
     }
 
     const expectedCents = Math.round(Number(session.totalAmount) * 100);
-    if (paymentIntent.amount_received < expectedCents) {
+    if (
+      paymentIntent.amount_received !== expectedCents ||
+      paymentIntent.currency.toLowerCase() !== 'usd'
+    ) {
       throw new BadRequestException('Payment amount mismatch');
     }
 
@@ -159,6 +184,8 @@ export class CompleteCheckoutProvider {
         where: { id: session.id },
         data: { status: CheckoutSessionStatus.COMPLETED },
       });
+
+      await tx.cartItem.deleteMany({ where: { userId } });
     });
 
     const created = await this.loadOrders(orderIds);

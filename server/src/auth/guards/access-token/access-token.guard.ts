@@ -3,6 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import jwtConfig from 'src/config/jwt.config';
 import type { ConfigType } from '@nestjs/config';
 import { UsersService } from 'src/users/users.service';
+import { JwtTokenType } from 'src/auth/constants/jwt-token-type.enum';
 import { extractUserRoles } from 'src/common/utils/authorization.util';
 import { JwtAccessTokenPayload } from 'src/common/types/jwt-payload.type';
 import { REQUEST_USER_KEY } from 'src/common/constants/request-user.constants';
@@ -31,25 +32,36 @@ export class AccessTokenGuard implements CanActivate {
     if (!token) {
       throw new UnauthorizedException();
     }
+
     try {
       const payload = await this.jwtService.verifyAsync<
         Record<string, unknown>
       >(token, {
         secret: this.jwtConfiguration.secret,
       });
+
+      if (payload.typ !== JwtTokenType.ACCESS) {
+        throw new UnauthorizedException();
+      }
+
       const userId = Number(payload.sub);
       if (!Number.isFinite(userId)) {
         throw new UnauthorizedException();
       }
 
       const user = await this.usersService.findOneForAuthById(userId);
-      if (!user || user.isBlocked) {
+      if (!user || user.deletedAt) {
+        throw new UnauthorizedException();
+      }
+
+      if (user.isBlocked) {
         throw new ForbiddenException(ACCOUNT_BLOCKED_MESSAGE);
       }
 
       const authenticatedUser: JwtAccessTokenPayload = {
         sub: userId,
         email: user.email,
+        typ: JwtTokenType.ACCESS,
         roles: extractUserRoles(user),
       };
 
@@ -65,6 +77,7 @@ export class AccessTokenGuard implements CanActivate {
       }
       throw new UnauthorizedException();
     }
+
     return true;
   }
 

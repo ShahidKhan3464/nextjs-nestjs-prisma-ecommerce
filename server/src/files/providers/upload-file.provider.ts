@@ -10,6 +10,8 @@ import {
   ProductFileType,
   FileUploadSubdir,
   SellerDocumentType,
+  buildSecureFileUrlPath,
+  isPrivateAssociationType,
 } from '../constants/file.constants';
 import {
   STORAGE_PROVIDER,
@@ -39,7 +41,7 @@ export class UploadFileProvider {
     file: Express.Multer.File,
   ): Promise<FileAssociationMapped> {
     return this.persistWithCleanup(file, async () => {
-      this.validation.assertValid(file, 'image');
+      await this.validation.assertMagicBytes(file, 'image');
       await this.authorization.assertCanManageProduct(productId, userId, roles);
 
       const meta = this.storage.buildMetaFromMulterFile(
@@ -103,7 +105,7 @@ export class UploadFileProvider {
     file: Express.Multer.File,
   ): Promise<FileAssociationMapped> {
     return this.persistWithCleanup(file, async () => {
-      this.validation.assertValid(file, 'image');
+      await this.validation.assertMagicBytes(file, 'image');
       await this.authorization.assertCanManageStore(storeId, userId, roles);
 
       const meta = this.storage.buildMetaFromMulterFile(
@@ -157,7 +159,7 @@ export class UploadFileProvider {
   ): Promise<FileAssociationMapped> {
     return this.persistWithCleanup(file, async () => {
       const profile = type === UserFileType.DOCUMENT ? 'document' : 'image';
-      this.validation.assertValid(file, profile);
+      await this.validation.assertMagicBytes(file, profile);
       await this.authorization.assertCanManageUser(
         targetUserId,
         actorUserId,
@@ -197,6 +199,13 @@ export class UploadFileProvider {
           });
 
           const storedFile = await tx.storedFile.create({ data: meta });
+          if (isPrivateAssociationType(type)) {
+            await tx.storedFile.update({
+              where: { id: storedFile.id },
+              data: { urlPath: buildSecureFileUrlPath(storedFile.id) },
+            });
+          }
+
           const association = await this.associations.createUserFile(tx, {
             userId: targetUserId,
             fileId: storedFile.id,
@@ -226,7 +235,7 @@ export class UploadFileProvider {
     file: Express.Multer.File,
   ): Promise<FileAssociationMapped> {
     return this.persistWithCleanup(file, async () => {
-      this.validation.assertValid(file, 'document');
+      await this.validation.assertMagicBytes(file, 'document');
       await this.authorization.assertCanManageSellerProfile(
         sellerProfileId,
         userId,
@@ -240,6 +249,10 @@ export class UploadFileProvider {
 
       const association = await this.prisma.$transaction(async (tx) => {
         const storedFile = await tx.storedFile.create({ data: meta });
+        await tx.storedFile.update({
+          where: { id: storedFile.id },
+          data: { urlPath: buildSecureFileUrlPath(storedFile.id) },
+        });
         return this.associations.createSellerDocument(tx, {
           sellerProfileId,
           fileId: storedFile.id,

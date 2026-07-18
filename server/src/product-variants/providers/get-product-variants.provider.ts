@@ -26,9 +26,10 @@ export class GetProductVariantsProvider {
         deletedAt: null,
         ...(scope?.storeId !== undefined
           ? { storeId: scope.storeId }
-          : query.storeId
-            ? { storeId: query.storeId }
-            : {}),
+          : {
+              status: 'ACTIVE',
+              ...(query.storeId ? { storeId: query.storeId } : {}),
+            }),
       },
     };
 
@@ -101,7 +102,11 @@ export class GetProductVariantsProvider {
     query: QueryProductVariantDto,
   ): Promise<PaginateQueryResult<ProductVariantWithRelations>> {
     const product = await this.prisma.product.findFirst({
-      where: { id: productId, deletedAt: null },
+      where: {
+        id: productId,
+        deletedAt: null,
+        status: 'ACTIVE',
+      },
       select: { id: true },
     });
 
@@ -140,7 +145,7 @@ export class GetProductVariantsProvider {
     const variant = await this.prisma.productVariant.findFirst({
       where: {
         id,
-        product: { deletedAt: null },
+        product: { deletedAt: null, status: 'ACTIVE' },
       },
       include: VARIANT_INCLUDE,
     });
