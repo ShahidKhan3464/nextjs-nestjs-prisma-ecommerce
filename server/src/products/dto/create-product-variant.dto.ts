@@ -2,6 +2,7 @@ import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 import {
   Min,
+  IsInt,
   IsNumber,
   IsString,
   MaxLength,
@@ -31,13 +32,13 @@ export class CreateProductVariantDto {
 
   @ApiProperty({ example: 10 })
   @Type(() => Number)
-  @IsNumber()
+  @IsInt()
   @Min(0)
   stock: number;
 
   @ApiProperty({ example: 99.99 })
   @Type(() => Number)
-  @IsNumber()
+  @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0)
   price: number;
 }

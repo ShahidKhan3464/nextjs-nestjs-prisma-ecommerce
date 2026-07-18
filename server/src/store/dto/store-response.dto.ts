@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { StoreStatus, StoreFileType } from '../constants/store.constants';
+import { SellerProfileStatus } from 'src/seller/constants/seller.constants';
 
 export class StoreFileAssetResponseDto {
   @ApiProperty({ example: 1 })
@@ -42,8 +43,11 @@ export class StoreSellerProfileSummaryDto {
   @ApiProperty({ example: 42 })
   userId: number;
 
-  @ApiProperty({ example: 'APPROVED' })
-  status: string;
+  @ApiProperty({
+    enum: SellerProfileStatus,
+    example: SellerProfileStatus.APPROVED,
+  })
+  status: SellerProfileStatus;
 
   @ApiProperty({ example: 'Acme Trading LLC' })
   businessName: string;

@@ -1,10 +1,16 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   PASSWORD_MAX_LENGTH,
   PASSWORD_MIN_LENGTH,
   PASSWORD_COMPLEXITY_REGEX,
   PASSWORD_COMPLEXITY_MESSAGE,
 } from 'src/common/constants/password.constants';
+import {
+  PHONE_REGEX,
+  PHONE_MAX_LENGTH,
+  PHONE_MIN_LENGTH,
+  PHONE_VALIDATION_MESSAGE,
+} from 'src/common/constants/phone.constants';
 import {
   IsEmail,
   Matches,
@@ -28,14 +34,19 @@ export class CreateUserDto {
   @MaxLength(30)
   fullName: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     example: '+1234567890',
     description: 'User phone number',
-    required: false,
+    minLength: PHONE_MIN_LENGTH,
+    maxLength: PHONE_MAX_LENGTH,
   })
   @IsOptional()
   @IsString()
-  @MaxLength(20)
+  @MinLength(PHONE_MIN_LENGTH)
+  @MaxLength(PHONE_MAX_LENGTH)
+  @Matches(PHONE_REGEX, {
+    message: `phoneNumber ${PHONE_VALIDATION_MESSAGE}`,
+  })
   phoneNumber?: string;
 
   @ApiProperty({

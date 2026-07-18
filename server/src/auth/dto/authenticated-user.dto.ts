@@ -18,7 +18,7 @@ export class AuthenticatedUserDto {
     example: AUTH_SWAGGER_EXAMPLES.authenticatedUser.roles,
     description: 'Assigned roles for the user',
   })
-  roles: string[];
+  roles: UserRole[];
 
   @ApiProperty({ example: false, description: 'Whether the user account is blocked' })
   isBlocked: boolean;

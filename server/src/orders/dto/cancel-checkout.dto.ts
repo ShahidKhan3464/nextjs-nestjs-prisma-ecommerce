@@ -1,7 +1,14 @@
-import { IsString, MinLength } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
+import { IsString, MaxLength, MinLength } from 'class-validator';
 
 export class CancelCheckoutDto {
+  @ApiProperty({
+    description: 'Stripe PaymentIntent id',
+    example: 'pi_3Abc123...',
+    maxLength: 255,
+  })
   @IsString()
   @MinLength(1)
+  @MaxLength(255)
   paymentIntentId: string;
 }

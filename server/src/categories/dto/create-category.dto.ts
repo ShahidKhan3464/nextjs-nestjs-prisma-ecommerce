@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsNotEmpty,
   IsOptional,
@@ -20,15 +20,15 @@ export class CreateCategoryDto {
   @MaxLength(255)
   name: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     example: 'Category description',
     description: 'Category description',
     minLength: 10,
     maxLength: 1000,
   })
-  @IsString()
   @IsOptional()
+  @IsString()
   @MinLength(10)
   @MaxLength(1000)
-  description: string;
+  description?: string;
 }

@@ -1,7 +1,14 @@
 import { Type } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { Min, IsInt, IsString, MaxLength, IsOptional } from 'class-validator';
 import { PaginationQueryDto } from 'src/common/pagination/dto/pagination-query.dto';
+import {
+  Min,
+  IsInt,
+  IsNumber,
+  IsString,
+  MaxLength,
+  IsOptional,
+} from 'class-validator';
 
 export class QueryProductVariantDto extends PaginationQueryDto {
   @ApiPropertyOptional({ description: 'Filter by product id' })
@@ -38,6 +45,7 @@ export class QueryProductVariantDto extends PaginationQueryDto {
 
   @ApiPropertyOptional({
     description: 'Search in SKU, color, and size (case-insensitive)',
+    maxLength: 255,
   })
   @IsOptional()
   @IsString()
@@ -61,12 +69,14 @@ export class QueryProductVariantDto extends PaginationQueryDto {
   @ApiPropertyOptional({ description: 'Minimum price' })
   @IsOptional()
   @Type(() => Number)
+  @IsNumber()
   @Min(0)
   minPrice?: number;
 
   @ApiPropertyOptional({ description: 'Maximum price' })
   @IsOptional()
   @Type(() => Number)
+  @IsNumber()
   @Min(0)
   maxPrice?: number;
 }

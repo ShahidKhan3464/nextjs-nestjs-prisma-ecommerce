@@ -1,6 +1,6 @@
 import { Type, Transform } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsInt, IsOptional } from 'class-validator';
+import { Min, IsEnum, IsInt, IsOptional } from 'class-validator';
 import { OrderStatus, PaymentStatus } from '../constants/order.constants';
 import { PaginationQueryDto } from 'src/common/pagination/dto/pagination-query.dto';
 
@@ -27,6 +27,7 @@ export class QueryOrderDto extends PaginationQueryDto {
   @IsOptional()
   @Type(() => Number)
   @IsInt()
+  @Min(1)
   userId?: number;
 
   @ApiPropertyOptional({
@@ -35,5 +36,6 @@ export class QueryOrderDto extends PaginationQueryDto {
   @IsOptional()
   @Type(() => Number)
   @IsInt()
+  @Min(1)
   storeId?: number;
 }

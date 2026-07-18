@@ -8,9 +8,14 @@ import {
 } from 'src/common/constants/password.constants';
 
 export class ChangePasswordDto {
-  @ApiProperty({ minLength: PASSWORD_MIN_LENGTH })
+  @ApiProperty({
+    description: 'Current account password',
+    minLength: PASSWORD_MIN_LENGTH,
+    maxLength: PASSWORD_MAX_LENGTH,
+  })
   @IsString()
   @MinLength(PASSWORD_MIN_LENGTH)
+  @MaxLength(PASSWORD_MAX_LENGTH)
   currentPassword: string;
 
   @ApiProperty({

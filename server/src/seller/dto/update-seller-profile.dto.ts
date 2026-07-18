@@ -1,5 +1,11 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import {
+  PHONE_REGEX,
+  PHONE_MAX_LENGTH,
+  PHONE_MIN_LENGTH,
+  PHONE_VALIDATION_MESSAGE,
+} from 'src/common/constants/phone.constants';
+import {
   IsEmail,
   Matches,
   IsString,
@@ -33,14 +39,15 @@ export class UpdateSellerProfileDto {
   @ApiPropertyOptional({
     example: '+1234567890',
     description: 'Business contact phone',
-    maxLength: 30,
+    minLength: PHONE_MIN_LENGTH,
+    maxLength: PHONE_MAX_LENGTH,
   })
   @IsOptional()
   @IsString()
-  @MinLength(7)
-  @MaxLength(30)
-  @Matches(/^[+\d][\d\s()-]{6,29}$/, {
-    message: 'businessPhone must be a valid phone number',
+  @MinLength(PHONE_MIN_LENGTH)
+  @MaxLength(PHONE_MAX_LENGTH)
+  @Matches(PHONE_REGEX, {
+    message: `businessPhone ${PHONE_VALIDATION_MESSAGE}`,
   })
   businessPhone?: string;
 

@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsIn, IsOptional, IsString } from 'class-validator';
+import { IsIn, IsOptional, IsString, MaxLength } from 'class-validator';
 import { PaginationQueryDto } from 'src/common/pagination/dto/pagination-query.dto';
 
 export class QueryUserDto extends PaginationQueryDto {
@@ -11,9 +11,13 @@ export class QueryUserDto extends PaginationQueryDto {
   @IsIn(['true', 'false'])
   isBlocked?: 'true' | 'false';
 
-  @ApiPropertyOptional({ description: 'Search by name or email' })
+  @ApiPropertyOptional({
+    description: 'Search by name or email',
+    maxLength: 255,
+  })
   @IsOptional()
   @IsString()
+  @MaxLength(255)
   search?: string;
 }
 

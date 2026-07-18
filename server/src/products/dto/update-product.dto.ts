@@ -49,10 +49,12 @@ export class UpdateProductDto {
     if (typeof value !== 'string') return value;
     try {
       const parsed: unknown = JSON.parse(value);
-      if (!Array.isArray(parsed)) return [];
+      if (!Array.isArray(parsed)) {
+        return value as unknown as CreateProductVariantDto[];
+      }
       return plainToInstance(CreateProductVariantDto, parsed);
     } catch {
-      return [];
+      return value as unknown as CreateProductVariantDto[];
     }
   })
   @IsArray()

@@ -1,6 +1,6 @@
 import { Type } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsInt, IsOptional, Max, Min } from 'class-validator';
+import { Min, IsInt, IsOptional, Max } from 'class-validator';
 import { PaginationQueryDto } from 'src/common/pagination/dto/pagination-query.dto';
 import {
   REVIEW_RATING_MAX,
@@ -12,6 +12,7 @@ export class QueryReviewDto extends PaginationQueryDto {
   @IsOptional()
   @Type(() => Number)
   @IsInt()
+  @Min(1)
   productId?: number;
 
   @ApiPropertyOptional({
@@ -20,6 +21,7 @@ export class QueryReviewDto extends PaginationQueryDto {
   @IsOptional()
   @Type(() => Number)
   @IsInt()
+  @Min(1)
   storeId?: number;
 
   @ApiPropertyOptional({
@@ -28,6 +30,7 @@ export class QueryReviewDto extends PaginationQueryDto {
   @IsOptional()
   @Type(() => Number)
   @IsInt()
+  @Min(1)
   userId?: number;
 
   @ApiPropertyOptional({

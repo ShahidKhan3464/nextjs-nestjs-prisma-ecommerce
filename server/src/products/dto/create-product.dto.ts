@@ -6,7 +6,6 @@ import { UniqueVariantSkuConstraint } from '../validators/unique-variant-sku.val
 import {
   Min,
   IsIn,
-  IsEnum,
   IsArray,
   IsNumber,
   Validate,
@@ -67,7 +66,6 @@ export class CreateProductDto {
       'Defaults to DRAFT. Use Publish endpoint to go DRAFT → ACTIVE.',
   })
   @IsOptional()
-  @IsEnum(ProductStatus)
   @IsIn([ProductStatus.DRAFT, ProductStatus.ACTIVE])
   status?: ProductStatus;
 
@@ -80,11 +78,13 @@ export class CreateProductDto {
     try {
       const parsed: unknown = JSON.parse(value);
 
-      if (!Array.isArray(parsed)) return [];
+      if (!Array.isArray(parsed)) {
+        return value as unknown as CreateProductVariantDto[];
+      }
 
       return plainToInstance(CreateProductVariantDto, parsed);
     } catch {
-      return [];
+      return value as unknown as CreateProductVariantDto[];
     }
   })
   @IsArray()

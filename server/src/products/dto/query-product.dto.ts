@@ -7,6 +7,7 @@ import {
   IsIn,
   IsInt,
   IsEnum,
+  IsNumber,
   IsString,
   MaxLength,
   IsOptional,
@@ -42,6 +43,7 @@ export class QueryProductDto extends PaginationQueryDto {
 
   @ApiPropertyOptional({
     description: 'Search in product name and description (case-insensitive)',
+    maxLength: 255,
   })
   @IsOptional()
   @IsString()
@@ -51,12 +53,14 @@ export class QueryProductDto extends PaginationQueryDto {
   @ApiPropertyOptional({ description: 'Filter by minimum price' })
   @IsOptional()
   @Type(() => Number)
+  @IsNumber()
   @Min(0)
   minPrice?: number;
 
   @ApiPropertyOptional({ description: 'Filter by maximum price' })
   @IsOptional()
   @Type(() => Number)
+  @IsNumber()
   @Min(0)
   maxPrice?: number;
 }

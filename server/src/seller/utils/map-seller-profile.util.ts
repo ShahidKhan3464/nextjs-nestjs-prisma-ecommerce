@@ -1,6 +1,7 @@
 import { StoreStatus } from 'src/store/constants/store.constants';
 import { SellerProfileStatus } from '../constants/seller.constants';
 import { seller_document_type_enum } from 'src/generated/prisma/client';
+import { buildSecureFileUrlPath } from 'src/files/constants/file.constants';
 
 export type SellerDocumentFile = {
   id: number;
@@ -120,7 +121,7 @@ export function mapSellerProfileToResponse(
       type: doc.type,
       file: {
         id: doc.file.id,
-        urlPath: doc.file.urlPath,
+        urlPath: buildSecureFileUrlPath(doc.file.id),
         fileSize: doc.file.fileSize,
         mimeType: doc.file.mimeType,
         createdAt: doc.file.createdAt,

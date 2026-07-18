@@ -1,11 +1,13 @@
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
+  Min,
   IsNumber,
-  IsOptional,
   IsString,
   MaxLength,
-  Min,
+  MinLength,
+  IsNotEmpty,
+  IsOptional,
 } from 'class-validator';
 
 export class RecordRefundDto {
@@ -23,13 +25,18 @@ export class RecordRefundDto {
   @ApiProperty({
     description: 'Reason for the refund',
     example: 'Customer cancelled pending order',
+    minLength: 1,
+    maxLength: 255,
   })
   @IsString()
+  @IsNotEmpty()
+  @MinLength(1)
   @MaxLength(255)
   reason: string;
 
   @ApiPropertyOptional({
     description: 'External refund id from the payment provider (if any)',
+    maxLength: 255,
   })
   @IsOptional()
   @IsString()

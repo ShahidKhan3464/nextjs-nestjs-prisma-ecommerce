@@ -1,11 +1,19 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { NotificationType } from '../constants/notification.constants';
-import { IsEnum, IsInt, IsString, MaxLength, MinLength } from 'class-validator';
+import {
+  Min,
+  IsInt,
+  IsEnum,
+  IsString,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
 
 /** Internal DTO — used when other modules create in-app notifications. */
 export class CreateNotificationDto {
   @ApiProperty({ description: 'Recipient user id' })
   @IsInt()
+  @Min(1)
   userId: number;
 
   @ApiProperty({ enum: NotificationType })
@@ -18,8 +26,9 @@ export class CreateNotificationDto {
   @MaxLength(255)
   title: string;
 
-  @ApiProperty()
+  @ApiProperty({ maxLength: 2000 })
   @IsString()
   @MinLength(1)
+  @MaxLength(2000)
   message: string;
 }

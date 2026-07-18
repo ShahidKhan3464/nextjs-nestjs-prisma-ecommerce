@@ -1,4 +1,5 @@
 import { StoreStatus, StoreFileType } from '../constants/store.constants';
+import { SellerProfileStatus } from 'src/seller/constants/seller.constants';
 
 export type StoreFileMapped = {
   id: number;
@@ -34,7 +35,7 @@ export type StoreMapped = {
   sellerProfile: {
     id: number;
     userId: number;
-    status: string;
+    status: SellerProfileStatus;
     businessName: string;
   };
 };
@@ -98,7 +99,7 @@ export function mapStoreToResponse(store: StoreSource): StoreMapped {
     sellerProfile: {
       id: store.sellerProfile.id,
       userId: store.sellerProfile.userId,
-      status: store.sellerProfile.status,
+      status: store.sellerProfile.status as SellerProfileStatus,
       businessName: store.sellerProfile.businessName,
     },
     files: (store.files ?? []).map((entry) => ({

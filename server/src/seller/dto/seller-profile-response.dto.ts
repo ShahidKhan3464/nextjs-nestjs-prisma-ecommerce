@@ -18,7 +18,7 @@ export class SellerDocumentFileResponseDto {
   @ApiProperty({ example: 204800 })
   fileSize: number;
 
-  @ApiProperty({ example: '/uploads/sellers/license-123.pdf' })
+  @ApiProperty({ example: '/files/secure/123' })
   urlPath: string;
 
   @ApiProperty({ example: '2026-07-14T10:00:00.000Z' })

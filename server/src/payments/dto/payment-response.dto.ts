@@ -1,32 +1,46 @@
-import { ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { PaymentProvider, PaymentStatus } from '../constants/payment.constants';
 
-export class PaymentResponseDto {
-  @ApiPropertyOptional()
+export class PaymentOrderSummaryDto {
+  @ApiProperty()
   id: string;
 
-  @ApiPropertyOptional()
+  @ApiProperty()
+  orderNumber: string;
+
+  @ApiProperty()
+  storeId: string;
+
+  @ApiProperty()
+  userId: string;
+}
+
+export class PaymentResponseDto {
+  @ApiProperty()
+  id: string;
+
+  @ApiProperty()
   orderId: string;
 
-  @ApiPropertyOptional({ enum: PaymentProvider })
+  @ApiProperty({ enum: PaymentProvider })
   provider: PaymentProvider;
 
-  @ApiPropertyOptional({ enum: PaymentStatus })
+  @ApiProperty({ enum: PaymentStatus })
   status: PaymentStatus;
 
-  @ApiPropertyOptional()
+  @ApiProperty()
   amount: number;
 
-  @ApiPropertyOptional()
+  @ApiProperty()
   currency: string;
 
-  @ApiPropertyOptional()
+  @ApiProperty()
   refundedAmount: number;
 
-  @ApiPropertyOptional()
+  @ApiProperty()
   createdAt: string;
 
-  @ApiPropertyOptional()
+  @ApiProperty()
   updatedAt: string;
 
   @ApiPropertyOptional()
@@ -49,4 +63,7 @@ export class PaymentResponseDto {
 
   @ApiPropertyOptional()
   externalRefundId?: string;
+
+  @ApiPropertyOptional({ type: PaymentOrderSummaryDto })
+  order?: PaymentOrderSummaryDto;
 }
