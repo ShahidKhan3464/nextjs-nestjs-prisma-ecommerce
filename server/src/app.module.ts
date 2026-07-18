@@ -14,6 +14,7 @@ import { SellerModule } from './seller/seller.module';
 import { CommonModule } from './common/common.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { SeedersModule } from './seeders/seeders.module';
+import { ReviewsModule } from './reviews/reviews.module';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { WishlistModule } from './wishlist/wishlist.module';
 import { ProductsModule } from './products/products.module';
@@ -40,6 +41,7 @@ import { DataResponseInterceptor } from './common/interceptors/data-response/dat
     PrismaModule,
     CommonModule,
     SeedersModule,
+    ReviewsModule,
     WishlistModule,
     ProductsModule,
     PaymentsModule,
