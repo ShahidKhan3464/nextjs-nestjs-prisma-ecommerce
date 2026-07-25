@@ -12,14 +12,16 @@ type Props = {
   children: React.ReactNode;
 };
 
-export function AdminAppShell({ roles, children }: Props) {
+export function SellerAppShell({ roles, children }: Props) {
   return (
     <RoleAppShell
-      sidebarVisibleFrom="lg"
-      sidebarId="admin-sidebar"
+      showMobileNav
+      sidebarVisibleFrom="md"
+      sidebarId="seller-sidebar"
       nav={getNavForRoles(roles)}
-      sidebarAriaLabel="Admin navigation"
-      portalTitle={shopChromeTitle("admin")}
+      sidebarAriaLabel="Seller navigation"
+      portalTitle={shopChromeTitle("seller")}
+      mobileAriaLabel="Mobile seller navigation"
     >
       {children}
     </RoleAppShell>

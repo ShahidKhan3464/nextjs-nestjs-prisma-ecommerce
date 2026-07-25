@@ -2,17 +2,23 @@
 
 import { useMemo } from "react";
 import { usePathname } from "next/navigation";
-import { useIsSuperAdmin } from "@/modules/auth";
+import { useUserRoles } from "@/modules/auth";
+import { resolveShopChrome } from "@/shared/navigation/app-nav";
 
 export function useAppSectionMeta(): { title: string; hint?: string } {
   const pathname = usePathname();
-  const admin = useIsSuperAdmin();
+  const roles = useUserRoles();
+  const chrome = resolveShopChrome(roles);
 
   return useMemo(() => {
     if (pathname === "/dashboard") {
-      return admin
-        ? { title: "Analytics", hint: "Overview" }
-        : { title: "Dashboard", hint: "Your overview" };
+      if (chrome === "admin") {
+        return { title: "Analytics", hint: "Overview" };
+      }
+      if (chrome === "seller") {
+        return { title: "Dashboard", hint: "Seller overview" };
+      }
+      return { title: "Dashboard", hint: "Your overview" };
     }
     if (pathname === "/profile") {
       return { title: "Profile", hint: "Account settings" };
@@ -27,12 +33,16 @@ export function useAppSectionMeta(): { title: string; hint?: string } {
       return { title: "Product", hint: "Details & variants" };
     }
     if (pathname === "/products") {
-      return admin
-        ? { title: "Products", hint: "Inventory" }
-        : { title: "Shop", hint: "Browse catalog" };
+      if (chrome === "admin") {
+        return { title: "Products", hint: "Inventory" };
+      }
+      if (chrome === "seller") {
+        return { title: "Products", hint: "Your listings" };
+      }
+      return { title: "Shop", hint: "Browse catalog" };
     }
     if (pathname === "/categories") {
-      return admin
+      return chrome === "admin"
         ? { title: "Categories", hint: "Manage product categories" }
         : { title: "Categories", hint: "Browse categories" };
     }
@@ -45,13 +55,23 @@ export function useAppSectionMeta(): { title: string; hint?: string } {
     if (pathname.startsWith("/orders/") && pathname !== "/orders") {
       return {
         title: "Order",
-        hint: admin ? "Fulfillment" : "Receipt & status",
+        hint:
+          chrome === "admin"
+            ? "Fulfillment"
+            : chrome === "seller"
+              ? "Order details"
+              : "Receipt & status",
       };
     }
     if (pathname === "/orders") {
       return {
         title: "Orders",
-        hint: admin ? "All storefront orders" : "Your history",
+        hint:
+          chrome === "admin"
+            ? "All storefront orders"
+            : chrome === "seller"
+              ? "Your sales"
+              : "Your history",
       };
     }
     if (pathname === "/cart") return { title: "Cart" };
@@ -64,5 +84,5 @@ export function useAppSectionMeta(): { title: string; hint?: string } {
     }
 
     return { title: "Store" };
-  }, [pathname, admin]);
+  }, [pathname, chrome]);
 }

@@ -4,6 +4,7 @@ import type { NextRequest } from "next/server";
 import { verifyToken } from "@/lib/server-auth";
 import { isSuperAdmin } from "@/modules/auth/utils/roles";
 import {
+  isAdminOnlyPath,
   isProtectedShopPath,
   safeProtectedRedirectPath,
 } from "@/lib/auth-route-guards";
@@ -85,13 +86,7 @@ export async function middleware(request: NextRequest) {
     return res;
   }
 
-  const adminOnly =
-    pathname.startsWith("/users") ||
-    pathname === "/products/new" ||
-    pathname.startsWith("/products/new/") ||
-    pathname.startsWith("/products/edit/");
-
-  if (adminOnly && !isSuperAdmin(payload.roles)) {
+  if (isAdminOnlyPath(pathname) && !isSuperAdmin(payload.roles)) {
     return NextResponse.redirect(new URL(ROUTES.dashboard, request.url));
   }
 

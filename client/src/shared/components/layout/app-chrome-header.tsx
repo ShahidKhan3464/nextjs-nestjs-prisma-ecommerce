@@ -6,10 +6,11 @@ import { cn } from "@/lib/utils";
 import { siteConfig } from "@/config/site";
 import { useRouter } from "next/navigation";
 import { ROUTES } from "@/constants/routes";
-import { LogOut, User } from "lucide-react";
+import { logoutRequest } from "@/modules/auth";
 import { useAuthStore } from "@/store/auth-store";
 import { buttonVariants } from "@/components/ui/button";
-import { logoutRequest, isSuperAdmin } from "@/modules/auth";
+import { LayoutDashboard, LogOut, User } from "lucide-react";
+import { resolveShopChrome } from "@/shared/navigation/app-nav";
 import { resetCartWishlistSession } from "@/lib/cart-wishlist-session";
 import {
   DropdownMenu,
@@ -26,6 +27,17 @@ type Props = {
   /** Subtle subtitle under section title (optional) */
   sectionHint?: string;
 };
+
+function roleLabel(chrome: ReturnType<typeof resolveShopChrome>): string {
+  switch (chrome) {
+    case "admin":
+      return "Administrator";
+    case "seller":
+      return "Seller";
+    default:
+      return "Buyer";
+  }
+}
 
 export function AppChromeHeader({ sectionTitle, sectionHint }: Props) {
   const router = useRouter();
@@ -49,6 +61,9 @@ export function AppChromeHeader({ sectionTitle, sectionHint }: Props) {
     router.push(ROUTES.home);
   }
 
+  const chrome = user ? resolveShopChrome(user.roles) : null;
+  const showProfile = chrome === "buyer" || chrome === "seller";
+
   return (
     <header className="border-border bg-background/95 sticky top-0 z-50 flex h-14 shrink-0 items-center justify-between border-b px-4 backdrop-blur-sm supports-backdrop-filter:bg-background/60 lg:px-6">
       <div className="min-w-0">
@@ -67,7 +82,7 @@ export function AppChromeHeader({ sectionTitle, sectionHint }: Props) {
         </div>
       </div>
 
-      {!mounted ? null : user ? (
+      {!mounted ? null : user && chrome ? (
         <DropdownMenu>
           <DropdownMenuTrigger
             className={cn(
@@ -85,10 +100,20 @@ export function AppChromeHeader({ sectionTitle, sectionHint }: Props) {
                 <span className="text-muted-foreground text-xs">
                   {user.email}
                 </span>
+                <span className="text-muted-foreground text-xs">
+                  {roleLabel(chrome)}
+                </span>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            {!isSuperAdmin(user.roles) && (
+            <DropdownMenuItem
+              onClick={() => {
+                router.push(ROUTES.dashboard);
+              }}
+            >
+              <LayoutDashboard className="mr-2 size-4" /> Dashboard
+            </DropdownMenuItem>
+            {showProfile ? (
               <DropdownMenuItem
                 onClick={() => {
                   router.push(ROUTES.profile);
@@ -96,7 +121,7 @@ export function AppChromeHeader({ sectionTitle, sectionHint }: Props) {
               >
                 <User className="mr-2 size-4" /> Profile
               </DropdownMenuItem>
-            )}
+            ) : null}
             <DropdownMenuItem onClick={() => void logout()}>
               <LogOut className="mr-2 size-4" /> Sign out
             </DropdownMenuItem>
