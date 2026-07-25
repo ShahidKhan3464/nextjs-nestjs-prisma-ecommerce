@@ -11,6 +11,7 @@ import { formatOrderDate } from "@/lib/format-date";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { buttonVariants } from "@/components/ui/button";
+import { isSuperAdmin } from "@/modules/auth/utils/roles";
 import { fetchAdminUserDetail } from "../services/users.service";
 import { EmptyState } from "@/shared/components/feedback/empty-state";
 
@@ -119,7 +120,14 @@ export function AdminUserDetail({ userId }: Props) {
                 Active
               </Badge>
             )}
-            <Badge variant="outline">{user.role}</Badge>
+            {user.roles.map((role) => (
+              <Badge
+                key={role}
+                variant={isSuperAdmin([role]) ? "default" : "outline"}
+              >
+                {role}
+              </Badge>
+            ))}
           </div>
         </div>
       </div>

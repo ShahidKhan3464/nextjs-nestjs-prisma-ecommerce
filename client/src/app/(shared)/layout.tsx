@@ -28,6 +28,6 @@ export default function SharedLayout({
     );
   }
 
-  const role = user?.role === "admin" ? "admin" : "customer";
-  return <ShopRoleShell role={role}>{children}</ShopRoleShell>;
+  const roles = user?.roles ?? [];
+  return <ShopRoleShell roles={roles}>{children}</ShopRoleShell>;
 }

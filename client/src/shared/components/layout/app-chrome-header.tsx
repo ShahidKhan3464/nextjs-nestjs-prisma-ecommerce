@@ -7,9 +7,9 @@ import { siteConfig } from "@/config/site";
 import { useRouter } from "next/navigation";
 import { ROUTES } from "@/constants/routes";
 import { LogOut, User } from "lucide-react";
-import { logoutRequest } from "@/modules/auth";
 import { useAuthStore } from "@/store/auth-store";
 import { buttonVariants } from "@/components/ui/button";
+import { logoutRequest, isSuperAdmin } from "@/modules/auth";
 import { resetCartWishlistSession } from "@/lib/cart-wishlist-session";
 import {
   DropdownMenu,
@@ -76,7 +76,7 @@ export function AppChromeHeader({ sectionTitle, sectionHint }: Props) {
             )}
           >
             <User className="size-4 shrink-0" />
-            <span className="max-w-[140px] truncate">{user.name}</span>
+            <span className="max-w-35 truncate">{user.name}</span>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
             <DropdownMenuLabel className="font-normal">
@@ -88,7 +88,7 @@ export function AppChromeHeader({ sectionTitle, sectionHint }: Props) {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            {user.role === "customer" && (
+            {!isSuperAdmin(user.roles) && (
               <DropdownMenuItem
                 onClick={() => {
                   router.push(ROUTES.profile);

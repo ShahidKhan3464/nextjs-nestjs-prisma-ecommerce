@@ -1,8 +1,9 @@
 import { cookies } from "next/headers";
+import type { ApiResponse, User } from "@/types";
 import { getBackendUrl } from "@/lib/backend-url";
 import { signAccessToken } from "@/lib/server-auth";
 import { jsonMessage, jsonOk } from "@/lib/api-response";
-import type { ApiResponse, User, UserRole } from "@/types";
+import { normalizeRoles } from "@/modules/auth/utils/roles";
 import { ACCOUNT_BLOCKED_MESSAGE } from "@/lib/account-blocked";
 import {
   ACCESS_TOKEN_TTL_SECONDS,
@@ -14,20 +15,12 @@ import {
   AUTH_BACKEND_ACCESS_COOKIE,
 } from "@/lib/auth-cookies";
 
-function toSessionRole(roles: string[] | undefined): UserRole {
-  if (roles?.includes("SUPER_ADMIN")) {
-    return "admin";
-  }
-
-  return "customer";
-}
-
 /** Nest wraps controller return values with DataResponseInterceptor: `{ data, version }`. */
 type NestLoginPayload = {
   data?: {
     user?: {
       id: number;
-      roles?: string[];
+      roles?: unknown;
       email: string;
       fullName: string;
       isBlocked: boolean;
@@ -99,10 +92,10 @@ export async function POST(req: Request) {
     return jsonMessage(ACCOUNT_BLOCKED_MESSAGE, 403);
   }
 
-  const role = toSessionRole(u.roles);
+  const roles = normalizeRoles(u.roles);
 
   const sessionJwt = await signAccessToken({
-    role,
+    roles,
     email: u.email,
     name: u.fullName,
     sub: String(u.id),
@@ -133,7 +126,7 @@ export async function POST(req: Request) {
   });
 
   const user: User = {
-    role,
+    roles,
     email: u.email,
     name: u.fullName,
     id: String(u.id),

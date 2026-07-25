@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { siteConfig } from "@/config/site";
 import { OrdersList } from "@/modules/customer/orders";
 import { AdminOrdersList } from "@/modules/admin/orders";
+import { isSuperAdmin } from "@/modules/auth/utils/roles";
 import { getAccessTokenPayload } from "@/lib/session-cookie";
 
 export const metadata: Metadata = {
@@ -12,7 +13,7 @@ export const metadata: Metadata = {
 export default async function OrdersPage() {
   const session = await getAccessTokenPayload();
 
-  if (session?.role === "admin") {
+  if (session && isSuperAdmin(session.roles)) {
     return (
       <div className="space-y-4">
         <header className="flex items-centere justify-between">

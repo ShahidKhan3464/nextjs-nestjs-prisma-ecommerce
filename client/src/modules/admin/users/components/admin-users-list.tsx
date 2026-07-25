@@ -207,11 +207,22 @@ export function AdminUsersList() {
                       {format(new Date(u.createdAt), "MMM d, yyyy")}
                     </TableCell>
                     <TableCell>
-                      <Badge
-                        variant={u.role === "admin" ? "default" : "outline"}
-                      >
-                        {u.role}
-                      </Badge>
+                      <div className="flex flex-wrap gap-1">
+                        {u.roles.length > 0 ? (
+                          u.roles.map((role) => (
+                            <Badge
+                              key={role}
+                              variant={
+                                role === "SUPER_ADMIN" ? "default" : "outline"
+                              }
+                            >
+                              {role}
+                            </Badge>
+                          ))
+                        ) : (
+                          <Badge variant="outline">—</Badge>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell>
                       {u.isBlocked ? (

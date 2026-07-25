@@ -30,3 +30,11 @@ export function hasRole(userRoles: UserRole[], role: UserRole): boolean {
 export function isSuperAdmin(userRoles: UserRole[]): boolean {
   return hasRole(userRoles, UserRole.SUPER_ADMIN);
 }
+
+export function isSeller(userRoles: UserRole[]): boolean {
+  return hasRole(userRoles, UserRole.SELLER);
+}
+
+export function isBuyer(userRoles: UserRole[]): boolean {
+  return hasRole(userRoles, UserRole.BUYER);
+}

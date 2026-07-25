@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { siteConfig } from "@/config/site";
 import { ROUTES } from "@/constants/routes";
 import { buttonVariants } from "@/components/ui/button";
+import { isSuperAdmin } from "@/modules/auth/utils/roles";
 import { getAccessTokenPayload } from "@/lib/session-cookie";
 import { AdminProductsList } from "@/modules/admin/products";
 import { ProductsPageContent } from "@/modules/customer/products/components/products-page-content";
@@ -16,7 +17,7 @@ export const metadata: Metadata = {
 export default async function ProductsPage() {
   const session = await getAccessTokenPayload();
 
-  if (session?.role === "admin") {
+  if (session && isSuperAdmin(session.roles)) {
     return (
       <div className="space-y-4">
         <header className="flex items-center justify-between">

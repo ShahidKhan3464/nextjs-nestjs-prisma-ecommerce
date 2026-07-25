@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { ROUTES } from "@/constants/routes";
 import type { NextRequest } from "next/server";
 import { verifyToken } from "@/lib/server-auth";
+import { isSuperAdmin } from "@/modules/auth/utils/roles";
 import {
   isProtectedShopPath,
   safeProtectedRedirectPath,
@@ -90,7 +91,7 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith("/products/new/") ||
     pathname.startsWith("/products/edit/");
 
-  if (adminOnly && payload.role !== "admin") {
+  if (adminOnly && !isSuperAdmin(payload.roles)) {
     return NextResponse.redirect(new URL(ROUTES.dashboard, request.url));
   }
 

@@ -2,15 +2,13 @@
 
 import { useMemo } from "react";
 import { usePathname } from "next/navigation";
-import { useAuthStore } from "@/store/auth-store";
+import { useIsSuperAdmin } from "@/modules/auth";
 
 export function useAppSectionMeta(): { title: string; hint?: string } {
   const pathname = usePathname();
-  const role = useAuthStore((s) => s.user?.role);
+  const admin = useIsSuperAdmin();
 
   return useMemo(() => {
-    const admin = role === "admin";
-
     if (pathname === "/dashboard") {
       return admin
         ? { title: "Analytics", hint: "Overview" }
@@ -66,5 +64,5 @@ export function useAppSectionMeta(): { title: string; hint?: string } {
     }
 
     return { title: "Store" };
-  }, [pathname, role]);
+  }, [pathname, admin]);
 }
