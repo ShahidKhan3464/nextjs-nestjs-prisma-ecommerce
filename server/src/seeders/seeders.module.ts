@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { CryptoModule } from 'src/crypto/crypto.module';
+import { CryptoModule } from 'src/common/crypto/crypto.module';
 import { SeedAdminProvider } from './providers/seed-admin.provider.js';
 import { SeedProductsProvider } from './providers/seed-products.provider.js';
 import { SeedCustomersProvider } from './providers/seed-customers.provider.js';

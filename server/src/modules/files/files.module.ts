@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { FilesService } from './files.service';
 import { FilesController } from './files.controller';
-import { UploadedFileGuard } from './guards/uploaded-file.guard';
 import { UploadFileProvider } from './providers/upload-file.provider';
 import { DeleteFileProvider } from './providers/delete-file.provider';
 import { StorageModule } from 'src/integrations/storage/storage.module';
@@ -16,7 +15,6 @@ import { STORAGE_PROVIDER } from 'src/integrations/storage/interfaces/storage-pr
   controllers: [FilesController],
   providers: [
     FilesService,
-    UploadedFileGuard,
     UploadFileProvider,
     DeleteFileProvider,
     FileValidationProvider,

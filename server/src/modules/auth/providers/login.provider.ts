@@ -1,9 +1,9 @@
 import { LoginDto } from '../dto/login.dto';
 import { User } from 'src/generated/prisma/client';
-import { UsersService } from 'src/modules/users/users.service';
 import { UserRole } from 'src/common/enums/user-role.enum';
+import { UsersService } from 'src/modules/users/users.service';
 import { GenerateTokensProvider } from './generate-tokens.provider';
-import { HashingProvider } from 'src/crypto/providers/hashing.provider';
+import { HashingProvider } from 'src/common/crypto/providers/hashing.provider';
 import { ACCOUNT_BLOCKED_MESSAGE } from '../constants/auth-messages.constants';
 import {
   Injectable,

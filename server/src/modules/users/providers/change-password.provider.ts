@@ -1,6 +1,6 @@
 import { PrismaService } from 'src/prisma/prisma.service';
 import { ChangePasswordDto } from '../dto/change-password.dto';
-import { HashingProvider } from 'src/crypto/providers/hashing.provider';
+import { HashingProvider } from 'src/common/crypto/providers/hashing.provider';
 import { RefreshTokenStoreProvider } from 'src/modules/auth/providers/refresh-token-store.provider';
 import {
   Injectable,

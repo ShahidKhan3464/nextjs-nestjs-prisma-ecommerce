@@ -1,11 +1,11 @@
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { UsersService } from 'src/modules/users/users.service';
 import { ResetPasswordDto } from '../dto/reset-password.dto';
+import { UsersService } from 'src/modules/users/users.service';
 import { JwtTokenType } from '../constants/jwt-token-type.enum';
-import { HashingProvider } from 'src/crypto/providers/hashing.provider';
 import { RefreshTokenStoreProvider } from './refresh-token-store.provider';
 import { JwtPasswordResetPayload } from 'src/common/types/jwt-payload.type';
+import { HashingProvider } from 'src/common/crypto/providers/hashing.provider';
 import {
   Logger,
   Injectable,

@@ -23,8 +23,10 @@ export function setupSwagger(
 
   const config = new DocumentBuilder()
     .setVersion('1.0')
-    .setTitle('My API')
-    .setDescription('API documentation')
+    .setTitle('Multi Vendor E-Commerce API')
+    .setDescription(
+      'REST API for the multi-vendor e-commerce platform: catalog, carts, checkout, orders, payments, sellers, and stores.',
+    )
     .addServer('http://localhost:3001')
     .addBearerAuth(
       {

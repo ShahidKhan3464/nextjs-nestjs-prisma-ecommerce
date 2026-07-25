@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UsersController } from './users.controller';
-import { CryptoModule } from 'src/crypto/crypto.module';
 import { FilesModule } from 'src/modules/files/files.module';
+import { CryptoModule } from 'src/common/crypto/crypto.module';
 import { GetUsersProvider } from './providers/get-users.provider';
 import { BlockUserProvider } from './providers/block-user.provider';
 import { CreateUserProvider } from './providers/create-user.provider';

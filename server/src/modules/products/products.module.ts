@@ -5,7 +5,6 @@ import { GetProductsProvider } from './providers/get-products.provider';
 import { CreateProductProvider } from './providers/create-product.provider';
 import { UpdateProductProvider } from './providers/update-product.provider';
 import { DeleteProductProvider } from './providers/delete-product.provider';
-import { ProductImagesProvider } from './providers/product-images.provider';
 import { ProductStatusProvider } from './providers/product-status.provider';
 import { ProductOwnershipProvider } from './providers/product-ownership.provider';
 
@@ -16,7 +15,6 @@ import { ProductOwnershipProvider } from './providers/product-ownership.provider
     CreateProductProvider,
     UpdateProductProvider,
     DeleteProductProvider,
-    ProductImagesProvider,
     ProductStatusProvider,
     ProductOwnershipProvider,
   ],
