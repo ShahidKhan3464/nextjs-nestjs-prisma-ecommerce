@@ -1,15 +1,14 @@
-import { join } from 'path';
 import helmet from 'helmet';
 import compression from 'compression';
 import { AppModule } from './app.module';
 import { NestFactory } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
 import { ValidationPipe } from '@nestjs/common';
+import { setupSwagger } from './common/swagger/setup-swagger';
 import type { Request, Response, NextFunction } from 'express';
-import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { NestExpressApplication } from '@nestjs/platform-express';
-import { PRIVATE_UPLOAD_SUBDIRS } from './files/constants/file.constants';
-import { SWAGGER_EXTRA_MODELS } from './common/swagger/swagger-extra-models';
+import { getUploadsRoot } from './integrations/storage/uploads-root';
+import { PRIVATE_UPLOAD_SUBDIRS } from './modules/files/constants/file.constants';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
@@ -43,7 +42,7 @@ async function bootstrap() {
     );
   }
 
-  app.useStaticAssets(join(process.cwd(), 'uploads'), {
+  app.useStaticAssets(getUploadsRoot(), {
     prefix: '/uploads/',
   });
 
@@ -56,36 +55,7 @@ async function bootstrap() {
     }),
   );
 
-  const swaggerEnabled =
-    !isProduction ||
-    configService.get<string>('SWAGGER_ENABLED') === 'true' ||
-    process.env.SWAGGER_ENABLED === 'true';
-
-  if (swaggerEnabled) {
-    const config = new DocumentBuilder()
-      .setVersion('1.0')
-      .setTitle('My API')
-      .setDescription('API documentation')
-      .addServer('http://localhost:3001')
-      .addBearerAuth(
-        {
-          name: 'JWT',
-          in: 'header',
-          type: 'http',
-          scheme: 'bearer',
-          bearerFormat: 'JWT',
-          description: 'Enter JWT token',
-        },
-        'access-token',
-      )
-      .build();
-
-    const document = SwaggerModule.createDocument(app, config, {
-      extraModels: [...SWAGGER_EXTRA_MODELS],
-    });
-
-    SwaggerModule.setup('api', app, document);
-  }
+  setupSwagger(app, configService, isProduction);
 
   const port = Number(process.env.PORT) || 3001;
   await app.listen(port);

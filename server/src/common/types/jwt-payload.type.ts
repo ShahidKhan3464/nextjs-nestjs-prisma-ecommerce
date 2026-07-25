@@ -1,5 +1,5 @@
 import { UserRole } from 'src/common/enums/user-role.enum';
-import { JwtTokenType } from 'src/auth/constants/jwt-token-type.enum';
+import { JwtTokenType } from 'src/modules/auth/constants/jwt-token-type.enum';
 
 export type JwtAccessTokenPayload = {
   sub: number;

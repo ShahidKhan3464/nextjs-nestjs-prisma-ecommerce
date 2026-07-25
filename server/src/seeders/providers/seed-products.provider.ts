@@ -1,10 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { SeedResult } from '../types/seed-result.type.js';
-import { ProductFileType } from 'src/files/constants/file.constants';
+import { ProductFileType } from 'src/modules/files/constants/file.constants';
 import { SeedCategoriesProvider } from './seed-categories.provider.js';
-import { ProductStatus } from 'src/products/constants/product.constants';
-import { generateProductSlug } from 'src/products/utils/generate-product-slug.util';
+import { ProductStatus } from 'src/modules/products/constants/product.constants';
+import { generateProductSlug } from 'src/modules/products/utils/generate-product-slug.util';
 import {
   DEMO_PRODUCTS,
   picsumImageUrl,

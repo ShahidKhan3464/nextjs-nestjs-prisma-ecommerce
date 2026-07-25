@@ -1,32 +1,35 @@
 import { Module } from '@nestjs/common';
 import appConfig from './config/app.config';
+import jwtConfig from './config/jwt.config';
 import { ConfigModule } from '@nestjs/config';
 import mailConfig from './config/mail.config';
-import { CartModule } from './cart/cart.module';
-import { AuthModule } from './auth/auth.module';
-import { MailModule } from './mail/mail.module';
 import stripeConfig from './config/stripe.config';
-import { UsersModule } from './users/users.module';
-import { FilesModule } from './files/files.module';
-import { StoreModule } from './store/store.module';
-import { HealthModule } from './health/health.module';
-import { OrdersModule } from './orders/orders.module';
-import { SellerModule } from './seller/seller.module';
+import storageConfig from './config/storage.config';
 import { CommonModule } from './common/common.module';
 import { PrismaModule } from './prisma/prisma.module';
+import { HealthModule } from './health/health.module';
+import databaseConfig from './config/database.config';
+import { AuthModule } from './modules/auth/auth.module';
 import { SeedersModule } from './seeders/seeders.module';
-import { ReviewsModule } from './reviews/reviews.module';
+import { CartModule } from './modules/carts/cart.module';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
-import { WishlistModule } from './wishlist/wishlist.module';
-import { ProductsModule } from './products/products.module';
-import { PaymentsModule } from './payments/payments.module';
-import { DashboardModule } from './dashboard/dashboard.module';
-import { CategoriesModule } from './categories/categories.module';
+import { UsersModule } from './modules/users/users.module';
+import { FilesModule } from './modules/files/files.module';
+import { StoreModule } from './modules/stores/store.module';
+import { MailModule } from './integrations/mail/mail.module';
+import { OrdersModule } from './modules/orders/orders.module';
+import { SellerModule } from './modules/sellers/seller.module';
+import { ReviewsModule } from './modules/reviews/reviews.module';
+import { ProductsModule } from './modules/products/products.module';
 import environmentValidation from './config/environment.validation';
+import { PaymentsModule } from './modules/payments/payments.module';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
-import { NotificationModule } from './notification/notification.module';
+import { WishlistModule } from './modules/wishlists/wishlist.module';
+import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { PaginationModule } from './common/pagination/pagination.module';
-import { ProductVariantsModule } from './product-variants/product-variants.module';
+import { CategoriesModule } from './modules/categories/categories.module';
+import { NotificationModule } from './modules/notifications/notification.module';
+import { ProductVariantsModule } from './modules/product-variants/product-variants.module';
 import { DataResponseInterceptor } from './common/interceptors/data-response/data-response.interceptor';
 
 @Module({
@@ -63,7 +66,14 @@ import { DataResponseInterceptor } from './common/interceptors/data-response/dat
       isGlobal: true,
       envFilePath: '.env',
       validationSchema: environmentValidation,
-      load: [appConfig, mailConfig, stripeConfig],
+      load: [
+        appConfig,
+        jwtConfig,
+        mailConfig,
+        stripeConfig,
+        storageConfig,
+        databaseConfig,
+      ],
     }),
   ],
   providers: [

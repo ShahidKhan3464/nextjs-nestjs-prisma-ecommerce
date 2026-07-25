@@ -1,8 +1,8 @@
 import { HealthService } from './health.service';
 import { SkipThrottle } from '@nestjs/throttler';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
-import { Auth } from 'src/auth/decorators/auth.decorator';
-import { AuthType } from 'src/auth/constants/auth.constants';
+import { Auth } from 'src/modules/auth/decorators/auth.decorator';
+import { AuthType } from 'src/modules/auth/constants/auth.constants';
 import { Controller, Get, ServiceUnavailableException } from '@nestjs/common';
 
 @ApiTags('health')

@@ -9,6 +9,7 @@ export default Joi.object({
     otherwise: Joi.string().uri().optional(),
   }),
   DATABASE_URL: Joi.string().required(),
+  UPLOADS_ROOT: Joi.string().optional().allow(''),
   API_VERSION: Joi.string().default('v1'),
   STRIPE_SECRET_KEY: Joi.string().required(),
   STRIPE_WEBHOOK_SECRET: Joi.when('NODE_ENV', {
