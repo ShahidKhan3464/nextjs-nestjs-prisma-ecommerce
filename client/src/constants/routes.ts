@@ -12,6 +12,7 @@ export const ROUTES = {
   dashboard: "/dashboard",
   categories: "/categories",
   productNew: "/products/new",
+  becomeSeller: "/become-seller",
   categoryNew: "/categories/new",
   resetPassword: "/reset-password",
   forgotPassword: "/forgot-password",

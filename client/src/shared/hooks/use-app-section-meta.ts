@@ -77,6 +77,9 @@ export function useAppSectionMeta(): { title: string; hint?: string } {
     if (pathname === "/cart") return { title: "Cart" };
     if (pathname === "/checkout") return { title: "Checkout" };
     if (pathname === "/wishlist") return { title: "Wishlist" };
+    if (pathname === "/become-seller" || pathname.startsWith("/become-seller/")) {
+      return { title: "Become a seller", hint: "Seller application" };
+    }
 
     if (pathname === "/users") return { title: "Users", hint: "Accounts" };
     if (pathname.startsWith("/users/")) {

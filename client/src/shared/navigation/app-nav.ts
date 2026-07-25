@@ -134,6 +134,13 @@ const BUYER_NAV: AppNavItem[] = [
     href: ROUTES.orders,
   },
   {
+    icon: Store,
+    roles: ["BUYER"],
+    id: "become-seller",
+    label: "Become a seller",
+    href: ROUTES.becomeSeller,
+  },
+  {
     id: "profile",
     icon: UserRound,
     label: "Profile",

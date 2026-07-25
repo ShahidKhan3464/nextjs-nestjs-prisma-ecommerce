@@ -1,10 +1,12 @@
 "use client";
 
+import Link from "next/link";
 import Image from "next/image";
 import { toast } from "sonner";
 import * as React from "react";
+import { cn } from "@/lib/utils";
+import { ROUTES } from "@/constants/routes";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/store/auth-store";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getApiErrorMessage } from "@/lib/api-error";
@@ -12,6 +14,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Separator } from "@/components/ui/separator";
 import { useForm, type Resolver } from "react-hook-form";
 import { resolveUploadUrl } from "@/lib/resolve-upload-url";
+import { isBuyer, isSeller } from "@/modules/auth/utils/roles";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   fetchProfile,
   updateProfile,
@@ -289,6 +293,24 @@ export function ProfileForm() {
           </form>
         </Form>
       </section>
+
+      {isBuyer(user?.roles ?? []) && !isSeller(user?.roles ?? []) ? (
+        <>
+          <Separator />
+          <section className="space-y-2">
+            <h2 className="font-heading text-lg font-semibold">Sell with us</h2>
+            <p className="text-muted-foreground text-sm">
+              Apply to open a seller account and list products on the marketplace.
+            </p>
+            <Link
+              href={ROUTES.becomeSeller}
+              className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+            >
+              Become a seller
+            </Link>
+          </section>
+        </>
+      ) : null}
 
       <Separator />
 

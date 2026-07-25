@@ -10,6 +10,9 @@ export const queryKeys = {
   dashboard: {
     customer: ["dashboard", "customer"] as const,
   },
+  sellerProfile: {
+    me: ["seller-profile", "me"] as const,
+  },
   orders: {
     all: ["orders"] as const,
     list: (filters?: Record<string, unknown>) =>
