@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { OrderResponseDto } from 'src/modules/orders/dto/order-response.dto';
 
 export class DashboardStatusCountDto {
@@ -96,4 +96,100 @@ export class CustomerDashboardResponseDto {
 
   @ApiProperty({ type: [DashboardSpendingPointDto] })
   spendingByMonth: DashboardSpendingPointDto[];
+}
+
+export class SellerStoreSummaryDto {
+  @ApiProperty()
+  id: number;
+
+  @ApiProperty()
+  name: string;
+
+  @ApiProperty()
+  slug: string;
+
+  @ApiProperty()
+  city: string;
+
+  @ApiProperty()
+  status: string;
+
+  @ApiProperty()
+  country: string;
+
+  @ApiProperty()
+  address: string;
+
+  @ApiPropertyOptional({ nullable: true })
+  description: string | null;
+
+  @ApiPropertyOptional({ nullable: true })
+  verifiedAt: Date | null;
+
+  @ApiProperty()
+  businessName: string;
+}
+
+export class SellerDashboardTotalsDto {
+  @ApiProperty()
+  revenue: number;
+
+  @ApiProperty()
+  orders: number;
+
+  @ApiProperty()
+  products: number;
+
+  @ApiProperty()
+  variants: number;
+
+  @ApiProperty()
+  pendingOrders: number;
+
+  @ApiProperty()
+  lowStockCount: number;
+}
+
+export class DashboardActivityItemDto {
+  @ApiProperty()
+  id: string;
+
+  @ApiProperty()
+  type: string;
+
+  @ApiProperty()
+  title: string;
+
+  @ApiProperty()
+  message: string;
+
+  @ApiProperty()
+  isRead: boolean;
+
+  @ApiProperty()
+  createdAt: string;
+}
+
+/** Mirrors `SellerDashboardResponse`. */
+export class SellerDashboardResponseDto {
+  @ApiProperty({ type: SellerStoreSummaryDto })
+  store: SellerStoreSummaryDto;
+
+  @ApiProperty({ type: SellerDashboardTotalsDto })
+  totals: SellerDashboardTotalsDto;
+
+  @ApiProperty({ type: [OrderResponseDto] })
+  recentOrders: OrderResponseDto[];
+
+  @ApiProperty({ type: [DashboardLowStockItemDto] })
+  lowStock: DashboardLowStockItemDto[];
+
+  @ApiProperty({ type: [DashboardRevenuePointDto] })
+  revenueByDay: DashboardRevenuePointDto[];
+
+  @ApiProperty({ type: [DashboardStatusCountDto] })
+  ordersByStatus: DashboardStatusCountDto[];
+
+  @ApiProperty({ type: [DashboardActivityItemDto] })
+  recentActivity: DashboardActivityItemDto[];
 }

@@ -9,6 +9,7 @@ export const queryKeys = {
   },
   dashboard: {
     customer: ["dashboard", "customer"] as const,
+    seller: ["dashboard", "seller"] as const,
   },
   sellerProfile: {
     me: ["seller-profile", "me"] as const,

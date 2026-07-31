@@ -6,6 +6,7 @@ import { ApiTags, ApiBearerAuth, ApiOkResponse } from '@nestjs/swagger';
 import { ActiveUser } from 'src/common/decorators/active-user.decorator';
 import {
   AdminDashboardResponseDto,
+  SellerDashboardResponseDto,
   CustomerDashboardResponseDto,
 } from './dto/dashboard-response.dto';
 
@@ -20,6 +21,13 @@ export class DashboardController {
   @ApiOkResponse({ type: AdminDashboardResponseDto })
   getAdminOverview() {
     return this.dashboardService.getAdminOverview();
+  }
+
+  @Get('seller')
+  @Roles(UserRole.SELLER)
+  @ApiOkResponse({ type: SellerDashboardResponseDto })
+  getSellerOverview(@ActiveUser() userId: number) {
+    return this.dashboardService.getSellerOverview(userId);
   }
 
   @Get('customer')

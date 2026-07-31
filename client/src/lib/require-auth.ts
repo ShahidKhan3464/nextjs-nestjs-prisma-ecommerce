@@ -2,7 +2,7 @@ import type { User } from "@/types";
 import { cookies } from "next/headers";
 import { jsonMessage } from "@/lib/api-response";
 import { AUTH_SESSION_COOKIE } from "@/lib/auth-cookies";
-import { isSuperAdmin } from "@/modules/auth/utils/roles";
+import { isSeller, isSuperAdmin } from "@/modules/auth/utils/roles";
 import { verifyToken, type JwtPayload } from "@/lib/server-auth";
 
 function userFromSessionPayload(payload: JwtPayload): User {
@@ -48,4 +48,14 @@ export async function requireSuperAdmin(
   req: Request
 ): Promise<User | Response> {
   return requireAdmin(req);
+}
+
+/** Requires an authenticated session with the `SELLER` role. */
+export async function requireSeller(req: Request): Promise<User | Response> {
+  const res = await requireUser(req);
+  if (res instanceof Response) return res;
+  if (!isSeller(res.roles)) {
+    return jsonMessage("Forbidden", 403);
+  }
+  return res;
 }
