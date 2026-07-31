@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
-import { isSeller, isSuperAdmin } from "@/modules/auth/utils/roles";
 import { AdminAnalytics } from "@/modules/admin/dashboard";
 import { SellerDashboard } from "@/modules/seller/dashboard";
 import { getAccessTokenPayload } from "@/lib/session-cookie";
 import { DashboardOverview } from "@/modules/customer/dashboard";
+import { isSeller, isSuperAdmin } from "@/modules/auth/utils/roles";
 
 export const metadata: Metadata = {
   title: "Dashboard",

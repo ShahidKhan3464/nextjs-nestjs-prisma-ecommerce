@@ -16,9 +16,9 @@ type NestSellerDashboardPayload = {
     status: string;
     country: string;
     address: string;
-    description: string | null;
-    verifiedAt: string | null;
     businessName: string;
+    verifiedAt: string | null;
+    description: string | null;
   };
   totals: {
     orders: number;

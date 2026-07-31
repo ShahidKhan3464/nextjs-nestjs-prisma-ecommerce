@@ -2,8 +2,8 @@ import type { User } from "@/types";
 import { cookies } from "next/headers";
 import { jsonMessage } from "@/lib/api-response";
 import { AUTH_SESSION_COOKIE } from "@/lib/auth-cookies";
-import { isSeller, isSuperAdmin } from "@/modules/auth/utils/roles";
 import { verifyToken, type JwtPayload } from "@/lib/server-auth";
+import { isSeller, isSuperAdmin } from "@/modules/auth/utils/roles";
 
 function userFromSessionPayload(payload: JwtPayload): User {
   return {

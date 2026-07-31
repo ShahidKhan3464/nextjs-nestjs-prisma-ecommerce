@@ -13,9 +13,9 @@ export type SellerStoreSummary = {
   status: string;
   country: string;
   address: string;
-  description: string | null;
-  verifiedAt: string | null;
   businessName: string;
+  verifiedAt: string | null;
+  description: string | null;
 };
 
 export type SellerDashboardActivity = {
@@ -39,7 +39,7 @@ export type SellerDashboardData = {
   };
   recentOrders: Order[];
   ordersByStatus: DashboardStatusCount[];
+  recentActivity: SellerDashboardActivity[];
   revenueByDay: { date: string; revenue: number }[];
   lowStock: { sku: string; product: string; stock: number }[];
-  recentActivity: SellerDashboardActivity[];
 };
