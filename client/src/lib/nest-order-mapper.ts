@@ -1,5 +1,12 @@
 import { getBackendUrl } from "@/lib/backend-url";
+import type { SellerOrder } from "@/modules/seller/orders/types";
 import type { Order, OrderLineItem } from "@/modules/customer/orders/types";
+
+export type NestOrderBuyerPayload = {
+  email: string;
+  fullName: string;
+  id: string | number;
+};
 
 export type NestOrderPayload = {
   tax: number;
@@ -16,6 +23,7 @@ export type NestOrderPayload = {
   userId: string | number;
   cancellationReason?: string;
   paymentMethodSummary: string;
+  buyer?: NestOrderBuyerPayload;
   items: NestOrderLineItemPayload[];
   shippingAddress: {
     city: string;
@@ -77,5 +85,21 @@ export function normalizeNestOrderPayload(order: NestOrderPayload): Order {
     paymentStatus: (
       order.paymentStatus ?? "paid"
     ).toLowerCase() as Order["paymentStatus"],
+  };
+}
+
+/** Seller/admin fulfillment payloads may include buyer contact. */
+export function normalizeNestSellerOrderPayload(
+  order: NestOrderPayload
+): SellerOrder {
+  const base = normalizeNestOrderPayload(order);
+  if (!order.buyer) return base;
+  return {
+    ...base,
+    buyer: {
+      email: order.buyer.email,
+      id: String(order.buyer.id),
+      fullName: order.buyer.fullName,
+    },
   };
 }

@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import { siteConfig } from "@/config/site";
 import { AdminOrderDetail } from "@/modules/admin/orders";
-import { isSuperAdmin } from "@/modules/auth/utils/roles";
+import { SellerOrderDetail } from "@/modules/seller/orders";
 import { OrderDetailView } from "@/modules/customer/orders";
 import { getAccessTokenPayload } from "@/lib/session-cookie";
+import { isSeller, isSuperAdmin } from "@/modules/auth/utils/roles";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -21,6 +22,10 @@ export default async function OrderPage({ params }: Props) {
 
   if (session && isSuperAdmin(session.roles)) {
     return <AdminOrderDetail orderId={id} />;
+  }
+
+  if (session && isSeller(session.roles)) {
+    return <SellerOrderDetail orderId={id} />;
   }
 
   return <OrderDetailView orderId={id} />;
