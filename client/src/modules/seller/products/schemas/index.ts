@@ -8,13 +8,15 @@ const ALLOWED_IMAGE_TYPES = [
   "image/webp",
 ] as const;
 
-const variantSchema = z.object({
-  size: z.string().trim().min(1, "Size is required"),
-  color: z.string().trim().min(1, "Color is required"),
-  sku: z.string().trim().min(2, "SKU must be at least 2 characters"),
+export const sellerVariantSchema = z.object({
+  size: z.string().trim().min(1, "Size is required").max(255),
+  color: z.string().trim().min(1, "Color is required").max(255),
+  sku: z.string().trim().min(2, "SKU must be at least 2 characters").max(255),
   stock: z.coerce.number().int().min(0, "Stock cannot be negative"),
   price: z.coerce.number().positive("Price must be greater than 0"),
 });
+
+export type SellerVariantValues = z.infer<typeof sellerVariantSchema>;
 
 export const productSchema = z.object({
   name: z.string().trim().min(2, "Name must be at least 2 characters").max(255),
@@ -29,7 +31,7 @@ export const productSchema = z.object({
     }),
   categoryId: z.string().min(1, "Pick a category"),
   status: z.enum(["DRAFT", "ACTIVE"]).default("DRAFT"),
-  variants: z.array(variantSchema).min(1, "Add at least one variant"),
+  variants: z.array(sellerVariantSchema).min(1, "Add at least one variant"),
 });
 
 export type ProductValues = z.infer<typeof productSchema>;

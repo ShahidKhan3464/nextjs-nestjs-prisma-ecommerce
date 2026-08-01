@@ -14,6 +14,7 @@ import { getApiErrorMessage } from "@/lib/api-error";
 import { Separator } from "@/components/ui/separator";
 import { ProductStatusBadge } from "./product-status-badge";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { SellerProductVariants } from "./seller-product-variants";
 import { EmptyState } from "@/shared/components/feedback/empty-state";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -29,14 +30,6 @@ import {
   publishSellerProduct,
   restoreSellerProduct,
 } from "../services/products.service";
-import {
-  Table,
-  TableRow,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-} from "@/components/ui/table";
 import {
   AlertDialog,
   AlertDialogTitle,
@@ -62,13 +55,6 @@ function DetailSkeleton() {
       <Skeleton className="h-40 w-full" />
     </div>
   );
-}
-
-function formatMoney(value: number) {
-  return new Intl.NumberFormat(undefined, {
-    style: "currency",
-    currency: "USD",
-  }).format(value);
 }
 
 export function SellerProductDetail({ productId }: { productId: string }) {
@@ -322,9 +308,9 @@ export function SellerProductDetail({ productId }: { productId: string }) {
             >
               <Image
                 fill
-                alt={product.name}
-                src={img.url}
                 unoptimized
+                src={img.url}
+                alt={product.name}
                 className="object-cover"
                 sizes="(max-width: 768px) 50vw, 25vw"
               />
@@ -350,53 +336,11 @@ export function SellerProductDetail({ productId }: { productId: string }) {
         </p>
       </section>
 
-      <section className="space-y-3">
-        <div className="flex items-center justify-between gap-2">
-          <h2 className="font-heading text-lg font-semibold tracking-tight">
-            Variants
-          </h2>
-          <p className="text-muted-foreground text-sm tabular-nums">
-            From {formatMoney(product.basePrice)}
-          </p>
-        </div>
-        <div className="overflow-x-auto rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>SKU</TableHead>
-                <TableHead>Size</TableHead>
-                <TableHead>Color</TableHead>
-                <TableHead>Price</TableHead>
-                <TableHead>Stock</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {product.variants.length === 0 ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={5}
-                    className="text-muted-foreground py-8 text-center text-sm"
-                  >
-                    No variants
-                  </TableCell>
-                </TableRow>
-              ) : (
-                product.variants.map((v) => (
-                  <TableRow key={v.id}>
-                    <TableCell className="font-medium">{v.sku}</TableCell>
-                    <TableCell>{v.size}</TableCell>
-                    <TableCell>{v.color}</TableCell>
-                    <TableCell className="tabular-nums">
-                      {formatMoney(v.price)}
-                    </TableCell>
-                    <TableCell className="tabular-nums">{v.stock}</TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
-      </section>
+      <SellerProductVariants
+        productId={product.id}
+        readOnly={product.isRemoved}
+        initialVariants={product.variants}
+      />
 
       <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
         <AlertDialogContent>

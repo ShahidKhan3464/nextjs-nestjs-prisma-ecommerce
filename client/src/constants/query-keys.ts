@@ -23,6 +23,12 @@ export const queryKeys = {
       all: ["seller", "products"] as const,
       detail: (id: string) => ["seller", "products", "detail", id] as const,
     },
+    variants: {
+      all: ["seller", "variants"] as const,
+      byProduct: (productId: string) =>
+        ["seller", "variants", "product", productId] as const,
+      detail: (id: string) => ["seller", "variants", "detail", id] as const,
+    },
   },
   orders: {
     all: ["orders"] as const,

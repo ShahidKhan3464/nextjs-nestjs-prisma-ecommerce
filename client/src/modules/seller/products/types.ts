@@ -87,6 +87,43 @@ export type UpdateSellerProductInput = {
   newImages?: File[];
 };
 
+export type CreateSellerVariantInput = {
+  productId: string;
+  size: string;
+  color: string;
+  sku: string;
+  stock: number;
+  price: number;
+};
+
+export type UpdateSellerVariantInput = {
+  size?: string;
+  color?: string;
+  sku?: string;
+  stock?: number;
+  price?: number;
+};
+
+export type SellerVariantListParams = {
+  page?: number;
+  limit?: number;
+  productId?: string | number;
+  search?: string;
+  sku?: string;
+  color?: string;
+  size?: string;
+};
+
+export type SellerVariantListResult = {
+  variants: SellerProductVariant[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+};
+
 export function isProductDraft(product: SellerProduct): boolean {
   return product.status === "DRAFT" && !product.isRemoved;
 }
