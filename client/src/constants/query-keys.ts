@@ -14,6 +14,9 @@ export const queryKeys = {
   sellerProfile: {
     me: ["seller-profile", "me"] as const,
   },
+  store: {
+    me: ["store", "me"] as const,
+  },
   orders: {
     all: ["orders"] as const,
     list: (filters?: Record<string, unknown>) =>

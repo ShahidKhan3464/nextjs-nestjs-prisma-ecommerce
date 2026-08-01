@@ -135,6 +135,15 @@ export function SellerDashboard() {
                 {store.description}
               </p>
             ) : null}
+            <Link
+              href={ROUTES.store}
+              className={cn(
+                buttonVariants({ variant: "link", size: "sm" }),
+                "h-auto px-0"
+              )}
+            >
+              Manage store
+            </Link>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant="secondary">{formatStatusLabel(store.status)}</Badge>

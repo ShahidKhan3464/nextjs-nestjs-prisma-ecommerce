@@ -75,6 +75,13 @@ const SELLER_NAV: AppNavItem[] = [
     href: ROUTES.dashboard,
   },
   {
+    id: "store",
+    roles: ["SELLER"],
+    label: "Store",
+    icon: Store,
+    href: ROUTES.store,
+  },
+  {
     icon: Package,
     id: "products",
     label: "Products",
