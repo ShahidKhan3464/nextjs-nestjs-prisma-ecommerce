@@ -5,6 +5,8 @@ import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { Roles } from 'src/common/decorators/roles.decorator';
+import { Auth } from 'src/modules/auth/decorators/auth.decorator';
+import { AuthType } from 'src/modules/auth/constants/auth.constants';
 import { ActiveUser } from 'src/common/decorators/active-user.decorator';
 import { ParseProductImagesPipe } from './pipes/parse-product-images.pipe';
 import { createImageDiskMulterOptions } from 'src/integrations/storage/multer/image-upload.multer';
@@ -57,18 +59,21 @@ export class ProductsController {
 
   /** Catalog / admin list. Sellers manage their catalog via `GET /products/me`. */
   @Get()
+  @Auth(AuthType.NONE)
   @ApiOkResponse({ type: PaginatedProductResponseDto })
   findAll(@Query() query: QueryProductDto) {
     return this.productsService.findAllPaginated(query);
   }
 
   @Get('detail/:slug')
+  @Auth(AuthType.NONE)
   @ApiOkResponse({ type: ProductResponseDto })
   findBySlug(@Param('slug') slug: string) {
     return this.productsService.findBySlug(slug);
   }
 
   @Get(':id')
+  @Auth(AuthType.NONE)
   @ApiOkResponse({ type: ProductResponseDto })
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.productsService.findOne(id);

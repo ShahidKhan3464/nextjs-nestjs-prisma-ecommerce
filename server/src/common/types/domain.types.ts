@@ -31,11 +31,14 @@ export type ProductWithRelations = {
     name: string;
     slug: string;
     status: string;
+    logoUrl?: string | null;
     deletedAt?: Date | null;
+    verifiedAt?: Date | null;
     sellerProfile?: {
       id: number;
-      userId: number;
       status: string;
+      userId?: number;
+      businessName?: string;
       deletedAt?: Date | null;
     };
   };
@@ -71,8 +74,8 @@ export type PaymentWithRelations = Omit<
   'amount' | 'refundedAmount' | 'status' | 'provider'
 > & {
   amount: number;
-  refundedAmount: number;
   status: PaymentStatus;
+  refundedAmount: number;
   provider: PaymentProvider;
 };
 
@@ -88,23 +91,23 @@ export type OrderWithRelations = Omit<
   Order,
   'status' | 'totalAmount' | 'subtotal' | 'tax'
 > & {
+  tax: number;
+  subtotal: number;
   status: OrderStatus;
   totalAmount: number;
-  subtotal: number;
-  tax: number;
-  user?: Pick<User, 'id' | 'email' | 'fullName'>;
   store?: OrderStoreSummary;
-  payment?: PaymentWithRelations | null;
   items?: OrderItemWithRelations[];
+  payment?: PaymentWithRelations | null;
+  user?: Pick<User, 'id' | 'email' | 'fullName'>;
 };
 
 export type CheckoutSessionWithRelations = Omit<
   CheckoutSession,
   'totalAmount' | 'subtotal' | 'tax' | 'status'
 > & {
-  totalAmount: number;
-  subtotal: number;
   tax: number;
+  subtotal: number;
+  totalAmount: number;
   status: CheckoutSessionStatus;
   items: CheckoutSessionItemWithRelations[];
 };

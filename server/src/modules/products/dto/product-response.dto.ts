@@ -1,5 +1,17 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ProductStatus } from '../constants/product.constants';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+
+/** Nested seller profile summary on product store payloads. */
+export class ProductStoreSellerSummaryDto {
+  @ApiProperty()
+  id: number;
+
+  @ApiProperty()
+  businessName: string;
+
+  @ApiProperty()
+  status: string;
+}
 
 /** Nested store summary as returned on product payloads. */
 export class ProductStoreSummaryDto {
@@ -15,8 +27,20 @@ export class ProductStoreSummaryDto {
   @ApiProperty()
   status: string;
 
+  @ApiPropertyOptional({ nullable: true, type: String, format: 'date-time' })
+  verifiedAt: Date | null;
+
+  @ApiPropertyOptional({
+    nullable: true,
+    description: 'Store logo upload path (e.g. /uploads/stores/...)',
+  })
+  logoUrl: string | null;
+
   @ApiPropertyOptional({ nullable: true })
   deletedAt?: Date | null;
+
+  @ApiPropertyOptional({ type: ProductStoreSellerSummaryDto })
+  sellerProfile?: ProductStoreSellerSummaryDto;
 }
 
 /** Nested category as returned on product payloads (Prisma Category fields). */

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useMemo } from "react";
+import { isProductSort, type ProductSort } from "../types";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 export function useProductSearchParams() {
@@ -9,11 +10,17 @@ export function useProductSearchParams() {
   const searchParams = useSearchParams();
 
   const values = useMemo(() => {
+    const sortRaw = searchParams.get("sort") ?? "";
+    const sort: ProductSort | "" =
+      sortRaw && isProductSort(sortRaw) ? sortRaw : "";
+
     return {
       q: searchParams.get("q") ?? "",
       category: searchParams.get("category") ?? "",
       minPrice: searchParams.get("minPrice") ?? "",
       maxPrice: searchParams.get("maxPrice") ?? "",
+      storeId: searchParams.get("storeId") ?? "",
+      sort,
       page: Number(searchParams.get("page") ?? "1") || 1,
     };
   }, [searchParams]);

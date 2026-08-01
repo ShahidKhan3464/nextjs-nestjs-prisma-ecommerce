@@ -1,4 +1,8 @@
 import { ProductStatus } from 'src/common/enums/product-status.enum';
+import {
+  StoreFileType,
+  STORE_FILE_SELECT,
+} from 'src/modules/stores/constants/store.constants';
 
 export { ProductStatus } from 'src/common/enums/product-status.enum';
 
@@ -7,6 +11,32 @@ export enum ProductFileType {
   GALLERY = 'GALLERY',
   MANUAL = 'MANUAL',
 }
+
+/** Nested store summary used on product list/detail payloads. */
+export const PRODUCT_STORE_SELECT = {
+  id: true,
+  name: true,
+  slug: true,
+  status: true,
+  verifiedAt: true,
+  sellerProfile: {
+    select: {
+      id: true,
+      businessName: true,
+      status: true,
+    },
+  },
+  files: {
+    where: { type: StoreFileType.LOGO },
+    take: 1,
+    orderBy: { sortOrder: 'asc' as const },
+    include: {
+      file: {
+        select: STORE_FILE_SELECT,
+      },
+    },
+  },
+} as const;
 
 /** Allowed status transitions. Soft-delete is separate (`deletedAt`). */
 export const PRODUCT_STATUS_TRANSITIONS: Record<
@@ -33,12 +63,7 @@ export const PRODUCT_INCLUDE = {
   category: true,
   variants: true,
   store: {
-    select: {
-      id: true,
-      name: true,
-      slug: true,
-      status: true,
-    },
+    select: PRODUCT_STORE_SELECT,
   },
   files: {
     orderBy: { sortOrder: 'asc' as const },
@@ -56,10 +81,10 @@ export const PRODUCT_LIST_INCLUDE = {
     select: {
       id: true,
       name: true,
-      description: true,
       createdAt: true,
       updatedAt: true,
       deletedAt: true,
+      description: true,
     },
   },
   variants: {
@@ -70,18 +95,13 @@ export const PRODUCT_LIST_INCLUDE = {
       color: true,
       price: true,
       productId: true,
-      stockQuantity: true,
       createdAt: true,
       updatedAt: true,
+      stockQuantity: true,
     },
   },
   store: {
-    select: {
-      id: true,
-      name: true,
-      slug: true,
-      status: true,
-    },
+    select: PRODUCT_STORE_SELECT,
   },
   files: {
     orderBy: { sortOrder: 'asc' as const },

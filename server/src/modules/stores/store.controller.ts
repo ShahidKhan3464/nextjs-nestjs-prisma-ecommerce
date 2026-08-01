@@ -7,6 +7,8 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { StoreResponseDto } from './dto/store-response.dto';
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { UploadStoreFileDto } from './dto/upload-store-file.dto';
+import { Auth } from 'src/modules/auth/decorators/auth.decorator';
+import { AuthType } from 'src/modules/auth/constants/auth.constants';
 import { getUploadsRoot } from 'src/integrations/storage/uploads-root';
 import { ActiveUser } from 'src/common/decorators/active-user.decorator';
 import { createImageDiskMulterOptions } from 'src/integrations/storage/multer/image-upload.multer';
@@ -102,6 +104,7 @@ export class StoreController {
   }
 
   @Get('slug/:slug')
+  @Auth(AuthType.NONE)
   @ApiOkResponse({ type: StoreResponseDto })
   findBySlug(@Param('slug') slug: string) {
     return this.storeService.getBySlug(slug);

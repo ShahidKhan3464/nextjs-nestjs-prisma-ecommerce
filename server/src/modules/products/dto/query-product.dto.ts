@@ -63,4 +63,14 @@ export class QueryProductDto extends PaginationQueryDto {
   @IsNumber()
   @Min(0)
   maxPrice?: number;
+
+  @ApiPropertyOptional({
+    description: 'Catalog sort preset',
+    enum: ['newest', 'oldest', 'price_asc', 'price_desc', 'name_asc'],
+    default: 'newest',
+  })
+  @IsOptional()
+  @IsIn(['newest', 'oldest', 'price_asc', 'price_desc', 'name_asc'])
+  sort?: 'newest' | 'oldest' | 'price_asc' | 'price_desc' | 'name_asc' =
+    'newest';
 }

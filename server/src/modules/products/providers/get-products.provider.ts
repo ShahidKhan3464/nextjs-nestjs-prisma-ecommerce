@@ -99,6 +99,24 @@ export class GetProductsProvider {
     return this.paginate(query, { storeId: store.id, allowLifeCycle: true });
   }
 
+  private resolveOrderBy(
+    sort: QueryProductDto['sort'],
+  ): Prisma.ProductOrderByWithRelationInput {
+    switch (sort) {
+      case 'oldest':
+        return { createdAt: 'asc' };
+      case 'price_asc':
+        return { basePrice: 'asc' };
+      case 'price_desc':
+        return { basePrice: 'desc' };
+      case 'name_asc':
+        return { name: 'asc' };
+      case 'newest':
+      default:
+        return { createdAt: 'desc' };
+    }
+  }
+
   private async paginate(
     query: QueryProductDto,
     scope?: { storeId?: number; allowLifeCycle?: boolean },
@@ -110,7 +128,7 @@ export class GetProductsProvider {
     const products = await this.prisma.product.findMany({
       where,
       include: PRODUCT_LIST_INCLUDE,
-      orderBy: { createdAt: 'desc' },
+      orderBy: this.resolveOrderBy(query.sort),
       skip,
       take: limit,
     });

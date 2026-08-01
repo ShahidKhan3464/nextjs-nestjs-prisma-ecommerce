@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/constants/query-keys";
 import { useDebouncedCallback } from "use-debounce";
+import { PRODUCT_SORT_OPTIONS, type ProductSort } from "../types";
 import { useProductSearchParams } from "../hooks/use-product-search-params";
 import { fetchAdminCategories } from "@/modules/admin/categories/services/categories.service";
 import {
@@ -16,6 +17,14 @@ import {
   SelectContent,
   SelectTrigger,
 } from "@/components/ui/select";
+
+const SORT_LABELS: Record<ProductSort, string> = {
+  newest: "Newest",
+  oldest: "Oldest",
+  price_asc: "Price: low to high",
+  price_desc: "Price: high to low",
+  name_asc: "Name: A–Z",
+};
 
 export function ProductFilters({ disabled = false }: { disabled?: boolean }) {
   const { values, setParams } = useProductSearchParams();
@@ -37,7 +46,7 @@ export function ProductFilters({ disabled = false }: { disabled?: boolean }) {
 
   return (
     <div className="bg-muted/40 border-border rounded-xl border p-4">
-      <div className="flex flex-row flex-wrap justify-end items-end gap-4">
+      <div className="flex flex-row flex-wrap items-end justify-end gap-4">
         <div className="min-w-[min(100%,200px)] space-y-2">
           <Label htmlFor="search">Search</Label>
           <Input
@@ -54,7 +63,7 @@ export function ProductFilters({ disabled = false }: { disabled?: boolean }) {
           />
         </div>
 
-        <div className="w-full min-w-[140px] space-y-2 sm:w-auto">
+        <div className="w-full min-w-35 space-y-2 sm:w-auto">
           <Label>Category</Label>
           <Select
             disabled={disabled || categoriesLoading}
@@ -94,7 +103,7 @@ export function ProductFilters({ disabled = false }: { disabled?: boolean }) {
           </Select>
         </div>
 
-        <div className="w-full min-w-[140px] space-y-2 sm:w-auto">
+        <div className="w-full min-w-35 space-y-2 sm:w-auto">
           <Label>Max price</Label>
           <Select
             disabled={disabled}
@@ -119,6 +128,34 @@ export function ProductFilters({ disabled = false }: { disabled?: boolean }) {
           </Select>
         </div>
 
+        <div className="w-full min-w-40 space-y-2 sm:w-auto">
+          <Label>Sort</Label>
+          <Select
+            disabled={disabled}
+            value={values.sort || "newest"}
+            onValueChange={(v) => {
+              if (v == null) return;
+              setParams({
+                sort: v === "newest" ? "" : v,
+                page: 1,
+              });
+            }}
+          >
+            <SelectTrigger className="w-full" disabled={disabled}>
+              <SelectValue placeholder="Newest">
+                {SORT_LABELS[(values.sort || "newest") as ProductSort]}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              {PRODUCT_SORT_OPTIONS.map((option) => (
+                <SelectItem key={option} value={option}>
+                  {SORT_LABELS[option]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
         <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-end">
           <Button
             type="button"
@@ -131,6 +168,7 @@ export function ProductFilters({ disabled = false }: { disabled?: boolean }) {
                 category: "",
                 minPrice: "",
                 maxPrice: "",
+                sort: "",
                 page: 1,
               })
             }

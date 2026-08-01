@@ -4,6 +4,10 @@ export const queryKeys = {
     list: (filters: Record<string, unknown>) =>
       [...queryKeys.products.all, "list", filters] as const,
   },
+  stores: {
+    all: ["stores"] as const,
+    bySlug: (slug: string) => [...queryKeys.stores.all, "slug", slug] as const,
+  },
   wishlist: {
     all: ["wishlist"] as const,
   },

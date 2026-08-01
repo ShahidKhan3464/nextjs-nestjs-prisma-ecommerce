@@ -1,13 +1,17 @@
 "use client";
 
+import Link from "next/link";
 import Image from "next/image";
 import { toast } from "sonner";
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
+import { StoreChip } from "./store-chip";
+import { ROUTES } from "@/constants/routes";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cartAddItem } from "@/lib/cart-actions";
+import { ProductBadges } from "./product-badges";
 import type { Product, ProductVariant } from "../types";
 import { useRecentlyViewedStore } from "@/store/recently-viewed-store";
 import { useWishlistHydrate } from "@/shared/hooks/use-wishlist-hydrate";
@@ -231,14 +235,29 @@ export function ProductDetailView({ product }: Props) {
       {/* Details */}
       <div className="flex flex-col justify-center gap-8">
         <header className="space-y-4">
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge variant="secondary" className="font-normal">
-              {product.category}
-            </Badge>
-          </div>
+          <ProductBadges product={product} includeCategory />
           <h1 className="font-heading text-3xl font-semibold tracking-tight md:text-4xl">
             {product.name}
           </h1>
+          {product.store ? (
+            <div className="border-border space-y-2 rounded-xl border bg-muted/30 p-3">
+              <p className="text-muted-foreground text-[10px] font-medium uppercase tracking-wider">
+                Sold by
+              </p>
+              <StoreChip store={product.store} showVerified />
+              {product.store.seller?.businessName ? (
+                <p className="text-muted-foreground text-xs">
+                  {product.store.seller.businessName}
+                </p>
+              ) : null}
+              <Link
+                href={ROUTES.publicStore(product.store.slug)}
+                className="text-primary text-xs font-medium hover:underline"
+              >
+                Visit store
+              </Link>
+            </div>
+          ) : null}
           {product.description?.trim() ? (
             <p className="text-muted-foreground max-w-prose text-base leading-relaxed">
               {product.description}

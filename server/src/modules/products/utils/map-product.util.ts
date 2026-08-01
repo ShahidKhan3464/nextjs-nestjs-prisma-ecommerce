@@ -10,18 +10,39 @@ type ProductFileRow = {
   >;
 };
 
+type StoreFileRow = {
+  type: string;
+  sortOrder: number;
+  file: Pick<StoredFile, 'id' | 'urlPath'>;
+};
+
+type StoreRow = {
+  id: number;
+  name: string;
+  slug: string;
+  status: string;
+  files?: StoreFileRow[];
+  deletedAt?: Date | null;
+  verifiedAt?: Date | null;
+  sellerProfile?: {
+    id: number;
+    businessName: string;
+    status: string;
+  } | null;
+};
+
 type ProductRow = {
   id: number;
   name: string;
   slug: string;
   status: string;
   storeId: number;
-  store?: unknown;
   createdAt: Date;
   updatedAt: Date;
   categoryId: number;
   category?: unknown;
   deletedAt: Date | null;
+  store?: StoreRow | null;
   publishedAt: Date | null;
   description: string | null;
   basePrice: { toNumber?: () => number } | number | string;
@@ -38,6 +59,33 @@ type ProductRow = {
   }>;
   files?: ProductFileRow[];
 };
+
+function mapStoreSummary(
+  store: StoreRow | null | undefined,
+): ProductWithRelations['store'] | undefined {
+  if (!store) return undefined;
+
+  const logoPath = store.files?.[0]?.file?.urlPath ?? null;
+
+  return {
+    id: store.id,
+    name: store.name,
+    slug: store.slug,
+    logoUrl: logoPath,
+    status: store.status,
+    verifiedAt: store.verifiedAt ?? null,
+    ...(store.deletedAt !== undefined ? { deletedAt: store.deletedAt } : {}),
+    ...(store.sellerProfile
+      ? {
+          sellerProfile: {
+            id: store.sellerProfile.id,
+            businessName: store.sellerProfile.businessName,
+            status: store.sellerProfile.status,
+          },
+        }
+      : {}),
+  };
+}
 
 export function mapProductToResponse(product: ProductRow): ProductWithRelations {
   const images =
@@ -56,8 +104,8 @@ export function mapProductToResponse(product: ProductRow): ProductWithRelations 
     publishedAt: product.publishedAt,
     description: product.description,
     basePrice: Number(product.basePrice),
+    store: mapStoreSummary(product.store),
     status: product.status as ProductStatus,
-    store: product.store as ProductWithRelations['store'],
     category: product.category as ProductWithRelations['category'],
     variants: product.variants?.map((variant) => ({
       ...variant,

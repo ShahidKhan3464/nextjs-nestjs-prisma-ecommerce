@@ -29,6 +29,8 @@ export async function GET(req: Request) {
     url.searchParams.get("category") || url.searchParams.get("categoryId");
   const maxPrice = url.searchParams.get("maxPrice");
   const minPrice = url.searchParams.get("minPrice");
+  const storeId = url.searchParams.get("storeId");
+  const sort = url.searchParams.get("sort");
   const page = url.searchParams.get("page");
   const limit = url.searchParams.get("limit");
 
@@ -36,6 +38,8 @@ export async function GET(req: Request) {
   if (cat) searchParams.set("categoryId", cat);
   if (maxPrice) searchParams.set("maxPrice", maxPrice);
   if (minPrice) searchParams.set("minPrice", minPrice);
+  if (storeId) searchParams.set("storeId", storeId);
+  if (sort) searchParams.set("sort", sort);
   if (page) searchParams.set("page", page);
   if (limit) searchParams.set("limit", limit);
 

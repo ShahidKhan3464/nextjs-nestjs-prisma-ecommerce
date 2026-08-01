@@ -23,4 +23,5 @@ export const ROUTES = {
   productEdit: (id: string | number) => `/products/edit/${id}`,
   productManage: (id: string | number) => `/products/manage/${id}`,
   product: (slug: string | null | undefined) => `/products/${slug ?? ""}`,
+  publicStore: (slug: string | null | undefined) => `/stores/${slug ?? ""}`,
 } as const;

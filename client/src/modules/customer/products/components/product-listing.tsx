@@ -20,15 +20,25 @@ function toParams(
     q: values.q || undefined,
     categoryId: values.category ? Number(values.category) : undefined,
     maxPrice: values.maxPrice ? Number(values.maxPrice) : undefined,
+    storeId: values.storeId ? Number(values.storeId) : undefined,
+    sort: values.sort || undefined,
     page: values.page,
     limit: 12,
   };
 }
 
-export function ProductListing() {
+type Props = {
+  /** When set, scopes the listing to a store (also reflected in URL when present). */
+  storeId?: number;
+};
+
+export function ProductListing({ storeId }: Props) {
   useWishlistHydrate();
   const { values, setParams } = useProductSearchParams();
-  const params = toParams(values);
+  const params = toParams({
+    ...values,
+    storeId: storeId != null ? String(storeId) : values.storeId,
+  });
 
   const { data, isPending, isError, refetch } = useQuery({
     queryKey: queryKeys.products.list(
@@ -42,7 +52,12 @@ export function ProductListing() {
     return (
       <motion.div layout className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
         {Array.from({ length: 8 }).map((_, i) => (
-          <Skeleton key={i} className="h-48 rounded-2xl sm:h-52" />
+          <div key={i} className="space-y-3">
+            <Skeleton className="h-48 rounded-2xl sm:h-52" />
+            <Skeleton className="h-4 w-3/4" />
+            <Skeleton className="h-3 w-1/2" />
+            <Skeleton className="h-8 w-20" />
+          </div>
         ))}
       </motion.div>
     );
@@ -84,7 +99,7 @@ export function ProductListing() {
       <Pagination
         page={pagination.page}
         perPage={pagination.limit}
-        onPerPageChange={() => {}} // Not implemented in search params yet, but required by component
+        onPerPageChange={() => {}}
         totalPages={pagination.totalPages}
         onPageChange={(p) => setParams({ page: p })}
       />
