@@ -17,19 +17,30 @@ export function isSellerOrAdminProductPath(pathname: string): boolean {
   );
 }
 
+/** Public catalog — storefront + product browse (seller manage/edit stay protected). */
+function isPublicCatalogPath(pathname: string): boolean {
+  if (pathname.startsWith("/stores")) return true;
+  if (isSellerOrAdminProductPath(pathname)) return false;
+  return pathname === "/products" || pathname.startsWith("/products/");
+}
+
 export function isProtectedShopPath(pathname: string): boolean {
+  if (isPublicCatalogPath(pathname)) return false;
+
   return (
     pathname.startsWith("/dashboard") ||
     pathname.startsWith("/profile") ||
     pathname.startsWith("/orders") ||
-    pathname.startsWith("/products") ||
+    isSellerOrAdminProductPath(pathname) ||
     pathname.startsWith("/categories") ||
     pathname.startsWith("/cart") ||
     pathname.startsWith("/checkout") ||
     pathname.startsWith("/wishlist") ||
     pathname.startsWith("/users") ||
     pathname.startsWith("/become-seller") ||
-    pathname.startsWith("/store")
+    // Exact seller store settings — do not match public `/stores/...`
+    pathname === "/store" ||
+    pathname.startsWith("/store/")
   );
 }
 

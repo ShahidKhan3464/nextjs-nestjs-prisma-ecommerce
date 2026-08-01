@@ -4,6 +4,8 @@ import { QueryCategoryDto } from './dto/query-category.dto';
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
+import { Auth } from 'src/modules/auth/decorators/auth.decorator';
+import { AuthType } from 'src/modules/auth/constants/auth.constants';
 import {
   CategoryResponseDto,
   PaginatedCategoryResponseDto,
@@ -33,12 +35,14 @@ export class CategoriesController {
   constructor(private readonly categoriesService: CategoriesService) {}
 
   @Get()
+  @Auth(AuthType.NONE)
   @ApiOkResponse({ type: PaginatedCategoryResponseDto })
   findAll(@Query() query: QueryCategoryDto) {
     return this.categoriesService.findAllPaginated(query);
   }
 
   @Get(':id')
+  @Auth(AuthType.NONE)
   @ApiOkResponse({ type: CategoryResponseDto })
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.categoriesService.findOne(id);

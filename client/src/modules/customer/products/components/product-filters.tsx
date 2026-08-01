@@ -8,8 +8,8 @@ import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/constants/query-keys";
 import { useDebouncedCallback } from "use-debounce";
 import { PRODUCT_SORT_OPTIONS, type ProductSort } from "../types";
+import { fetchCustomerCategories } from "../services/categories.service";
 import { useProductSearchParams } from "../hooks/use-product-search-params";
-import { fetchAdminCategories } from "@/modules/admin/categories/services/categories.service";
 import {
   Select,
   SelectItem,
@@ -29,12 +29,10 @@ const SORT_LABELS: Record<ProductSort, string> = {
 export function ProductFilters({ disabled = false }: { disabled?: boolean }) {
   const { values, setParams } = useProductSearchParams();
   const [qLocal, setQLocal] = React.useState(values.q);
-  const { data: categoriesResp, isPending: categoriesLoading } = useQuery({
-    queryKey: queryKeys.admin.categories,
-    queryFn: () => fetchAdminCategories({ limit: 100 }),
+  const { data: categories = [], isPending: categoriesLoading } = useQuery({
+    queryKey: queryKeys.products.categories,
+    queryFn: fetchCustomerCategories,
   });
-
-  const categories = categoriesResp?.categories ?? [];
 
   React.useEffect(() => {
     setQLocal(values.q);
