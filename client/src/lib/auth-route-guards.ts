@@ -3,11 +3,17 @@
 /** Paths that require SUPER_ADMIN (nav + middleware). */
 export function isAdminOnlyPath(pathname: string): boolean {
   return (
-    pathname.startsWith("/users") ||
-    pathname.startsWith("/categories") ||
+    pathname.startsWith("/users") || pathname.startsWith("/categories")
+  );
+}
+
+/** Product create/edit/manage — SUPER_ADMIN or SELLER. */
+export function isSellerOrAdminProductPath(pathname: string): boolean {
+  return (
     pathname === "/products/new" ||
     pathname.startsWith("/products/new/") ||
-    pathname.startsWith("/products/edit/")
+    pathname.startsWith("/products/edit/") ||
+    pathname.startsWith("/products/manage/")
   );
 }
 

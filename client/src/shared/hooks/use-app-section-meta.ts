@@ -30,6 +30,12 @@ export function useAppSectionMeta(): { title: string; hint?: string } {
       if (pathname.startsWith("/products/edit/")) {
         return { title: "Edit product", hint: "Update catalog item" };
       }
+      if (pathname.startsWith("/products/manage/")) {
+        return {
+          title: "Product",
+          hint: chrome === "seller" ? "Your listing" : "Details",
+        };
+      }
       return { title: "Product", hint: "Details & variants" };
     }
     if (pathname === "/products") {

@@ -2,11 +2,12 @@ import { NextResponse } from "next/server";
 import { ROUTES } from "@/constants/routes";
 import type { NextRequest } from "next/server";
 import { verifyToken } from "@/lib/server-auth";
-import { isSuperAdmin } from "@/modules/auth/utils/roles";
+import { isSeller, isSuperAdmin } from "@/modules/auth/utils/roles";
 import {
   isAdminOnlyPath,
   isProtectedShopPath,
   safeProtectedRedirectPath,
+  isSellerOrAdminProductPath,
 } from "@/lib/auth-route-guards";
 import {
   AUTH_SESSION_COOKIE,
@@ -87,6 +88,14 @@ export async function middleware(request: NextRequest) {
   }
 
   if (isAdminOnlyPath(pathname) && !isSuperAdmin(payload.roles)) {
+    return NextResponse.redirect(new URL(ROUTES.dashboard, request.url));
+  }
+
+  if (
+    isSellerOrAdminProductPath(pathname) &&
+    !isSuperAdmin(payload.roles) &&
+    !isSeller(payload.roles)
+  ) {
     return NextResponse.redirect(new URL(ROUTES.dashboard, request.url));
   }
 

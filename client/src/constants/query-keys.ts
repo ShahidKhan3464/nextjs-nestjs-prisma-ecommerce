@@ -17,6 +17,13 @@ export const queryKeys = {
   store: {
     me: ["store", "me"] as const,
   },
+  seller: {
+    categories: ["seller", "categories"] as const,
+    products: {
+      all: ["seller", "products"] as const,
+      detail: (id: string) => ["seller", "products", "detail", id] as const,
+    },
+  },
   orders: {
     all: ["orders"] as const,
     list: (filters?: Record<string, unknown>) =>

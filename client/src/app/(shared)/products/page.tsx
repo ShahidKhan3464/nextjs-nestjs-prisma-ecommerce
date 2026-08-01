@@ -4,9 +4,10 @@ import type { Metadata } from "next";
 import { siteConfig } from "@/config/site";
 import { ROUTES } from "@/constants/routes";
 import { buttonVariants } from "@/components/ui/button";
-import { isSuperAdmin } from "@/modules/auth/utils/roles";
 import { getAccessTokenPayload } from "@/lib/session-cookie";
 import { AdminProductsList } from "@/modules/admin/products";
+import { SellerProductsPage } from "@/modules/seller/products";
+import { isSeller, isSuperAdmin } from "@/modules/auth/utils/roles";
 import { ProductsPageContent } from "@/modules/customer/products/components/products-page-content";
 
 export const metadata: Metadata = {
@@ -42,6 +43,10 @@ export default async function ProductsPage() {
         <AdminProductsList />
       </div>
     );
+  }
+
+  if (session && isSeller(session.roles)) {
+    return <SellerProductsPage />;
   }
 
   return <ProductsPageContent />;

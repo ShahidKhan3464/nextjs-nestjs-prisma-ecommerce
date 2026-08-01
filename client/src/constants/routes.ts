@@ -21,5 +21,6 @@ export const ROUTES = {
   order: (id: string) => `/orders/${id}`,
   category: (id: string | number) => `/categories/${id}`,
   productEdit: (id: string | number) => `/products/edit/${id}`,
+  productManage: (id: string | number) => `/products/manage/${id}`,
   product: (slug: string | null | undefined) => `/products/${slug ?? ""}`,
 } as const;

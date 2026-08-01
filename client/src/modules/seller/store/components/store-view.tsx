@@ -68,7 +68,7 @@ export function StoreView({ store }: Props) {
       ) : null}
 
       <section className="space-y-4">
-        <div className="relative aspect-[3/1] w-full overflow-hidden rounded-lg border bg-muted">
+        <div className="relative aspect-3/1 w-full overflow-hidden rounded-lg border bg-muted">
           {banner ? (
             <Image
               fill
