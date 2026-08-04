@@ -6,10 +6,10 @@ import { hydrateWishlistOnce } from "@/lib/cart-wishlist-session";
 
 /** Fetches wishlist once per session (for heart icons on product grids). */
 export function useWishlistHydrate() {
-  const accessToken = useAuthStore((s) => s.accessToken);
+  const user = useAuthStore((s) => s.user);
 
   React.useEffect(() => {
-    if (!accessToken) return;
+    if (!user) return;
     void hydrateWishlistOnce().catch(() => undefined);
-  }, [accessToken]);
+  }, [user]);
 }

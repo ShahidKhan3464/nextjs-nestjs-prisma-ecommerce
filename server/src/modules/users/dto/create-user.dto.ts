@@ -1,3 +1,5 @@
+import { Transform } from 'class-transformer';
+import { Match } from 'src/common/decorators/match.decorator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   PASSWORD_MAX_LENGTH,
@@ -53,6 +55,9 @@ export class CreateUserDto {
     example: 'test@gmail.com',
     description: 'User email address',
   })
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.trim().toLowerCase() : value,
+  )
   @IsEmail()
   @IsNotEmpty()
   email: string;
@@ -85,5 +90,6 @@ export class CreateUserDto {
   @Matches(PASSWORD_COMPLEXITY_REGEX, {
     message: PASSWORD_COMPLEXITY_MESSAGE,
   })
+  @Match('password', { message: 'confirmPassword must match password' })
   confirmPassword: string;
 }

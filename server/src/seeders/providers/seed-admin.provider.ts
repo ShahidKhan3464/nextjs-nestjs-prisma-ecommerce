@@ -19,6 +19,20 @@ export class SeedAdminProvider implements OnApplicationBootstrap {
   }
 
   private async seedAdminUser(): Promise<void> {
+    const nodeEnv =
+      this.configService.get<string>('NODE_ENV') ??
+      this.configService.get<string>('app.environments') ??
+      'development';
+    const allowAdminSeed =
+      this.configService.get<boolean>('ALLOW_ADMIN_SEED') === true;
+
+    if (nodeEnv === 'production' && !allowAdminSeed) {
+      this.logger.debug(
+        'Admin seeding skipped in production. Set ALLOW_ADMIN_SEED=true to enable.',
+      );
+      return;
+    }
+
     const adminEmail = this.configService.get<string>('ADMIN_EMAIL');
     const adminPhone = this.configService.get<string>('ADMIN_PHONE');
     const adminPassword = this.configService.get<string>('ADMIN_PASSWORD');
@@ -32,13 +46,15 @@ export class SeedAdminProvider implements OnApplicationBootstrap {
       return;
     }
 
+    const normalizedEmail = adminEmail.trim().toLowerCase();
+
     const existingUser = await this.prisma.user.findUnique({
-      where: { email: adminEmail },
+      where: { email: normalizedEmail },
     });
 
     if (existingUser) {
       this.logger.log(
-        `Admin seeding skipped. User already exists: ${adminEmail}`,
+        `Admin seeding skipped. User already exists: ${normalizedEmail}`,
       );
       return;
     }
@@ -46,8 +62,8 @@ export class SeedAdminProvider implements OnApplicationBootstrap {
     await this.prisma.user.create({
       data: {
         isBlocked: false,
-        email: adminEmail,
         fullName: adminName,
+        email: normalizedEmail,
         phoneNumber: adminPhone,
         password: await this.hashingProvider.hash(adminPassword),
         userRoles: {
@@ -56,6 +72,6 @@ export class SeedAdminProvider implements OnApplicationBootstrap {
       },
     });
 
-    this.logger.log(`Admin user seeded successfully: ${adminEmail}`);
+    this.logger.log(`Admin user seeded successfully: ${normalizedEmail}`);
   }
 }

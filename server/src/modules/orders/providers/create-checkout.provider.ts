@@ -1,15 +1,19 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { generateOrderNumber } from '../utils/map-order.util';
 import { CreateCheckoutDto } from '../dto/create-checkout.dto';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { calculateOrderPricing } from '../utils/order-pricing.util';
 import { lockProductVariants } from '../utils/lock-product-variants.util';
 import { findCartItemsWithImages } from 'src/common/prisma/file-query.util';
+import { validateAndGroupCheckoutCart } from '../utils/validate-checkout-cart.util';
+import {
+  type StockLine,
+  adjustVariantStock,
+} from '../utils/adjust-variant-stock.util';
 import {
   StripeClient,
   StripeService,
 } from 'src/integrations/stripe/stripe.service';
-import { validateAndGroupCheckoutCart } from '../utils/validate-checkout-cart.util';
 import {
   OrderStatus,
   PaymentStatus,
@@ -130,6 +134,13 @@ export class CreateCheckoutProvider {
             throw new BadRequestException('Product unavailable');
           }
         }
+
+        // Reserve inventory at checkout create so concurrent checkouts cannot oversell.
+        const stockLines: StockLine[] = allLines.map((line) => ({
+          variantId: line.variantId,
+          quantity: line.quantity,
+        }));
+        await adjustVariantStock(tx, stockLines, 'reserve');
 
         const createdSession = await tx.checkoutSession.create({
           data: {
@@ -325,6 +336,11 @@ export class CreateCheckoutProvider {
 
       const orderIds = [...new Set(pendingPayments.map((p) => p.orderId))];
       if (orderIds.length > 0) {
+        const items = await tx.orderItem.findMany({
+          where: { orderId: { in: orderIds } },
+          select: { variantId: true, quantity: true },
+        });
+        await adjustVariantStock(tx, items, 'release');
         await tx.order.deleteMany({ where: { id: { in: orderIds } } });
       }
 
@@ -344,6 +360,11 @@ export class CreateCheckoutProvider {
   ): Promise<void> {
     await this.prisma.$transaction(async (tx) => {
       if (orderIds.length > 0) {
+        const items = await tx.orderItem.findMany({
+          where: { orderId: { in: orderIds } },
+          select: { variantId: true, quantity: true },
+        });
+        await adjustVariantStock(tx, items, 'release');
         await tx.order.deleteMany({ where: { id: { in: orderIds } } });
       }
       await tx.checkoutSession.update({

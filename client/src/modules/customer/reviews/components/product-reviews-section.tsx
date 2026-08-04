@@ -70,8 +70,7 @@ export function ProductReviewsSection({
 }: Props) {
   const qc = useQueryClient();
   const user = useAuthStore((s) => s.user);
-  const accessToken = useAuthStore((s) => s.accessToken);
-  const authenticated = Boolean(user && accessToken);
+  const authenticated = Boolean(user);
   const canReview = authenticated && isBuyer(user?.roles ?? []);
 
   const [page, setPage] = React.useState(1);

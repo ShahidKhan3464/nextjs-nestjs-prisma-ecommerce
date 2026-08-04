@@ -1,10 +1,27 @@
 import { SignJWT, jwtVerify } from "jose";
 import type { UserRole } from "@/modules/auth";
 import { normalizeRoles } from "@/modules/auth/utils/roles";
+import { ACCESS_TOKEN_TTL_SECONDS } from "@/lib/auth-token-durations";
 
-const secret = new TextEncoder().encode(
-  process.env.JWT_SECRET ?? "dev-only-change-in-production-min-32-chars!!"
-);
+function resolveJwtSecret(): Uint8Array {
+  const raw = process.env.JWT_SECRET?.trim();
+  if (!raw) {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error(
+        "JWT_SECRET must be set in production (min 32 characters)."
+      );
+    }
+    return new TextEncoder().encode(
+      "dev-only-change-in-production-min-32-chars!!"
+    );
+  }
+  if (process.env.NODE_ENV === "production" && raw.length < 32) {
+    throw new Error("JWT_SECRET must be at least 32 characters in production.");
+  }
+  return new TextEncoder().encode(raw);
+}
+
+const secret = resolveJwtSecret();
 
 export interface JwtPayload {
   sub: string;
@@ -21,7 +38,7 @@ export async function signAccessToken(payload: Omit<JwtPayload, "typ">) {
   const token = await new SignJWT({ ...payload, typ: "access" })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
-    .setExpirationTime("2d")
+    .setExpirationTime(`${ACCESS_TOKEN_TTL_SECONDS}s`)
     .sign(secret);
   return token;
 }

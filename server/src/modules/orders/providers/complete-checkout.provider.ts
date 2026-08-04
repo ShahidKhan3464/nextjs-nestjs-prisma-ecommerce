@@ -1,7 +1,6 @@
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UsersService } from 'src/modules/users/users.service';
 import { CompleteCheckoutDto } from '../dto/complete-checkout.dto';
-import { lockProductVariants } from '../utils/lock-product-variants.util';
 import { MailService } from 'src/integrations/mail/providers/mail.service';
 import { OrderResponse, mapOrderToResponse } from '../utils/map-order.util';
 import { NotificationService } from 'src/modules/notifications/notification.service';
@@ -170,38 +169,7 @@ export class CompleteCheckoutProvider {
 
       claimed = true;
 
-      const allItems = payments.flatMap((payment) => payment.order.items);
-      const qtyByVariant = new Map<number, number>();
-      for (const item of allItems) {
-        qtyByVariant.set(
-          item.variantId,
-          (qtyByVariant.get(item.variantId) ?? 0) + item.quantity,
-        );
-      }
-
-      const variantIds = [...qtyByVariant.keys()];
-      await lockProductVariants(tx, variantIds);
-
-      const variants = await tx.productVariant.findMany({
-        where: { id: { in: variantIds } },
-        select: { id: true, stockQuantity: true },
-      });
-      const variantById = new Map(variants.map((v) => [v.id, v]));
-
-      for (const [variantId, quantity] of qtyByVariant) {
-        const variant = variantById.get(variantId);
-        if (!variant || variant.stockQuantity < quantity) {
-          throw new BadRequestException(
-            `Insufficient stock for variant ${variantId}`,
-          );
-        }
-
-        await tx.productVariant.update({
-          where: { id: variantId },
-          data: { stockQuantity: { decrement: quantity } },
-        });
-      }
-
+      // Stock was reserved at checkout create — only mark payment succeeded here.
       await this.paymentLifecycleProvider.markSucceededMany(tx, {
         orderIds,
         methodSummary: paymentSummary,
@@ -264,7 +232,7 @@ export class CompleteCheckoutProvider {
       existingPaid.map((payment) => payment.orderId),
     );
     const responses = orders.map((order) => mapOrderToResponse(order));
-    await this.sendConfirmationEmails(userId, responses);
+    // Idempotent path — do not re-send confirmation emails.
     return { orders: responses };
   }
 

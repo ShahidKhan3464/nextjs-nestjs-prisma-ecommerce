@@ -4,7 +4,7 @@ import { UserRole } from 'src/common/enums/user-role.enum';
 import { UsersService } from 'src/modules/users/users.service';
 import { OrderOwnershipProvider } from './order-ownership.provider';
 import { findOrderWithImages } from 'src/common/prisma/file-query.util';
-import { lockProductVariants } from '../utils/lock-product-variants.util';
+import { adjustVariantStock } from '../utils/adjust-variant-stock.util';
 import { OrderStatus, PaymentStatus } from '../constants/order.constants';
 import { MailService } from 'src/integrations/mail/providers/mail.service';
 import { OrderResponse, mapOrderToResponse } from '../utils/map-order.util';
@@ -60,93 +60,110 @@ export class CancelOrderProvider {
     const wasPaid = payment?.status === PaymentStatus.SUCCEEDED;
     let externalRefundId: string | null = null;
 
-    // Multi-store checkouts share one PaymentIntent — refund only this order's
-    // remaining balance so sibling store orders stay charged.
-    if (wasPaid && payment?.transactionId) {
-      const refundable =
-        Math.round(
-          (Number(payment.amount) - Number(payment.refundedAmount ?? 0)) * 100,
-        ) / 100;
+    // Claim cancel in DB first so concurrent cancels cannot double-refund.
+    const claim = await this.prisma.order.updateMany({
+      where: { id: orderId, status: OrderStatus.PENDING },
+      data: {
+        status: OrderStatus.CANCELLED,
+        cancellationReason: dto.reason.trim(),
+        cancelledAt: new Date(),
+      },
+    });
 
-      if (refundable <= 0) {
-        throw new BadRequestException(
-          'Order payment has already been refunded',
-        );
-      }
-
-      const refundAmountCents = Math.round(refundable * 100);
-      if (refundAmountCents < 1) {
-        throw new BadRequestException('Refundable amount is too small');
-      }
-
-      const refund = await this.stripe.refunds.create({
-        payment_intent: payment.transactionId,
-        amount: refundAmountCents,
-      });
-      externalRefundId = refund.id;
+    if (claim.count === 0) {
+      throw new BadRequestException('Only pending orders can be cancelled');
     }
 
-    await this.prisma.$transaction(async (tx) => {
-      const lockedOrder = await tx.order.findUnique({
-        where: { id: orderId },
-        include: { items: true, payment: true },
-      });
+    try {
+      if (wasPaid && payment?.transactionId) {
+        const refundable =
+          Math.round(
+            (Number(payment.amount) - Number(payment.refundedAmount ?? 0)) *
+              100,
+          ) / 100;
 
-      if (
-        !lockedOrder ||
-        (lockedOrder.status as OrderStatus) !== OrderStatus.PENDING
-      ) {
-        throw new BadRequestException('Only pending orders can be cancelled');
-      }
-
-      // Stock is deducted only after successful payment.
-      if (lockedOrder.payment?.status === PaymentStatus.SUCCEEDED || wasPaid) {
-        const variantIds = lockedOrder.items.map((item) => item.variantId);
-        await lockProductVariants(tx, variantIds);
-
-        await Promise.all(
-          lockedOrder.items.map((item) =>
-            tx.productVariant.update({
-              where: { id: item.variantId },
-              data: { stockQuantity: { increment: item.quantity } },
-            }),
-          ),
-        );
-      }
-
-      await tx.order.update({
-        where: { id: orderId },
-        data: {
-          status: OrderStatus.CANCELLED,
-          cancellationReason: dto.reason.trim(),
-          cancelledAt: new Date(),
-        },
-      });
-
-      if (lockedOrder.payment) {
-        if (wasPaid) {
-          const refundAmount =
-            Math.round(
-              (Number(lockedOrder.payment.amount) -
-                Number(lockedOrder.payment.refundedAmount ?? 0)) *
-                100,
-            ) / 100;
-
-          await this.paymentLifecycleProvider.applyRefund(tx, {
-            paymentId: lockedOrder.payment.id,
-            amount: refundAmount,
-            reason: dto.reason.trim(),
-            externalRefundId,
-          });
-        } else {
-          await this.paymentLifecycleProvider.markFailedOrKeep(
-            tx,
-            lockedOrder.payment.id,
-            PaymentFailureReason.PAYMENT_CANCELLED,
+        if (refundable <= 0) {
+          throw new BadRequestException(
+            'Order payment has already been refunded',
           );
         }
+
+        const refundAmountCents = Math.round(refundable * 100);
+        if (refundAmountCents < 1) {
+          throw new BadRequestException('Refundable amount is too small');
+        }
+
+        const refund = await this.stripe.refunds.create(
+          {
+            payment_intent: payment.transactionId,
+            amount: refundAmountCents,
+          },
+          { idempotencyKey: `order-cancel-${orderId}` },
+        );
+        externalRefundId = refund.id;
       }
-    });
+
+      await this.prisma.$transaction(async (tx) => {
+        const lockedOrder = await tx.order.findUnique({
+          where: { id: orderId },
+          include: { items: true, payment: true },
+        });
+
+        if (!lockedOrder) {
+          throw new NotFoundException('Order not found');
+        }
+
+        // Stock was reserved at checkout create — always release on cancel.
+        await adjustVariantStock(
+          tx,
+          lockedOrder.items.map((item) => ({
+            variantId: item.variantId,
+            quantity: item.quantity,
+          })),
+          'release',
+        );
+
+        if (lockedOrder.payment) {
+          if (wasPaid) {
+            const refundAmount =
+              Math.round(
+                (Number(lockedOrder.payment.amount) -
+                  Number(lockedOrder.payment.refundedAmount ?? 0)) *
+                  100,
+              ) / 100;
+
+            await this.paymentLifecycleProvider.applyRefund(tx, {
+              paymentId: lockedOrder.payment.id,
+              amount: refundAmount,
+              reason: dto.reason.trim(),
+              externalRefundId,
+            });
+          } else {
+            await this.paymentLifecycleProvider.markFailedOrKeep(
+              tx,
+              lockedOrder.payment.id,
+              PaymentFailureReason.PAYMENT_CANCELLED,
+            );
+          }
+        }
+      });
+    } catch (error) {
+      // Compensate claim if refund/stock update fails after status flip.
+      await this.prisma.order
+        .updateMany({
+          where: {
+            id: orderId,
+            status: OrderStatus.CANCELLED,
+          },
+          data: {
+            status: OrderStatus.PENDING,
+            cancellationReason: null,
+            cancelledAt: null,
+          },
+        })
+        .catch(() => undefined);
+      throw error;
+    }
 
     const updated = await findOrderWithImages(this.prisma, { id: orderId });
     if (!updated) {

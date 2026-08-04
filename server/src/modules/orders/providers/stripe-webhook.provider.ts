@@ -12,6 +12,8 @@ import {
   HttpStatus,
   BadRequestException,
   ServiceUnavailableException,
+  ForbiddenException,
+  NotFoundException,
 } from '@nestjs/common';
 
 @Injectable()
@@ -93,15 +95,48 @@ export class StripeWebhookProvider {
   }
 
   /**
-   * 4xx from completion are treated as permanent (bad metadata, already
-   * cancelled session, insufficient stock, etc.) so Stripe does not retry.
-   * Non-HTTP errors (DB blips, timeouts) are transient.
+   * Only truly permanent client/data errors are acked to Stripe.
+   * Fulfillment failures after a successful charge must NOT be silently acked
+   * (Stripe will retry; ops can investigate / refund).
    */
   private isPermanentCompletionFailure(err: unknown): boolean {
+    if (err instanceof ForbiddenException || err instanceof NotFoundException) {
+      return true;
+    }
+
     if (!(err instanceof HttpException)) {
       return false;
     }
+
     const status = err.getStatus();
-    return status >= 400 && status < 500;
+    if (status < 400 || status >= 500) {
+      return false;
+    }
+
+    const message = this.exceptionMessage(err).toLowerCase();
+
+    // Paid but unfulfillable (e.g. legacy stock race) — keep retrying / alert.
+    if (message.includes('insufficient stock')) {
+      return false;
+    }
+
+    return (
+      message.includes('amount mismatch') ||
+      message.includes('invalid checkout') ||
+      message.includes('does not match') ||
+      message.includes('payment has not been completed') ||
+      message.includes('invalid checkout payment metadata')
+    );
+  }
+
+  private exceptionMessage(err: HttpException): string {
+    const response = err.getResponse();
+    if (typeof response === 'string') return response;
+    if (response && typeof response === 'object' && 'message' in response) {
+      const message = (response as { message?: unknown }).message;
+      if (typeof message === 'string') return message;
+      if (Array.isArray(message)) return message.map(String).join(', ');
+    }
+    return err.message;
   }
 }

@@ -17,7 +17,7 @@ export default async function OrdersPage() {
   if (session && isSuperAdmin(session.roles)) {
     return (
       <div className="space-y-4">
-        <header className="flex items-centere justify-between">
+        <header className="flex items-center justify-between">
           <div className="space-y-0.5">
             <h1 className="font-heading text-3xl font-semibold tracking-tight">
               Orders

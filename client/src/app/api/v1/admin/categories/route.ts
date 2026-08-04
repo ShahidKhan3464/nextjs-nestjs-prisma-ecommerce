@@ -1,3 +1,4 @@
+import { requireAdmin } from "@/lib/require-auth";
 import type { ApiResponse } from "@/types";
 import { getBackendUrl } from "@/lib/backend-url";
 import { jsonMessage, jsonOk } from "@/lib/api-response";
@@ -19,6 +20,8 @@ type NestPagedEnvelope = {
 };
 
 export async function GET(req: Request) {
+  const admin = await requireAdmin(req);
+  if (admin instanceof Response) return admin;
   const url = new URL(req.url);
   const qs = url.searchParams.toString();
   const backend = getBackendUrl();
@@ -75,6 +78,8 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
+  const admin = await requireAdmin(req);
+  if (admin instanceof Response) return admin;
   const payload = await req.json();
   const backend = getBackendUrl();
   const res = await fetch(`${backend}/categories`, {

@@ -5,7 +5,7 @@ import { fetchCart } from "@/modules/customer/cart/services/cart.service";
 import { fetchWishlist } from "@/modules/customer/wishlist/services/wishlist.service";
 
 export function isAuthenticatedForCartWishlist(): boolean {
-  return Boolean(useAuthStore.getState().accessToken);
+  return Boolean(useAuthStore.getState().user);
 }
 
 let sessionUserId: string | null = null;
@@ -29,6 +29,22 @@ export function markCartWishlistSessionHydrated(): void {
   sessionUserId = userId;
   cartLoadedForSession = true;
   wishlistLoadedForSession = true;
+}
+
+/** Force a fresh cart fetch (used after optimistic update failures). */
+export async function refetchCart(): Promise<void> {
+  if (!isAuthenticatedForCartWishlist()) return;
+  cartLoadedForSession = false;
+  cartHydrateInFlight = null;
+  await hydrateCartOnce();
+}
+
+/** Force a fresh wishlist fetch (used after optimistic update failures). */
+export async function refetchWishlist(): Promise<void> {
+  if (!isAuthenticatedForCartWishlist()) return;
+  wishlistLoadedForSession = false;
+  wishlistHydrateInFlight = null;
+  await hydrateWishlistOnce();
 }
 
 function currentUserId(): string | null {

@@ -77,9 +77,8 @@ export const useAuthStore = create<AuthState>()(
     {
       name: "auth-storage",
       partialize: (state) => ({
+        // Persist identity only — Nest access JWT stays memory + httpOnly cookie.
         user: state.user,
-        accessToken: state.accessToken,
-        tokenExpiresAt: state.tokenExpiresAt,
       }),
       merge: (persisted, current) => {
         const p =
@@ -88,8 +87,10 @@ export const useAuthStore = create<AuthState>()(
             : {};
         return {
           ...current,
-          ...p,
           user: normalizePersistedUser(p.user) ?? null,
+          // Never hydrate access tokens from localStorage (XSS blast radius).
+          accessToken: null,
+          tokenExpiresAt: null,
         };
       },
     }

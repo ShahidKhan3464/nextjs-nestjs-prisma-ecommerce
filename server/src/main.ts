@@ -3,11 +3,12 @@ import compression from 'compression';
 import { AppModule } from './app.module';
 import { NestFactory } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
-import { ValidationPipe } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
 import { setupSwagger } from './common/swagger/setup-swagger';
 import type { Request, Response, NextFunction } from 'express';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { getUploadsRoot } from './integrations/storage/uploads-root';
+import { requestIdMiddleware } from './common/middleware/request-id.middleware';
 import { PRIVATE_UPLOAD_SUBDIRS } from './modules/files/constants/file.constants';
 
 async function bootstrap() {
@@ -24,11 +25,24 @@ async function bootstrap() {
     configService.get<string>('app.frontendUrl') ?? 'http://localhost:3000';
   const isProduction = nodeEnv === 'production';
 
+  // Required behind reverse proxies / load balancers for correct client IPs (throttling).
+  app.set('trust proxy', 1);
+
+  app.use(requestIdMiddleware);
   app.use(helmet());
   app.use(compression());
 
+  const corsOrigins = frontendUrl
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
   app.enableCors({
-    origin: isProduction ? frontendUrl : true,
+    origin: isProduction
+      ? corsOrigins.length === 1
+        ? corsOrigins[0]
+        : corsOrigins
+      : true,
     credentials: true,
   });
 
@@ -59,9 +73,10 @@ async function bootstrap() {
 
   const port = Number(process.env.PORT) || 3001;
   await app.listen(port);
+  Logger.log(`API listening on port ${port} (${nodeEnv})`, 'Bootstrap');
 }
 
 bootstrap().catch((err) => {
-  console.error('Error starting the application:', err);
+  Logger.error('Error starting the application', err);
   process.exit(1);
 });

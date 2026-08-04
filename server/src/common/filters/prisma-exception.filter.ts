@@ -1,4 +1,4 @@
-import type { Response } from 'express';
+import type { Request, Response } from 'express';
 import {
   Catch,
   HttpStatus,
@@ -9,6 +9,11 @@ import {
   PrismaClientKnownRequestError,
   PrismaClientValidationError,
 } from '@prisma/client/runtime/client';
+import {
+  readRequestId,
+  buildApiErrorBody,
+  httpStatusErrorName,
+} from './api-error-response.util';
 
 @Catch(PrismaClientKnownRequestError, PrismaClientValidationError)
 export class PrismaExceptionFilter implements ExceptionFilter {
@@ -18,22 +23,33 @@ export class PrismaExceptionFilter implements ExceptionFilter {
   ): void {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
+    const request = ctx.getRequest<Request & { requestId?: string }>();
+    const requestId = readRequestId(request);
 
     if (exception instanceof PrismaClientValidationError) {
-      response.status(HttpStatus.BAD_REQUEST).json({
-        statusCode: HttpStatus.BAD_REQUEST,
-        message: 'Invalid database query',
-        error: 'Bad Request',
-      });
+      response
+        .status(HttpStatus.BAD_REQUEST)
+        .json(
+          buildApiErrorBody(
+            HttpStatus.BAD_REQUEST,
+            'Invalid database query',
+            requestId,
+          ),
+        );
       return;
     }
 
     const { status, message } = this.mapPrismaError(exception);
-    response.status(status).json({
-      statusCode: status,
-      message,
-      error: this.getErrorName(status),
-    });
+    response
+      .status(status)
+      .json(
+        buildApiErrorBody(
+          status,
+          message,
+          requestId,
+          httpStatusErrorName(status),
+        ),
+      );
   }
 
   private mapPrismaError(exception: PrismaClientKnownRequestError): {
@@ -66,19 +82,6 @@ export class PrismaExceptionFilter implements ExceptionFilter {
           status: HttpStatus.INTERNAL_SERVER_ERROR,
           message: 'Database error',
         };
-    }
-  }
-
-  private getErrorName(status: number): string {
-    switch (status) {
-      case HttpStatus.BAD_REQUEST:
-        return 'Bad Request';
-      case HttpStatus.NOT_FOUND:
-        return 'Not Found';
-      case HttpStatus.CONFLICT:
-        return 'Conflict';
-      default:
-        return 'Internal Server Error';
     }
   }
 }

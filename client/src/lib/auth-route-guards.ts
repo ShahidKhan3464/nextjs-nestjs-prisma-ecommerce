@@ -37,6 +37,8 @@ export function isProtectedShopPath(pathname: string): boolean {
     pathname.startsWith("/checkout") ||
     pathname.startsWith("/wishlist") ||
     pathname.startsWith("/users") ||
+    pathname.startsWith("/notifications") ||
+    pathname.startsWith("/reviews") ||
     pathname.startsWith("/become-seller") ||
     // Exact seller store settings — do not match public `/stores/...`
     pathname === "/store" ||

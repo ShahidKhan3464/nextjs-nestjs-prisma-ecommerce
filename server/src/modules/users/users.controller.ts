@@ -1,4 +1,5 @@
 import { UsersService } from './users.service';
+import { BlockUserDto } from './dto/block-user.dto';
 import { UserRole } from 'src/common/enums/user-role.enum';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { UpdateProfileDto } from './dto/update-profile.dto';
@@ -102,10 +103,7 @@ export class UsersController {
   @Patch(':id/block')
   @Roles(UserRole.SUPER_ADMIN)
   @ApiOkResponse({ type: UserResponseDto })
-  blockUser(
-    @Param('id', ParseIntPipe) id: number,
-    @Body('isBlocked') isBlocked: boolean,
-  ) {
-    return this.usersService.blockUser(id, isBlocked);
+  blockUser(@Param('id', ParseIntPipe) id: number, @Body() dto: BlockUserDto) {
+    return this.usersService.blockUser(id, dto.isBlocked);
   }
 }

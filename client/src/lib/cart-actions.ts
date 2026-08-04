@@ -3,7 +3,7 @@ import { useCartStore } from "@/store/cart-store";
 import { getApiErrorMessage } from "@/lib/api-error";
 import type { CartItem } from "@/modules/customer/cart/types";
 import {
-  hydrateCartOnce,
+  refetchCart,
   isAuthenticatedForCartWishlist,
 } from "@/lib/cart-wishlist-session";
 import {
@@ -28,7 +28,7 @@ export async function cartAddItem(item: CartItem): Promise<void> {
     replaceCartLine(serverItem);
   } catch (error) {
     toast.error(getApiErrorMessage(error, "Could not update cart"));
-    await hydrateCartOnce().catch(() => undefined);
+    await refetchCart().catch(() => undefined);
   }
 }
 
@@ -48,7 +48,7 @@ export async function cartUpdateQty(
     replaceCartLine(serverItem);
   } catch (error) {
     toast.error(getApiErrorMessage(error, "Could not update cart"));
-    await hydrateCartOnce().catch(() => undefined);
+    await refetchCart().catch(() => undefined);
   }
 }
 
@@ -60,7 +60,7 @@ export async function cartRemoveItem(variantId: string): Promise<void> {
     await removeCartItem(variantId);
   } catch (error) {
     toast.error(getApiErrorMessage(error, "Could not remove item"));
-    await hydrateCartOnce().catch(() => undefined);
+    await refetchCart().catch(() => undefined);
   }
 }
 
@@ -72,5 +72,6 @@ export async function cartClear(): Promise<void> {
     await clearCartRemote();
   } catch (error) {
     toast.error(getApiErrorMessage(error, "Could not clear cart"));
+    await refetchCart().catch(() => undefined);
   }
 }

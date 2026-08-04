@@ -1,4 +1,5 @@
 import { PrismaService } from 'src/prisma/prisma.service';
+import { adjustVariantStock } from '../utils/adjust-variant-stock.util';
 import {
   StripeClient,
   StripeService,
@@ -76,6 +77,11 @@ export class CancelCheckoutProvider {
 
       const orderIds = payments.map((payment) => payment.orderId);
       if (orderIds.length > 0) {
+        const items = await tx.orderItem.findMany({
+          where: { orderId: { in: orderIds } },
+          select: { variantId: true, quantity: true },
+        });
+        await adjustVariantStock(tx, items, 'release');
         await tx.order.deleteMany({ where: { id: { in: orderIds } } });
       }
 

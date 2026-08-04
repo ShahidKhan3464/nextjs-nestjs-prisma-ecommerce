@@ -1,8 +1,8 @@
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UserRole } from 'src/common/enums/user-role.enum';
 import { OrderWithRelations } from 'src/common/types/domain.types';
-import { SellerProfileStatus } from 'src/modules/sellers/constants/seller.constants';
 import { isSuperAdmin, hasAnyRole } from 'src/common/utils/authorization.util';
+import { SellerProfileStatus } from 'src/modules/sellers/constants/seller.constants';
 import {
   Injectable,
   NotFoundException,

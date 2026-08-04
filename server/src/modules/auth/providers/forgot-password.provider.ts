@@ -1,10 +1,14 @@
 import { ConfigService } from '@nestjs/config';
 import { User } from 'src/generated/prisma/client';
 import { UsersService } from 'src/modules/users/users.service';
-import { MailService } from 'src/integrations/mail/providers/mail.service';
 import { ForgotPasswordDto } from '../dto/forgot-password.dto';
 import { GenerateTokensProvider } from './generate-tokens.provider';
-import { Logger, Injectable, RequestTimeoutException } from '@nestjs/common';
+import { MailService } from 'src/integrations/mail/providers/mail.service';
+import {
+  Logger,
+  Injectable,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 
 @Injectable()
 export class ForgotPasswordProvider {
@@ -24,9 +28,8 @@ export class ForgotPasswordProvider {
     try {
       user = await this.usersService.findOneByEmail(dto.email);
     } catch {
-      throw new RequestTimeoutException(
+      throw new ServiceUnavailableException(
         'Unable to process your request at the moment',
-        { description: 'Error connecting to the database' },
       );
     }
 

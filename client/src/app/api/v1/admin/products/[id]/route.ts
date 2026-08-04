@@ -1,3 +1,4 @@
+import { requireAdmin } from "@/lib/require-auth";
 import type { Product } from "@/types";
 import type { ApiResponse } from "@/types";
 import { getBackendUrl } from "@/lib/backend-url";
@@ -15,6 +16,8 @@ import {
 type RouteCtx = { params: Promise<{ id: string }> };
 
 export async function GET(req: Request, ctx: RouteCtx) {
+  const admin = await requireAdmin(req);
+  if (admin instanceof Response) return admin;
   const backend = getBackendUrl();
   const { id } = await ctx.params;
   const res = await fetch(`${backend}/products/${encodeURIComponent(id)}`, {
@@ -43,6 +46,8 @@ export async function GET(req: Request, ctx: RouteCtx) {
 }
 
 export async function PATCH(req: Request, ctx: RouteCtx) {
+  const admin = await requireAdmin(req);
+  if (admin instanceof Response) return admin;
   const { id } = await ctx.params;
   const backend = getBackendUrl();
   const contentType = req.headers.get("content-type") ?? "";
@@ -75,6 +80,8 @@ export async function PATCH(req: Request, ctx: RouteCtx) {
 }
 
 export async function DELETE(req: Request, ctx: RouteCtx) {
+  const admin = await requireAdmin(req);
+  if (admin instanceof Response) return admin;
   const { id } = await ctx.params;
   const backend = getBackendUrl();
   const res = await fetch(`${backend}/products/${encodeURIComponent(id)}`, {

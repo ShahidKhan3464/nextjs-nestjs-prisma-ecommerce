@@ -1,9 +1,6 @@
 import type { Metadata } from "next";
-import { AdminAnalytics } from "@/modules/admin/dashboard";
-import { SellerDashboard } from "@/modules/seller/dashboard";
 import { getAccessTokenPayload } from "@/lib/session-cookie";
-import { DashboardOverview } from "@/modules/customer/dashboard";
-import { isSeller, isSuperAdmin } from "@/modules/auth/utils/roles";
+import { RoleDashboard } from "./role-dashboard";
 
 export const metadata: Metadata = {
   title: "Dashboard",
@@ -11,9 +8,5 @@ export const metadata: Metadata = {
 
 export default async function DashboardPage() {
   const session = await getAccessTokenPayload();
-
-  if (session && isSuperAdmin(session.roles)) return <AdminAnalytics />;
-  if (session && isSeller(session.roles)) return <SellerDashboard />;
-
-  return <DashboardOverview />;
+  return <RoleDashboard roles={session?.roles ?? []} />;
 }

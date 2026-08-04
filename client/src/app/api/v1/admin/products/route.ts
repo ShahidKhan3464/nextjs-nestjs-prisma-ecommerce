@@ -1,3 +1,4 @@
+import { requireAdmin } from "@/lib/require-auth";
 import type { Product } from "@/types";
 import type { ApiResponse } from "@/types";
 import { getBackendUrl } from "@/lib/backend-url";
@@ -18,6 +19,8 @@ type NestPagedEnvelope = {
 };
 
 export async function GET(req: Request) {
+  const admin = await requireAdmin(req);
+  if (admin instanceof Response) return admin;
   const url = new URL(req.url);
   const backend = getBackendUrl();
   const qs = url.searchParams.toString();
@@ -67,6 +70,8 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
+  const admin = await requireAdmin(req);
+  if (admin instanceof Response) return admin;
   const backend = getBackendUrl();
   const formData = await req.formData();
 

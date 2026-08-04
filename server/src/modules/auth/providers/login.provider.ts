@@ -9,7 +9,7 @@ import {
   Injectable,
   ForbiddenException,
   UnauthorizedException,
-  RequestTimeoutException,
+  ServiceUnavailableException,
 } from '@nestjs/common';
 
 export type LoggedInUser = Pick<
@@ -33,9 +33,8 @@ export class LoginProvider {
     const user = await this.usersService
       .findOneByEmailWithRoles(dto.email)
       .catch(() => {
-        throw new RequestTimeoutException(
+        throw new ServiceUnavailableException(
           'Unable to process your request at the moment',
-          { description: 'Error connecting to the database' },
         );
       });
 

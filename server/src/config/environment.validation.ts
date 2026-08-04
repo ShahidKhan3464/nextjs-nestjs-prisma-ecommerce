@@ -34,11 +34,12 @@ export default Joi.object({
   SMTP_PASSWORD: Joi.string().required(),
   MAIL_SECURE: Joi.boolean().default(false),
   ADMIN_EMAIL: Joi.string().email().optional(),
-  JWT_ACCESS_TOKEN_TTL: Joi.string().default('2d'),
+  JWT_ACCESS_TOKEN_TTL: Joi.string().default('15m'),
   JWT_REFRESH_TOKEN_TTL: Joi.string().default('7d'),
   ADMIN_NAME: Joi.string().min(5).max(30).optional(),
   ADMIN_PHONE: Joi.string().min(10).max(15).optional(),
   ADMIN_PASSWORD: Joi.string().min(8).max(30).optional(),
   MAIL_PORT: Joi.number().integer().min(1).max(65535).default(2525),
   SEED_DEMO_DATA: Joi.boolean().truthy('true').falsy('false').default(false),
+  ALLOW_ADMIN_SEED: Joi.boolean().truthy('true').falsy('false').default(false),
 });

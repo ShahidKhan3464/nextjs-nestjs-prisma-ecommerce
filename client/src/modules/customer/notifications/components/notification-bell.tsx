@@ -17,13 +17,13 @@ type Props = {
 };
 
 export function NotificationBell({ className }: Props) {
-  const accessToken = useAuthStore((s) => s.accessToken);
+  const user = useAuthStore((s) => s.user);
   const previousCount = useRef<number | null>(null);
 
   const { data: count = 0 } = useQuery({
     queryKey: queryKeys.notifications.unreadCount,
     queryFn: fetchUnreadNotificationCount,
-    enabled: Boolean(accessToken),
+    enabled: Boolean(user),
     staleTime: 30_000,
     refetchInterval: 60_000,
   });

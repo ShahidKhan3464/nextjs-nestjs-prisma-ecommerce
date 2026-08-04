@@ -15,18 +15,18 @@ type Props = {
 };
 
 export function RecentlyPurchasedRail({ limit = 8, className }: Props) {
-  const accessToken = useAuthStore((s) => s.accessToken);
+  const user = useAuthStore((s) => s.user);
 
   const { data, isPending } = useQuery({
     queryKey: queryKeys.dashboard.customer,
     queryFn: fetchCustomerDashboard,
-    enabled: Boolean(accessToken),
+    enabled: Boolean(user),
     staleTime: 60_000,
   });
 
   const items = (data?.recentlyPurchased ?? []).slice(0, limit);
 
-  if (!accessToken) return null;
+  if (!user) return null;
   if (!isPending && items.length === 0) return null;
 
   return (

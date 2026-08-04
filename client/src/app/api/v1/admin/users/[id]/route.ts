@@ -1,3 +1,4 @@
+import { requireAdmin } from "@/lib/require-auth";
 import type { User } from "@/types";
 import type { ApiResponse } from "@/types";
 import { getBackendUrl } from "@/lib/backend-url";
@@ -12,6 +13,8 @@ import {
 type Props = { params: Promise<{ id: string }> };
 
 export async function GET(req: Request, { params }: Props) {
+  const admin = await requireAdmin(req);
+  if (admin instanceof Response) return admin;
   const { id } = await params;
   const backend = getBackendUrl();
   const res = await fetch(`${backend}/users/${id}`, {

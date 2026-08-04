@@ -49,7 +49,7 @@ async function refreshAccessToken(): Promise<string> {
 }
 
 api.interceptors.request.use(async (config) => {
-  const token = useAuthStore.getState().accessToken;
+  const { accessToken: token, user } = useAuthStore.getState();
 
   // Skip auth endpoints — they don't need a token and must not trigger refresh
   const url = config.url ?? "";
@@ -60,7 +60,12 @@ api.interceptors.request.use(async (config) => {
     url.includes("/auth/forgot-password") ||
     url.includes("/auth/reset-password");
 
-  if (!isAuthEndpoint && token && isTokenExpired()) {
+  // After reload, user may be persisted while access token is memory-only —
+  // refresh via httpOnly cookie so Authorization is available when needed.
+  const needsTokenBootstrap =
+    !isAuthEndpoint && Boolean(user) && (!token || isTokenExpired());
+
+  if (needsTokenBootstrap) {
     try {
       const fresh = await refreshAccessToken();
       config.headers.Authorization = `Bearer ${fresh}`;

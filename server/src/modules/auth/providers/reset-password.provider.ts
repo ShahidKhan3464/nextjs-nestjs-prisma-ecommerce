@@ -12,7 +12,7 @@ import {
   NotFoundException,
   BadRequestException,
   UnauthorizedException,
-  RequestTimeoutException,
+  ServiceUnavailableException,
 } from '@nestjs/common';
 
 @Injectable()
@@ -64,9 +64,8 @@ export class ResetPasswordProvider {
       if (err instanceof NotFoundException) {
         throw err;
       }
-      throw new RequestTimeoutException(
+      throw new ServiceUnavailableException(
         'Unable to process your request at the moment',
-        { description: 'Error connecting to the database' },
       );
     }
 
