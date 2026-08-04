@@ -32,7 +32,7 @@ export async function syncCartAndWishlistWithServer(): Promise<void> {
     const localCart = useCartStore.getState().items;
     const localWishlist = useWishlistStore.getState().productIds;
 
-    const [serverCart, serverWishlist] = await Promise.all([
+    const [serverCart, serverWishlistIds] = await Promise.all([
       localCart.length > 0
         ? syncCart(
             localCart.map((i) => ({
@@ -41,11 +41,13 @@ export async function syncCartAndWishlistWithServer(): Promise<void> {
             }))
           )
         : fetchCart(),
-      localWishlist.length > 0 ? syncWishlist(localWishlist) : fetchWishlist(),
+      localWishlist.length > 0
+        ? syncWishlist(localWishlist)
+        : fetchWishlist().then((w) => w.productIds),
     ]);
 
     useCartStore.getState().setItems(serverCart);
-    useWishlistStore.getState().setProductIds(serverWishlist);
+    useWishlistStore.getState().setProductIds(serverWishlistIds);
     markCartWishlistSessionHydrated();
   })();
 

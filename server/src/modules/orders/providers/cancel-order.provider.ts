@@ -1,19 +1,21 @@
-import { UsersService } from 'src/modules/users/users.service';
 import { CancelOrderDto } from '../dto/cancel-order.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UserRole } from 'src/common/enums/user-role.enum';
-import { MailService } from 'src/integrations/mail/providers/mail.service';
-import {
-  StripeClient,
-  StripeService,
-} from 'src/integrations/stripe/stripe.service';
+import { UsersService } from 'src/modules/users/users.service';
 import { OrderOwnershipProvider } from './order-ownership.provider';
 import { findOrderWithImages } from 'src/common/prisma/file-query.util';
 import { lockProductVariants } from '../utils/lock-product-variants.util';
 import { OrderStatus, PaymentStatus } from '../constants/order.constants';
+import { MailService } from 'src/integrations/mail/providers/mail.service';
 import { OrderResponse, mapOrderToResponse } from '../utils/map-order.util';
+import { NotificationService } from 'src/modules/notifications/notification.service';
 import { PaymentFailureReason } from 'src/modules/payments/constants/payment.constants';
+import { NotificationType } from 'src/modules/notifications/constants/notification.constants';
 import { PaymentLifecycleProvider } from 'src/modules/payments/providers/payment-lifecycle.provider';
+import {
+  StripeClient,
+  StripeService,
+} from 'src/integrations/stripe/stripe.service';
 import {
   Injectable,
   NotFoundException,
@@ -30,6 +32,7 @@ export class CancelOrderProvider {
     private readonly usersService: UsersService,
     private readonly orderOwnershipProvider: OrderOwnershipProvider,
     private readonly paymentLifecycleProvider: PaymentLifecycleProvider,
+    private readonly notificationService: NotificationService,
     stripeService: StripeService,
   ) {
     this.stripe = stripeService.client;
@@ -165,6 +168,15 @@ export class CancelOrderProvider {
         )
         .catch(() => undefined);
     }
+
+    void this.notificationService
+      .create({
+        userId: updated.userId,
+        type: NotificationType.ORDER_CANCELLED,
+        title: 'Order cancelled',
+        message: `Your order #${updated.id} has been cancelled.`,
+      })
+      .catch(() => undefined);
 
     return response;
   }

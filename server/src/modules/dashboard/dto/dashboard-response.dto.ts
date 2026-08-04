@@ -36,6 +36,126 @@ export class DashboardLowStockItemDto {
   stock: number;
 }
 
+export class DashboardActivityItemDto {
+  @ApiProperty()
+  id: string;
+
+  @ApiProperty()
+  type: string;
+
+  @ApiProperty()
+  title: string;
+
+  @ApiProperty()
+  message: string;
+
+  @ApiProperty()
+  isRead: boolean;
+
+  @ApiProperty()
+  createdAt: string;
+}
+
+export class DashboardReviewItemDto {
+  @ApiProperty()
+  id: string;
+
+  @ApiProperty()
+  rating: number;
+
+  @ApiPropertyOptional({ nullable: true })
+  title: string | null;
+
+  @ApiPropertyOptional({ nullable: true })
+  comment: string | null;
+
+  @ApiProperty()
+  productName: string;
+
+  @ApiProperty()
+  productSlug: string;
+
+  @ApiProperty()
+  buyerName: string;
+
+  @ApiProperty()
+  createdAt: string;
+}
+
+export class DashboardTopProductDto {
+  @ApiProperty()
+  productId: string;
+
+  @ApiProperty()
+  name: string;
+
+  @ApiProperty()
+  slug: string;
+
+  @ApiProperty()
+  unitsSold: number;
+
+  @ApiProperty()
+  revenue: number;
+
+  @ApiProperty()
+  averageRating: number;
+
+  @ApiProperty()
+  reviewCount: number;
+}
+
+export class DashboardRecentCustomerDto {
+  @ApiProperty()
+  id: string;
+
+  @ApiProperty()
+  fullName: string;
+
+  @ApiProperty()
+  email: string;
+
+  @ApiProperty()
+  ordersCount: number;
+
+  @ApiProperty()
+  lastOrderAt: string;
+}
+
+export class DashboardPendingApprovalDto {
+  @ApiProperty()
+  id: string;
+
+  @ApiProperty({ enum: ['seller', 'store'] })
+  kind: 'seller' | 'store';
+
+  @ApiProperty()
+  name: string;
+
+  @ApiProperty()
+  status: string;
+
+  @ApiProperty()
+  createdAt: string;
+}
+
+export class DashboardPurchasedProductDto {
+  @ApiProperty()
+  productId: string;
+
+  @ApiProperty()
+  name: string;
+
+  @ApiProperty()
+  slug: string;
+
+  @ApiPropertyOptional({ nullable: true })
+  imageUrl: string | null;
+
+  @ApiProperty()
+  purchasedAt: string;
+}
+
 export class AdminDashboardTotalsDto {
   @ApiProperty()
   revenue: number;
@@ -54,6 +174,9 @@ export class AdminDashboardTotalsDto {
 
   @ApiProperty()
   pendingOrders: number;
+
+  @ApiProperty()
+  pendingSellerApprovals: number;
 }
 
 /** Mirrors `AdminDashboardResponse`. */
@@ -72,6 +195,21 @@ export class AdminDashboardResponseDto {
 
   @ApiProperty({ type: [DashboardStatusCountDto] })
   ordersByStatus: DashboardStatusCountDto[];
+
+  @ApiProperty({ type: [DashboardActivityItemDto] })
+  recentNotifications: DashboardActivityItemDto[];
+
+  @ApiProperty({ type: [DashboardReviewItemDto] })
+  recentReviews: DashboardReviewItemDto[];
+
+  @ApiProperty({ type: [DashboardPendingApprovalDto] })
+  pendingApprovals: DashboardPendingApprovalDto[];
+
+  @ApiProperty({ type: [DashboardTopProductDto] })
+  topProducts: DashboardTopProductDto[];
+
+  @ApiProperty({ type: [DashboardRecentCustomerDto] })
+  recentCustomers: DashboardRecentCustomerDto[];
 }
 
 /** Mirrors `CustomerDashboardResponse`. */
@@ -96,6 +234,12 @@ export class CustomerDashboardResponseDto {
 
   @ApiProperty({ type: [DashboardSpendingPointDto] })
   spendingByMonth: DashboardSpendingPointDto[];
+
+  @ApiProperty({ type: [DashboardActivityItemDto] })
+  recentNotifications: DashboardActivityItemDto[];
+
+  @ApiProperty({ type: [DashboardPurchasedProductDto] })
+  recentlyPurchased: DashboardPurchasedProductDto[];
 }
 
 export class SellerStoreSummaryDto {
@@ -128,6 +272,15 @@ export class SellerStoreSummaryDto {
 
   @ApiProperty()
   businessName: string;
+
+  @ApiProperty()
+  averageRating: number;
+
+  @ApiProperty()
+  totalReviews: number;
+
+  @ApiProperty()
+  productsSold: number;
 }
 
 export class SellerDashboardTotalsDto {
@@ -148,26 +301,12 @@ export class SellerDashboardTotalsDto {
 
   @ApiProperty()
   lowStockCount: number;
-}
-
-export class DashboardActivityItemDto {
-  @ApiProperty()
-  id: string;
 
   @ApiProperty()
-  type: string;
+  averageRating: number;
 
   @ApiProperty()
-  title: string;
-
-  @ApiProperty()
-  message: string;
-
-  @ApiProperty()
-  isRead: boolean;
-
-  @ApiProperty()
-  createdAt: string;
+  totalReviews: number;
 }
 
 /** Mirrors `SellerDashboardResponse`. */
@@ -192,4 +331,10 @@ export class SellerDashboardResponseDto {
 
   @ApiProperty({ type: [DashboardActivityItemDto] })
   recentActivity: DashboardActivityItemDto[];
+
+  @ApiProperty({ type: [DashboardReviewItemDto] })
+  recentReviews: DashboardReviewItemDto[];
+
+  @ApiProperty({ type: [DashboardTopProductDto] })
+  topProducts: DashboardTopProductDto[];
 }

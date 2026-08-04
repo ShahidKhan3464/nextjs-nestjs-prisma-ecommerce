@@ -20,6 +20,7 @@ import { MailModule } from './integrations/mail/mail.module';
 import { OrdersModule } from './modules/orders/orders.module';
 import { SellerModule } from './modules/sellers/seller.module';
 import { ReviewsModule } from './modules/reviews/reviews.module';
+import { AddressModule } from './modules/addresses/address.module';
 import { ProductsModule } from './modules/products/products.module';
 import environmentValidation from './config/environment.validation';
 import { PaymentsModule } from './modules/payments/payments.module';
@@ -47,6 +48,7 @@ import { DataResponseInterceptor } from './common/interceptors/data-response/dat
     CommonModule,
     SeedersModule,
     ReviewsModule,
+    AddressModule,
     WishlistModule,
     ProductsModule,
     PaymentsModule,

@@ -30,6 +30,9 @@ export type OrderStoreResponse = {
   id: string;
   name: string;
   slug: string;
+  verified: boolean;
+  sellerName: string;
+  logoUrl: string | null;
 };
 
 export type OrderBuyerResponse = {
@@ -157,6 +160,9 @@ export function mapOrderToResponse(
       id: String(order.store.id),
       name: order.store.name,
       slug: order.store.slug,
+      logoUrl: order.store.logoUrl ?? null,
+      verified: Boolean(order.store.verifiedAt),
+      sellerName: order.store.sellerName ?? order.store.name,
     };
   }
 

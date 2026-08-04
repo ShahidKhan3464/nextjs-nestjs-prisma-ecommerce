@@ -12,10 +12,11 @@ import { CreateCheckoutProvider } from './providers/create-checkout.provider';
 import { CancelCheckoutProvider } from './providers/cancel-checkout.provider';
 import { OrderOwnershipProvider } from './providers/order-ownership.provider';
 import { CompleteCheckoutProvider } from './providers/complete-checkout.provider';
+import { NotificationModule } from 'src/modules/notifications/notification.module';
 import { UpdateOrderStatusProvider } from './providers/update-order-status.provider';
 
 @Module({
-  imports: [UsersModule, PaymentsModule, StripeModule],
+  imports: [UsersModule, PaymentsModule, StripeModule, NotificationModule],
   controllers: [OrdersController],
   providers: [
     OrdersService,

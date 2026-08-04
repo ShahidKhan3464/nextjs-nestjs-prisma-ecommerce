@@ -35,6 +35,8 @@ export type NestProductPayload = {
     name: string;
   };
   categoryId?: number;
+  averageRating?: number | null;
+  reviewCount?: number | null;
   variants: {
     sku: string;
     size?: string;
@@ -107,6 +109,12 @@ export function normalizeNestProductPayload(p: NestProductPayload): Product {
     },
   }));
 
+  const categoryId = p.category?.id ?? p.categoryId;
+  const averageRating =
+    p.averageRating != null ? Number(p.averageRating) : undefined;
+  const reviewCount =
+    p.reviewCount != null ? Number(p.reviewCount) : undefined;
+
   return {
     slug,
     images,
@@ -116,7 +124,14 @@ export function normalizeNestProductPayload(p: NestProductPayload): Product {
     basePrice: Number(p.basePrice),
     description: p.description ?? "",
     category: p.category?.name ?? "",
+    ...(categoryId != null ? { categoryId: Number(categoryId) } : {}),
     publishedAt: toIsoOrNull(p.publishedAt),
     ...(store ? { store } : {}),
+    ...(averageRating != null && !Number.isNaN(averageRating)
+      ? { averageRating }
+      : {}),
+    ...(reviewCount != null && !Number.isNaN(reviewCount)
+      ? { reviewCount }
+      : {}),
   };
 }

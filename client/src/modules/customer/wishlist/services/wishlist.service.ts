@@ -1,11 +1,17 @@
 import type { ApiResponse } from "@/types";
 import { api } from "@/services/api/client";
+import type { WishlistPayload } from "../types";
 
-export async function fetchWishlist() {
-  const res = await api.get<ApiResponse<{ productIds: string[] }>>(
+export async function fetchWishlist(): Promise<WishlistPayload> {
+  const res = await api.get<ApiResponse<WishlistPayload>>(
     "/api/v1/customer/wishlist"
   );
-  return res.data.data.productIds;
+  return res.data.data;
+}
+
+export async function fetchWishlistProductIds(): Promise<string[]> {
+  const payload = await fetchWishlist();
+  return payload.productIds;
 }
 
 export async function toggleWishlistItem(productId: string) {

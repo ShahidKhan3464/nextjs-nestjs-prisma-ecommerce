@@ -8,6 +8,10 @@ import { ProductListing } from "./product-listing";
 import { fetchProducts } from "../services/products.service";
 import { ProductFiltersSkeleton } from "./product-filters-skeleton";
 import { useProductSearchParams } from "../hooks/use-product-search-params";
+import {
+  RecentlyViewedRail,
+  RecommendedProductsRail,
+} from "@/modules/customer/discovery";
 
 function toParams(
   values: ReturnType<typeof useProductSearchParams>["values"]
@@ -15,8 +19,12 @@ function toParams(
   return {
     q: values.q || undefined,
     categoryId: values.category ? Number(values.category) : undefined,
+    minPrice: values.minPrice ? Number(values.minPrice) : undefined,
     maxPrice: values.maxPrice ? Number(values.maxPrice) : undefined,
+    minRating: values.minRating ? Number(values.minRating) : undefined,
+    inStock: values.inStock === "true" ? true : undefined,
     storeId: values.storeId ? Number(values.storeId) : undefined,
+    sellerId: values.sellerId ? Number(values.sellerId) : undefined,
     sort: values.sort || undefined,
     page: values.page,
     limit: 12,
@@ -41,8 +49,11 @@ export function ProductsPageContent() {
     values.category.length > 0 ||
     values.maxPrice.length > 0 ||
     values.minPrice.length > 0 ||
+    values.minRating.length > 0 ||
+    values.inStock.length > 0 ||
     values.sort.length > 0 ||
-    values.storeId.length > 0;
+    values.storeId.length > 0 ||
+    values.sellerId.length > 0;
   const filtersDisabled =
     (data?.pagination.total ?? 0) === 0 && !hasActiveFilters;
 
@@ -62,6 +73,10 @@ export function ProductsPageContent() {
         <ProductFilters disabled={filtersDisabled} />
       )}
       <ProductListing />
+      <div className="space-y-10 pt-6">
+        <RecentlyViewedRail />
+        <RecommendedProductsRail />
+      </div>
     </div>
   );
 }

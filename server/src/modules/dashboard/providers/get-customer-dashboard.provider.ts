@@ -11,12 +11,16 @@ import {
 } from 'src/modules/orders/utils/map-order.util';
 import {
   DashboardStatusCount,
+  DashboardActivityItem,
   DashboardSpendingPoint,
+  DashboardPurchasedProduct,
   CustomerDashboardResponse,
 } from '../utils/dashboard.types';
 
 const SPENDING_MONTHS = 6;
 const RECENT_ORDERS_LIMIT = 5;
+const RECENT_NOTIFICATIONS_LIMIT = 8;
+const RECENTLY_PURCHASED_LIMIT = 8;
 
 @Injectable()
 export class GetCustomerDashboardProvider {
@@ -31,6 +35,8 @@ export class GetCustomerDashboardProvider {
       ordersByStatus,
       spendingByMonth,
       recentOrders,
+      recentNotifications,
+      recentlyPurchased,
     ] = await Promise.all([
       this.getTotalSpending(userId),
       this.prisma.order.count({ where: { userId } }),
@@ -39,6 +45,8 @@ export class GetCustomerDashboardProvider {
       this.getOrdersByStatus(userId),
       this.getSpendingByMonth(userId),
       this.getRecentOrders(userId),
+      this.getRecentNotifications(userId),
+      this.getRecentlyPurchased(userId),
     ]);
 
     return {
@@ -48,6 +56,8 @@ export class GetCustomerDashboardProvider {
       ordersByStatus,
       spendingByMonth,
       recentOrders,
+      recentNotifications,
+      recentlyPurchased,
       totalSpending: Math.round(Number(spendingRow?.amount ?? 0) * 100) / 100,
     };
   }
@@ -116,6 +126,81 @@ export class GetCustomerDashboardProvider {
     });
 
     return orders.map((order) => mapOrderToResponse(order));
+  }
+
+  private async getRecentNotifications(
+    userId: number,
+  ): Promise<DashboardActivityItem[]> {
+    const notifications = await this.prisma.notification.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+      take: RECENT_NOTIFICATIONS_LIMIT,
+    });
+
+    return notifications.map((notification) => ({
+      id: String(notification.id),
+      type: notification.type,
+      title: notification.title,
+      message: notification.message,
+      isRead: notification.readAt !== null,
+      createdAt: notification.createdAt.toISOString(),
+    }));
+  }
+
+  private async getRecentlyPurchased(
+    userId: number,
+  ): Promise<DashboardPurchasedProduct[]> {
+    const items = await this.prisma.orderItem.findMany({
+      where: {
+        order: {
+          userId,
+          status: OrderStatus.DELIVERED,
+          payment: { status: PaymentStatus.SUCCEEDED },
+        },
+      },
+      orderBy: { order: { createdAt: 'desc' } },
+      take: 40,
+      select: {
+        order: { select: { createdAt: true } },
+        variant: {
+          select: {
+            product: {
+              select: {
+                id: true,
+                name: true,
+                slug: true,
+                files: {
+                  orderBy: { sortOrder: 'asc' },
+                  take: 1,
+                  select: { file: { select: { urlPath: true } } },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const seen = new Set<number>();
+    const result: DashboardPurchasedProduct[] = [];
+
+    for (const item of items) {
+      const product = item.variant.product;
+      if (seen.has(product.id)) continue;
+      seen.add(product.id);
+
+      result.push({
+        productId: String(product.id),
+        name: product.name,
+        slug: product.slug,
+        imageUrl: product.files[0]?.file.urlPath ?? null,
+        purchasedAt: item.order.createdAt.toISOString(),
+      });
+
+      if (result.length >= RECENTLY_PURCHASED_LIMIT) break;
+    }
+
+    return result;
   }
 
   private buildLastNMonthsRange(months: number): {

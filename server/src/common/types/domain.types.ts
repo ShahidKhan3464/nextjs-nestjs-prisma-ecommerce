@@ -42,8 +42,10 @@ export type ProductWithRelations = {
       deletedAt?: Date | null;
     };
   };
+  reviewCount?: number;
   images?: StoredFile[];
   status: ProductStatus;
+  averageRating?: number;
   deletedAt: Date | null;
   publishedAt: Date | null;
   description: string | null;
@@ -85,6 +87,9 @@ export type OrderStoreSummary = {
   slug: string;
   status: string;
   deletedAt?: Date | null;
+  logoUrl?: string | null;
+  verifiedAt?: Date | null;
+  sellerName?: string | null;
 };
 
 export type OrderWithRelations = Omit<

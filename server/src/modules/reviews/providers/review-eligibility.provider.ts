@@ -25,6 +25,30 @@ export class ReviewEligibilityProvider {
   }
 
   /**
+   * Sellers cannot review products belonging to their own store.
+   */
+  public async assertNotOwnProduct(
+    userId: number,
+    productId: number,
+  ): Promise<void> {
+    const ownProduct = await this.prisma.product.findFirst({
+      where: {
+        id: productId,
+        deletedAt: null,
+        store: {
+          deletedAt: null,
+          sellerProfile: { userId, deletedAt: null },
+        },
+      },
+      select: { id: true },
+    });
+
+    if (ownProduct) {
+      throw new BadRequestException('You cannot review your own products');
+    }
+  }
+
+  /**
    * Buyer may review only if they purchased the product on a delivered order
    * with a successfully completed payment. Verified via Prisma relations —
    * never trusts client-provided order/payment ids.
@@ -33,6 +57,8 @@ export class ReviewEligibilityProvider {
     userId: number,
     productId: number,
   ): Promise<void> {
+    await this.assertNotOwnProduct(userId, productId);
+
     const eligiblePurchase = await this.prisma.order.findFirst({
       where: {
         userId,

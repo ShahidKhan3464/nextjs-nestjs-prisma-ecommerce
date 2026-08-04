@@ -18,14 +18,25 @@ export type OrderLineItem = {
   priceAtPurchase: number;
 };
 
+export type OrderStore = {
+  id: string;
+  name: string;
+  slug: string;
+  verified: boolean;
+  sellerName: string;
+  logoUrl: string | null;
+};
+
 export type Order = {
   id: string;
   tax: number;
   total: number;
   userId: string;
+  storeId?: string;
   subtotal: number;
   createdAt: string;
   shippedAt?: string;
+  store?: OrderStore;
   orderNumber: string;
   status: OrderStatus;
   deliveredAt?: string;

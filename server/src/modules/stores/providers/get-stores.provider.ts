@@ -5,6 +5,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { StoreOwnershipProvider } from './store-ownership.provider';
 import { StoreStatus, STORE_INCLUDE } from '../constants/store.constants';
 import { StoreMapped, mapStoreToResponse } from '../utils/map-store.util';
+import { getStoreReviewStats } from 'src/modules/reviews/utils/review-stats.util';
 import { PaginationProviders } from 'src/common/pagination/providers/pagination.providers';
 import { PaginateQueryResult } from 'src/common/pagination/interfaces/paginated.interfaces';
 
@@ -16,8 +17,20 @@ export class GetStoresProvider {
     private readonly storeOwnershipProvider: StoreOwnershipProvider,
   ) {}
 
-  public findMe(userId: number): Promise<StoreMapped> {
-    return this.storeOwnershipProvider.findOwnedStoreOrThrow(userId);
+  private async withReputation(store: StoreMapped): Promise<StoreMapped> {
+    const stats = await getStoreReviewStats(this.prisma, store.id);
+    return {
+      ...store,
+      averageRating: stats.averageRating,
+      totalReviews: stats.totalReviews,
+      productsSold: stats.productsSold,
+    };
+  }
+
+  public async findMe(userId: number): Promise<StoreMapped> {
+    const store =
+      await this.storeOwnershipProvider.findOwnedStoreOrThrow(userId);
+    return this.withReputation(store);
   }
 
   public async findById(id: number): Promise<StoreMapped> {
@@ -30,7 +43,7 @@ export class GetStoresProvider {
       throw new NotFoundException('Store not found');
     }
 
-    return mapStoreToResponse(store);
+    return this.withReputation(mapStoreToResponse(store));
   }
 
   public async findBySlug(slug: string): Promise<StoreMapped> {
@@ -47,7 +60,7 @@ export class GetStoresProvider {
       throw new NotFoundException('Store not found');
     }
 
-    return mapStoreToResponse(store);
+    return this.withReputation(mapStoreToResponse(store));
   }
 
   public async findAllPaginated(
@@ -86,11 +99,15 @@ export class GetStoresProvider {
       include: STORE_INCLUDE,
     });
 
+    const data = await Promise.all(
+      stores.map((store) => this.withReputation(mapStoreToResponse(store))),
+    );
+
     return {
       page,
       limit,
       total,
-      data: stores.map((store) => mapStoreToResponse(store)),
+      data,
     };
   }
 }

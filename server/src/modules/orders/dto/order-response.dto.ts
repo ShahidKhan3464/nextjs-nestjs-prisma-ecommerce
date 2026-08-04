@@ -62,6 +62,15 @@ export class OrderStoreResponseDto {
 
   @ApiProperty()
   slug: string;
+
+  @ApiProperty()
+  verified: boolean;
+
+  @ApiPropertyOptional({ nullable: true })
+  logoUrl: string | null;
+
+  @ApiProperty()
+  sellerName: string;
 }
 
 export class OrderBuyerResponseDto {

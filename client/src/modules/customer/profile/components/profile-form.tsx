@@ -5,9 +5,12 @@ import Image from "next/image";
 import { toast } from "sonner";
 import * as React from "react";
 import { cn } from "@/lib/utils";
+import type { User } from "../types";
 import { ROUTES } from "@/constants/routes";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import { useAuthStore } from "@/store/auth-store";
+import { queryKeys } from "@/constants/query-keys";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getApiErrorMessage } from "@/lib/api-error";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -16,6 +19,7 @@ import { useForm, type Resolver } from "react-hook-form";
 import { resolveUploadUrl } from "@/lib/resolve-upload-url";
 import { isBuyer, isSeller } from "@/modules/auth/utils/roles";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   fetchProfile,
   updateProfile,
@@ -88,49 +92,28 @@ function ProfileFormSkeleton() {
 }
 
 export function ProfileForm() {
-  const user = useAuthStore((s) => s.user);
+  const qc = useQueryClient();
   const setUser = useAuthStore((s) => s.setUser);
+  const authUser = useAuthStore((s) => s.user);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
-  const profileLoadedRef = React.useRef(false);
-  const [profileLoading, setProfileLoading] = React.useState(true);
-  const [uploadingAvatar, setUploadingAvatar] = React.useState(false);
-  const [avatarUrl, setAvatarUrl] = React.useState(
-    resolveUploadUrl(user?.avatarUrl) ?? ""
-  );
+
+  const { data: profile, isPending } = useQuery({
+    queryKey: queryKeys.profile.me,
+    queryFn: fetchProfile,
+  });
+
+  const user = profile ?? authUser;
 
   const { firstName, lastName } = splitName(user?.fullName ?? user?.name);
 
   const profileForm = useForm<ProfileValues>({
     resolver: zodResolver(profileSchema) as Resolver<ProfileValues>,
-    defaultValues: {
+    values: {
       firstName,
       lastName,
       phoneNumber: user?.phoneNumber ?? "",
     },
   });
-
-  React.useEffect(() => {
-    if (profileLoadedRef.current) return;
-    profileLoadedRef.current = true;
-
-    void fetchProfile()
-      .then((profile) => {
-        setAvatarUrl(resolveUploadUrl(profile.avatarUrl) ?? "");
-        setUser(profile);
-        const { firstName: fn, lastName: ln } = splitName(profile.fullName);
-        profileForm.reset({
-          firstName: fn,
-          lastName: ln,
-          phoneNumber: profile.phoneNumber ?? "",
-        });
-      })
-      .catch(() => {
-        profileLoadedRef.current = false;
-      })
-      .finally(() => {
-        setProfileLoading(false);
-      });
-  }, [setUser, profileForm]);
 
   const passwordForm = useForm<PasswordValues>({
     resolver: zodResolver(passwordSchema) as Resolver<PasswordValues>,
@@ -141,54 +124,95 @@ export function ProfileForm() {
     },
   });
 
-  async function onProfileSubmit(values: ProfileValues) {
-    try {
-      const fullName =
-        `${values.firstName.trim()} ${values.lastName.trim()}`.trim();
-      const next = await updateProfile({
-        fullName,
-        phoneNumber: values.phoneNumber?.trim() || undefined,
-      });
-      setUser({ ...next, avatarUrl });
-      toast.success("Profile updated");
-    } catch (error) {
-      toast.error(getApiErrorMessage(error, "Could not update profile"));
-    }
-  }
+  React.useEffect(() => {
+    if (profile) setUser(profile);
+  }, [profile, setUser]);
 
-  async function onPasswordSubmit(values: PasswordValues) {
-    try {
-      await changePassword(values);
+  const profileMutation = useMutation({
+    mutationFn: updateProfile,
+    onMutate: async (body) => {
+      await qc.cancelQueries({ queryKey: queryKeys.profile.me });
+      const previous = qc.getQueryData<User>(queryKeys.profile.me);
+      if (previous) {
+        const optimistic: User = {
+          ...previous,
+          fullName: body.fullName,
+          name: body.fullName,
+          phoneNumber: body.phoneNumber,
+        };
+        qc.setQueryData(queryKeys.profile.me, optimistic);
+        setUser(optimistic);
+      }
+      return { previous };
+    },
+    onError: (error, _vars, ctx) => {
+      if (ctx?.previous) {
+        qc.setQueryData(queryKeys.profile.me, ctx.previous);
+        setUser(ctx.previous);
+      }
+      toast.error(getApiErrorMessage(error, "Could not update profile"));
+    },
+    onSuccess: (next) => {
+      qc.setQueryData(queryKeys.profile.me, next);
+      setUser(next);
+      toast.success("Profile updated");
+    },
+  });
+
+  const passwordMutation = useMutation({
+    mutationFn: changePassword,
+    onSuccess: () => {
       passwordForm.reset();
       toast.success("Password updated");
-    } catch (error) {
+    },
+    onError: (error) => {
       toast.error(getApiErrorMessage(error, "Could not update password"));
-    }
-  }
+    },
+  });
 
-  async function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setUploadingAvatar(true);
-    try {
-      const url = await uploadProfileAvatar(file);
+  const avatarMutation = useMutation({
+    mutationFn: uploadProfileAvatar,
+    onSuccess: (url) => {
       const resolved = resolveUploadUrl(url) ?? url;
-      setAvatarUrl(resolved);
-      if (user) {
-        setUser({ ...user, avatarUrl: resolved });
+      const current = qc.getQueryData<User>(queryKeys.profile.me) ?? user;
+      if (current) {
+        const next = { ...current, avatarUrl: resolved };
+        qc.setQueryData(queryKeys.profile.me, next);
+        setUser(next);
       }
       toast.success("Profile photo updated");
-    } catch (error) {
+    },
+    onError: (error) => {
       toast.error(getApiErrorMessage(error, "Could not upload photo"));
-    } finally {
-      setUploadingAvatar(false);
-      if (fileInputRef.current) fileInputRef.current.value = "";
-    }
+    },
+  });
+
+  function onProfileSubmit(values: ProfileValues) {
+    const fullName =
+      `${values.firstName.trim()} ${values.lastName.trim()}`.trim();
+    profileMutation.mutate({
+      fullName,
+      phoneNumber: values.phoneNumber?.trim() || undefined,
+    });
   }
 
-  if (profileLoading) {
+  function onPasswordSubmit(values: PasswordValues) {
+    passwordMutation.mutate(values);
+  }
+
+  function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    avatarMutation.mutate(file);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }
+
+  if (isPending && !user) {
     return <ProfileFormSkeleton />;
   }
+
+  const avatarUrl = resolveUploadUrl(user?.avatarUrl) ?? "";
+  const roles = user?.roles ?? [];
 
   return (
     <div className="space-y-6">
@@ -215,16 +239,16 @@ export function ProfileForm() {
               type="file"
               ref={fileInputRef}
               className="hidden"
-              onChange={(e) => void handleAvatarChange(e)}
+              onChange={handleAvatarChange}
               accept="image/jpeg,image/png,image/gif,image/webp"
             />
             <Button
               type="button"
               variant="outline"
-              disabled={uploadingAvatar}
+              disabled={avatarMutation.isPending}
               onClick={() => fileInputRef.current?.click()}
             >
-              {uploadingAvatar ? "Uploading…" : "Upload photo"}
+              {avatarMutation.isPending ? "Uploading…" : "Upload photo"}
             </Button>
           </div>
         </div>
@@ -232,6 +256,26 @@ export function ProfileForm() {
         <div className="space-y-1">
           <p className="text-sm font-medium">Email</p>
           <p className="text-muted-foreground text-sm">{user?.email}</p>
+        </div>
+      </section>
+
+      <Separator />
+
+      <section className="space-y-3">
+        <h2 className="font-heading text-lg font-semibold">Account roles</h2>
+        <p className="text-muted-foreground text-sm">
+          Roles are assigned by the platform and shown for reference only.
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {roles.length === 0 ? (
+            <Badge variant="outline">No roles</Badge>
+          ) : (
+            roles.map((role) => (
+              <Badge key={role} variant="secondary">
+                {role}
+              </Badge>
+            ))
+          )}
         </div>
       </section>
 
@@ -286,15 +330,15 @@ export function ProfileForm() {
             <Button
               type="submit"
               className="sm:col-span-2 sm:w-fit"
-              disabled={profileForm.formState.isSubmitting}
+              disabled={profileMutation.isPending}
             >
-              {profileForm.formState.isSubmitting ? "Saving…" : "Save profile"}
+              {profileMutation.isPending ? "Saving…" : "Save profile"}
             </Button>
           </form>
         </Form>
       </section>
 
-      {isBuyer(user?.roles ?? []) && !isSeller(user?.roles ?? []) ? (
+      {isBuyer(roles) && !isSeller(roles) ? (
         <>
           <Separator />
           <section className="space-y-2">
@@ -311,6 +355,23 @@ export function ProfileForm() {
           </section>
         </>
       ) : null}
+
+      <Separator />
+
+      <section className="space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="font-heading text-lg font-semibold">Addresses</h2>
+          <Link
+            href={ROUTES.addresses}
+            className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+          >
+            Manage addresses
+          </Link>
+        </div>
+        <p className="text-muted-foreground text-sm">
+          Save shipping and billing addresses for faster checkout.
+        </p>
+      </section>
 
       <Separator />
 
@@ -372,13 +433,8 @@ export function ProfileForm() {
                 </FormItem>
               )}
             />
-            <Button
-              type="submit"
-              disabled={passwordForm.formState.isSubmitting}
-            >
-              {passwordForm.formState.isSubmitting
-                ? "Updating…"
-                : "Update password"}
+            <Button type="submit" disabled={passwordMutation.isPending}>
+              {passwordMutation.isPending ? "Updating…" : "Update password"}
             </Button>
           </form>
         </Form>

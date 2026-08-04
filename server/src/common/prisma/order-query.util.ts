@@ -20,6 +20,22 @@ const ORDER_LIST_INCLUDE = {
       slug: true,
       status: true,
       deletedAt: true,
+      verifiedAt: true,
+      files: {
+        where: { type: 'LOGO' },
+        orderBy: { sortOrder: 'asc' as const },
+        take: 1,
+        select: {
+          file: {
+            select: { urlPath: true },
+          },
+        },
+      },
+      sellerProfile: {
+        select: {
+          businessName: true,
+        },
+      },
     },
   },
   items: {
@@ -78,6 +94,9 @@ export async function findOrdersWithImages(
           slug: order.store.slug,
           status: order.store.status,
           deletedAt: order.store.deletedAt,
+          verifiedAt: order.store.verifiedAt,
+          logoUrl: order.store.files?.[0]?.file?.urlPath ?? null,
+          sellerName: order.store.sellerProfile?.businessName ?? null,
         }
       : undefined,
     payment: order.payment

@@ -23,6 +23,12 @@ export function useAppSectionMeta(): { title: string; hint?: string } {
     if (pathname === "/profile") {
       return { title: "Profile", hint: "Account settings" };
     }
+    if (pathname === "/profile/addresses") {
+      return { title: "Addresses", hint: "Shipping & billing" };
+    }
+    if (pathname === "/notifications") {
+      return { title: "Notifications", hint: "Marketplace updates" };
+    }
     if (pathname.startsWith("/products/") && pathname !== "/products") {
       if (pathname.startsWith("/products/new")) {
         return { title: "New product", hint: "Create catalog item" };
@@ -83,7 +89,19 @@ export function useAppSectionMeta(): { title: string; hint?: string } {
               : "Your history",
       };
     }
+    if (pathname === "/reviews") {
+      return {
+        title: "Reviews",
+        hint:
+          chrome === "admin"
+            ? "Moderation"
+            : chrome === "seller"
+              ? "Store feedback"
+              : "Reviews",
+      };
+    }
     if (pathname === "/cart") return { title: "Cart" };
+    if (pathname === "/checkout/success") return { title: "Order confirmed" };
     if (pathname === "/checkout") return { title: "Checkout" };
     if (pathname === "/wishlist") return { title: "Wishlist" };
     if (pathname === "/become-seller" || pathname.startsWith("/become-seller/")) {

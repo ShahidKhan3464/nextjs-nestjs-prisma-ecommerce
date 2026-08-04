@@ -13,13 +13,22 @@ export function useProductSearchParams() {
     const sortRaw = searchParams.get("sort") ?? "";
     const sort: ProductSort | "" =
       sortRaw && isProductSort(sortRaw) ? sortRaw : "";
+    const inStockRaw = searchParams.get("inStock") ?? "";
 
     return {
       q: searchParams.get("q") ?? "",
       category: searchParams.get("category") ?? "",
       minPrice: searchParams.get("minPrice") ?? "",
       maxPrice: searchParams.get("maxPrice") ?? "",
+      minRating: searchParams.get("minRating") ?? "",
+      inStock:
+        inStockRaw === "true" || inStockRaw === "1"
+          ? "true"
+          : inStockRaw === "false" || inStockRaw === "0"
+            ? "false"
+            : "",
       storeId: searchParams.get("storeId") ?? "",
+      sellerId: searchParams.get("sellerId") ?? "",
       sort,
       page: Number(searchParams.get("page") ?? "1") || 1,
     };

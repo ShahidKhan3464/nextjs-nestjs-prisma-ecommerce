@@ -45,12 +45,24 @@ const CART_ITEM_SELECT = {
               slug: true,
               status: true,
               deletedAt: true,
+              verifiedAt: true,
+              files: {
+                where: { type: 'LOGO' },
+                orderBy: { sortOrder: 'asc' as const },
+                take: 1,
+                select: {
+                  file: {
+                    select: { urlPath: true },
+                  },
+                },
+              },
               sellerProfile: {
                 select: {
                   id: true,
                   userId: true,
                   status: true,
                   deletedAt: true,
+                  businessName: true,
                 },
               },
             },
@@ -97,6 +109,9 @@ export async function findCartItemsWithImages(
                 slug: item.variant.product.store.slug,
                 status: item.variant.product.store.status,
                 deletedAt: item.variant.product.store.deletedAt,
+                verifiedAt: item.variant.product.store.verifiedAt,
+                logoUrl:
+                  item.variant.product.store.files?.[0]?.file?.urlPath ?? null,
                 sellerProfile: item.variant.product.store.sellerProfile
                   ? {
                       id: item.variant.product.store.sellerProfile.id,
@@ -104,6 +119,8 @@ export async function findCartItemsWithImages(
                       status: item.variant.product.store.sellerProfile.status,
                       deletedAt:
                         item.variant.product.store.sellerProfile.deletedAt,
+                      businessName:
+                        item.variant.product.store.sellerProfile.businessName,
                     }
                   : undefined,
               }

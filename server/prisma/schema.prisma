@@ -23,6 +23,7 @@ model User {
   files            UserFile[]
   userRoles        UserRole[]
   cartItems        CartItem[]
+  addresses        UserAddress[]
   wishlistItems    WishlistItem[]
   notifications    Notification[]
   sellerProfile    SellerProfile?
@@ -31,6 +32,30 @@ model User {
 
   @@index([deletedAt])
   @@map("users")
+}
+
+model UserAddress {
+  id                 Int      @id @default(autoincrement())
+  userId             Int
+  label              String?  @db.VarChar(100)
+  fullName           String   @db.VarChar(100)
+  line1              String   @db.VarChar(255)
+  line2              String?  @db.VarChar(255)
+  city               String   @db.VarChar(100)
+  region             String   @db.VarChar(100)
+  postalCode         String   @db.VarChar(20)
+  country            String   @db.VarChar(100)
+  phone              String?  @db.VarChar(30)
+  isDefaultShipping  Boolean  @default(false)
+  isDefaultBilling   Boolean  @default(false)
+  createdAt          DateTime @default(now()) @db.Timestamp(6)
+  updatedAt          DateTime @default(now()) @updatedAt @db.Timestamp(6)
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([userId])
+  @@index([userId, isDefaultShipping])
+  @@index([userId, isDefaultBilling])
+  @@map("user_addresses")
 }
 
 model RefreshToken {
@@ -467,10 +492,13 @@ enum notification_type_enum {
   ORDER_CREATED
   ORDER_SHIPPED
   ORDER_DELIVERED
+  ORDER_CANCELLED
   SELLER_APPROVED
   SELLER_REJECTED
   PRODUCT_APPROVED
   PRODUCT_REJECTED
+  STORE_ANNOUNCEMENT
+  PRODUCT_BACK_IN_STOCK
   SYSTEM
 }
 

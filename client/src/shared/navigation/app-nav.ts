@@ -8,8 +8,11 @@ import {
 } from "@/modules/auth/utils/roles";
 import {
   Heart,
+  Bell,
+  Star,
   Store,
   Users,
+  MapPin,
   Package,
   UserRound,
   ShoppingBag,
@@ -64,6 +67,20 @@ const ADMIN_NAV: AppNavItem[] = [
     href: ROUTES.orders,
     roles: ["SUPER_ADMIN"],
   },
+  {
+    icon: Star,
+    id: "reviews",
+    label: "Reviews",
+    href: ROUTES.reviews,
+    roles: ["SUPER_ADMIN"],
+  },
+  {
+    icon: Bell,
+    id: "notifications",
+    label: "Notifications",
+    roles: ["SUPER_ADMIN"],
+    href: ROUTES.notifications,
+  },
 ];
 
 const SELLER_NAV: AppNavItem[] = [
@@ -94,6 +111,20 @@ const SELLER_NAV: AppNavItem[] = [
     roles: ["SELLER"],
     icon: ShoppingCart,
     href: ROUTES.orders,
+  },
+  {
+    icon: Star,
+    id: "reviews",
+    label: "Reviews",
+    roles: ["SELLER"],
+    href: ROUTES.reviews,
+  },
+  {
+    icon: Bell,
+    roles: ["SELLER"],
+    id: "notifications",
+    label: "Notifications",
+    href: ROUTES.notifications,
   },
   {
     id: "profile",
@@ -139,6 +170,20 @@ const BUYER_NAV: AppNavItem[] = [
     label: "Orders",
     roles: ["BUYER"],
     href: ROUTES.orders,
+  },
+  {
+    icon: Bell,
+    roles: ["BUYER"],
+    id: "notifications",
+    label: "Notifications",
+    href: ROUTES.notifications,
+  },
+  {
+    icon: MapPin,
+    id: "addresses",
+    roles: ["BUYER"],
+    label: "Addresses",
+    href: ROUTES.addresses,
   },
   {
     icon: Store,

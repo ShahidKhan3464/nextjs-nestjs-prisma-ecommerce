@@ -11,6 +11,7 @@ import { useAuthStore } from "@/store/auth-store";
 import { buttonVariants } from "@/components/ui/button";
 import { LayoutDashboard, LogOut, User } from "lucide-react";
 import { resolveShopChrome } from "@/shared/navigation/app-nav";
+import { NotificationBell } from "@/modules/customer/notifications";
 import { resetCartWishlistSession } from "@/lib/cart-wishlist-session";
 import {
   DropdownMenu,
@@ -83,7 +84,9 @@ export function AppChromeHeader({ sectionTitle, sectionHint }: Props) {
       </div>
 
       {!mounted ? null : user && chrome ? (
-        <DropdownMenu>
+        <div className="flex items-center gap-2">
+          <NotificationBell />
+          <DropdownMenu>
           <DropdownMenuTrigger
             className={cn(
               buttonVariants({ variant: "outline", size: "sm" }),
@@ -127,6 +130,7 @@ export function AppChromeHeader({ sectionTitle, sectionHint }: Props) {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+        </div>
       ) : (
         <Link
           href={ROUTES.login}

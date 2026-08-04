@@ -20,8 +20,9 @@ export async function wishlistToggle(productId: string): Promise<void> {
 
   try {
     const { productIds } = await toggleWishlistItem(productId);
-    useWishlistStore.getState().setProductIds(productIds);
-    const isWishlisted = productIds.includes(productId);
+    const nextIds = productIds.map(String);
+    useWishlistStore.getState().setProductIds(nextIds);
+    const isWishlisted = nextIds.includes(productId);
     toast.success(isWishlisted ? "Added to wishlist" : "Removed from wishlist");
   } catch (error) {
     useWishlistStore.getState().setProductIds(prev);

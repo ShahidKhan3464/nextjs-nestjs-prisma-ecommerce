@@ -1,14 +1,16 @@
-import { UsersService } from 'src/modules/users/users.service';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { UsersService } from 'src/modules/users/users.service';
+import { CompleteCheckoutDto } from '../dto/complete-checkout.dto';
+import { lockProductVariants } from '../utils/lock-product-variants.util';
 import { MailService } from 'src/integrations/mail/providers/mail.service';
+import { OrderResponse, mapOrderToResponse } from '../utils/map-order.util';
+import { NotificationService } from 'src/modules/notifications/notification.service';
+import { NotificationType } from 'src/modules/notifications/constants/notification.constants';
+import { PaymentLifecycleProvider } from 'src/modules/payments/providers/payment-lifecycle.provider';
 import {
   StripeClient,
   StripeService,
 } from 'src/integrations/stripe/stripe.service';
-import { CompleteCheckoutDto } from '../dto/complete-checkout.dto';
-import { lockProductVariants } from '../utils/lock-product-variants.util';
-import { OrderResponse, mapOrderToResponse } from '../utils/map-order.util';
-import { PaymentLifecycleProvider } from 'src/modules/payments/providers/payment-lifecycle.provider';
 import {
   PaymentStatus,
   CheckoutSessionStatus,
@@ -36,6 +38,7 @@ export class CompleteCheckoutProvider {
     private readonly prisma: PrismaService,
     private readonly mailService: MailService,
     private readonly usersService: UsersService,
+    private readonly notificationService: NotificationService,
     private readonly paymentLifecycleProvider: PaymentLifecycleProvider,
     stripeService: StripeService,
   ) {
@@ -222,8 +225,22 @@ export class CompleteCheckoutProvider {
     const responses = created.map((order) => mapOrderToResponse(order));
 
     await this.sendConfirmationEmails(userId, responses);
+    this.notifyOrdersCreated(userId, responses);
 
     return { orders: responses };
+  }
+
+  private notifyOrdersCreated(userId: number, orders: OrderResponse[]): void {
+    for (const order of orders) {
+      void this.notificationService
+        .create({
+          userId,
+          type: NotificationType.ORDER_CREATED,
+          title: 'Order placed',
+          message: `Your order #${order.id} was placed successfully.`,
+        })
+        .catch(() => undefined);
+    }
   }
 
   private async loadCompletedOrdersForPaymentIntent(

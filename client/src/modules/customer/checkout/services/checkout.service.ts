@@ -36,3 +36,11 @@ export async function completeCheckout(body: CompleteCheckoutInput) {
   );
   return res.data.data.orders ?? [res.data.data.order];
 }
+
+/**
+ * Recover a checkout after Stripe success when complete failed (network).
+ * Backend complete is idempotent — safe to retry.
+ */
+export async function recoverCheckout(paymentIntentId: string) {
+  return completeCheckout({ paymentIntentId });
+}

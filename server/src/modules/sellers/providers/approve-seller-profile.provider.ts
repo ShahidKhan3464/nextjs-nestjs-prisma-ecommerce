@@ -1,8 +1,10 @@
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UserRole } from 'src/common/enums/user-role.enum';
-import { StoreStatus } from 'src/modules/stores/constants/store.constants';
 import { generateStoreSlug } from '../utils/generate-store-slug.util';
+import { StoreStatus } from 'src/modules/stores/constants/store.constants';
 import { ApproveSellerProfileDto } from '../dto/approve-seller-profile.dto';
+import { NotificationService } from 'src/modules/notifications/notification.service';
+import { NotificationType } from 'src/modules/notifications/constants/notification.constants';
 import {
   Injectable,
   ConflictException,
@@ -20,13 +22,16 @@ import {
 
 @Injectable()
 export class ApproveSellerProfileProvider {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notificationService: NotificationService,
+  ) {}
 
   public async approve(
     id: number,
     dto: ApproveSellerProfileDto,
   ): Promise<SellerProfileMapped> {
-    return this.prisma.$transaction(async (tx) => {
+    const response = await this.prisma.$transaction(async (tx) => {
       const profile = await tx.sellerProfile.findFirst({
         where: { id, deletedAt: null },
         include: { store: true },
@@ -105,6 +110,18 @@ export class ApproveSellerProfileProvider {
 
       return mapSellerProfileToResponse(updated);
     });
+
+    void this.notificationService
+      .create({
+        userId: response.userId,
+        type: NotificationType.SELLER_APPROVED,
+        title: 'Seller profile approved',
+        message:
+          'Your seller profile has been approved. You can now start selling.',
+      })
+      .catch(() => undefined);
+
+    return response;
   }
 
   private async resolveUniqueSlug(

@@ -19,6 +19,9 @@ type NestSellerDashboardPayload = {
     businessName: string;
     verifiedAt: string | null;
     description: string | null;
+    averageRating?: number;
+    totalReviews?: number;
+    productsSold?: number;
   };
   totals: {
     orders: number;
@@ -27,6 +30,8 @@ type NestSellerDashboardPayload = {
     variants: number;
     pendingOrders: number;
     lowStockCount: number;
+    averageRating?: number;
+    totalReviews?: number;
   };
   recentOrders: NestOrderPayload[];
   revenueByDay: { date: string; revenue: number }[];
@@ -39,6 +44,25 @@ type NestSellerDashboardPayload = {
     message: string;
     isRead: boolean;
     createdAt: string;
+  }[];
+  recentReviews?: {
+    id: string;
+    rating: number;
+    title: string | null;
+    comment: string | null;
+    productName: string;
+    productSlug: string;
+    buyerName: string;
+    createdAt: string;
+  }[];
+  topProducts?: {
+    productId: string;
+    name: string;
+    slug: string;
+    unitsSold: number;
+    revenue: number;
+    averageRating: number;
+    reviewCount: number;
   }[];
 };
 
@@ -72,7 +96,20 @@ export async function GET(req: Request) {
   return jsonOk({
     data: {
       ...payload,
+      store: {
+        ...payload.store,
+        averageRating: payload.store.averageRating ?? 0,
+        totalReviews: payload.store.totalReviews ?? 0,
+        productsSold: payload.store.productsSold ?? 0,
+      },
+      totals: {
+        ...payload.totals,
+        averageRating: payload.totals.averageRating ?? 0,
+        totalReviews: payload.totals.totalReviews ?? 0,
+      },
       recentOrders: (payload.recentOrders ?? []).map(normalizeNestOrderPayload),
+      recentReviews: payload.recentReviews ?? [],
+      topProducts: payload.topProducts ?? [],
     },
   });
 }

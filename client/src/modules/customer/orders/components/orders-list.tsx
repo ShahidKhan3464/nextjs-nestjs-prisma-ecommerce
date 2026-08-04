@@ -103,6 +103,7 @@ export function OrdersList() {
         filterWidths={["w-72", "w-32", "w-32", "w-24"]}
         columns={[
           { className: "flex-1" },
+          { className: "w-36" },
           { className: "w-24" },
           { className: "w-24" },
           { className: "flex-1" },
@@ -190,7 +191,8 @@ export function OrdersList() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Order</TableHead>
+                  <TableHead>Order</TableHead>
+              <TableHead>Store</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Payment</TableHead>
               <TableHead>Placed</TableHead>
@@ -205,7 +207,7 @@ export function OrdersList() {
             {pageRows.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={7}
+                  colSpan={8}
                   className="text-muted-foreground py-10 text-center text-sm"
                 >
                   No orders found.
@@ -216,6 +218,19 @@ export function OrdersList() {
                 <TableRow key={order.id}>
                   <TableCell className="font-mono text-sm">
                     {order.orderNumber}
+                  </TableCell>
+                  <TableCell className="min-w-36 whitespace-normal">
+                    {order.store ? (
+                      <div className="space-y-0.5">
+                        <p className="text-sm font-medium">{order.store.name}</p>
+                        <p className="text-muted-foreground text-xs">
+                          {order.store.sellerName}
+                          {order.store.verified ? " · Verified" : ""}
+                        </p>
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground text-sm">—</span>
+                    )}
                   </TableCell>
                   <TableCell>
                     <OrderStatusBadge status={order.status} />
@@ -241,6 +256,15 @@ export function OrdersList() {
                         buttonVariants({ variant: "outline", size: "icon" })
                       )}
                       aria-label={`View order ${order.orderNumber}`}
+                      onMouseEnter={() => {
+                        void qc.prefetchQuery({
+                          queryKey: queryKeys.orders.detail(order.id),
+                          queryFn: () =>
+                            import("../services/orders.service").then((m) =>
+                              m.fetchOrder(order.id)
+                            ),
+                        });
+                      }}
                     >
                       <EyeIcon className="h-4 w-4" />
                     </Link>

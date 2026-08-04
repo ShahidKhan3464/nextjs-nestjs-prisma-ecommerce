@@ -24,6 +24,7 @@ const SORT_LABELS: Record<ProductSort, string> = {
   price_asc: "Price: low to high",
   price_desc: "Price: high to low",
   name_asc: "Name: A–Z",
+  rating_desc: "Highest rated",
 };
 
 export function ProductFilters({ disabled = false }: { disabled?: boolean }) {
@@ -32,6 +33,7 @@ export function ProductFilters({ disabled = false }: { disabled?: boolean }) {
   const { data: categories = [], isPending: categoriesLoading } = useQuery({
     queryKey: queryKeys.products.categories,
     queryFn: fetchCustomerCategories,
+    staleTime: 60_000,
   });
 
   React.useEffect(() => {
@@ -102,6 +104,29 @@ export function ProductFilters({ disabled = false }: { disabled?: boolean }) {
         </div>
 
         <div className="w-full min-w-35 space-y-2 sm:w-auto">
+          <Label>Min price</Label>
+          <Select
+            disabled={disabled}
+            value={values.minPrice || "all"}
+            onValueChange={(v) => {
+              if (v == null) return;
+              setParams({ minPrice: v === "all" ? "" : v, page: 1 });
+            }}
+          >
+            <SelectTrigger className="w-full" disabled={disabled}>
+              <SelectValue placeholder="Any" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Any</SelectItem>
+              <SelectItem value="25">$25+</SelectItem>
+              <SelectItem value="50">$50+</SelectItem>
+              <SelectItem value="100">$100+</SelectItem>
+              <SelectItem value="200">$200+</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="w-full min-w-35 space-y-2 sm:w-auto">
           <Label>Max price</Label>
           <Select
             disabled={disabled}
@@ -122,6 +147,47 @@ export function ProductFilters({ disabled = false }: { disabled?: boolean }) {
               <SelectItem value="300">$300 or less</SelectItem>
               <SelectItem value="400">$400 or less</SelectItem>
               <SelectItem value="1000">$1000 or less</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="w-full min-w-35 space-y-2 sm:w-auto">
+          <Label>Min rating</Label>
+          <Select
+            disabled={disabled}
+            value={values.minRating || "all"}
+            onValueChange={(v) => {
+              if (v == null) return;
+              setParams({ minRating: v === "all" ? "" : v, page: 1 });
+            }}
+          >
+            <SelectTrigger className="w-full" disabled={disabled}>
+              <SelectValue placeholder="Any" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Any</SelectItem>
+              <SelectItem value="3">3+</SelectItem>
+              <SelectItem value="4">4+</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="w-full min-w-35 space-y-2 sm:w-auto">
+          <Label>Availability</Label>
+          <Select
+            disabled={disabled}
+            value={values.inStock || "all"}
+            onValueChange={(v) => {
+              if (v == null) return;
+              setParams({ inStock: v === "all" ? "" : v, page: 1 });
+            }}
+          >
+            <SelectTrigger className="w-full" disabled={disabled}>
+              <SelectValue placeholder="Any" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Any</SelectItem>
+              <SelectItem value="true">In stock</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -166,6 +232,9 @@ export function ProductFilters({ disabled = false }: { disabled?: boolean }) {
                 category: "",
                 minPrice: "",
                 maxPrice: "",
+                minRating: "",
+                inStock: "",
+                sellerId: "",
                 sort: "",
                 page: 1,
               })

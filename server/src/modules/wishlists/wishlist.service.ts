@@ -13,7 +13,7 @@ export class WishlistService {
   ) {}
 
   findAll(userId: number) {
-    return this.getWishlistProvider.findProductIds(userId);
+    return this.getWishlistProvider.findForUser(userId);
   }
 
   toggle(userId: number, productId: number) {

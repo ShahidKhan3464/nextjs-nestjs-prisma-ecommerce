@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { ROUTES } from "@/constants/routes";
 import { useQuery } from "@tanstack/react-query";
@@ -38,6 +39,10 @@ import {
   TableHead,
   TableHeader,
 } from "@/components/ui/table";
+import {
+  RecentlyViewedRail,
+  RecommendedProductsRail,
+} from "@/modules/customer/discovery";
 
 function formatStatusLabel(status: string) {
   return status.charAt(0) + status.slice(1).toLowerCase();
@@ -57,6 +62,7 @@ export function DashboardOverview() {
   const { data, isPending } = useQuery({
     queryKey: queryKeys.dashboard.customer,
     queryFn: fetchCustomerDashboard,
+    staleTime: 30_000,
   });
 
   const ordersByStatus =
@@ -285,6 +291,99 @@ export function DashboardOverview() {
           )}
         </CardContent>
       </Card>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle>Recent notifications</CardTitle>
+            <Link
+              href={ROUTES.notifications}
+              className={cn(buttonVariants({ variant: "ghost", size: "sm" }))}
+            >
+              View all
+            </Link>
+          </CardHeader>
+          <CardContent>
+            {isPending ? (
+              <Skeleton className="h-40 w-full" />
+            ) : !(data?.recentNotifications?.length ?? 0) ? (
+              <EmptyState
+                title="No notifications"
+                description="Order and marketplace updates will show up here."
+              />
+            ) : (
+              <ul className="divide-y">
+                {data!.recentNotifications.slice(0, 5).map((item) => (
+                  <li
+                    key={item.id}
+                    className={cn(
+                      "flex flex-col gap-1 py-3 first:pt-0 last:pb-0",
+                      !item.isRead && "bg-muted/40 -mx-2 rounded-md px-2"
+                    )}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <p className="text-sm font-medium leading-snug">
+                        {item.title}
+                      </p>
+                      <time className="text-muted-foreground shrink-0 text-xs tabular-nums">
+                        {formatOrderDate(item.createdAt)}
+                      </time>
+                    </div>
+                    <p className="text-muted-foreground text-sm leading-snug">
+                      {item.message}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Recently purchased</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isPending ? (
+              <Skeleton className="h-40 w-full" />
+            ) : !(data?.recentlyPurchased?.length ?? 0) ? (
+              <EmptyState
+                title="No purchases yet"
+                description="Products from your orders will appear here."
+              />
+            ) : (
+              <ul className="flex flex-wrap gap-3">
+                {data!.recentlyPurchased.slice(0, 8).map((item) => (
+                  <li key={`${item.productId}-${item.purchasedAt}`}>
+                    <Link
+                      href={ROUTES.product(item.slug)}
+                      className="group flex w-24 flex-col gap-2"
+                    >
+                      <div className="border-border relative size-20 overflow-hidden rounded-lg border bg-muted/40">
+                        <Image
+                          fill
+                          alt=""
+                          sizes="80px"
+                          src={item.imageUrl ?? "/placeholder.svg"}
+                          className="object-cover transition group-hover:scale-105"
+                        />
+                      </div>
+                      <span className="line-clamp-2 text-xs font-medium">
+                        {item.name}
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="space-y-10">
+        <RecentlyViewedRail />
+        <RecommendedProductsRail />
+      </div>
     </div>
   );
 }

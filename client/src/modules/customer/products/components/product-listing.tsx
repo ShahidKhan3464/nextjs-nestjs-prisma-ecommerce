@@ -19,8 +19,12 @@ function toParams(
   return {
     q: values.q || undefined,
     categoryId: values.category ? Number(values.category) : undefined,
+    minPrice: values.minPrice ? Number(values.minPrice) : undefined,
     maxPrice: values.maxPrice ? Number(values.maxPrice) : undefined,
+    minRating: values.minRating ? Number(values.minRating) : undefined,
+    inStock: values.inStock === "true" ? true : undefined,
     storeId: values.storeId ? Number(values.storeId) : undefined,
+    sellerId: values.sellerId ? Number(values.sellerId) : undefined,
     sort: values.sort || undefined,
     page: values.page,
     limit: 12,

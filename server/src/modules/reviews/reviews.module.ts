@@ -7,6 +7,7 @@ import { CreateReviewProvider } from './providers/create-review.provider';
 import { UpdateReviewProvider } from './providers/update-review.provider';
 import { DeleteReviewProvider } from './providers/delete-review.provider';
 import { ReviewOwnershipProvider } from './providers/review-ownership.provider';
+import { GetReviewSummaryProvider } from './providers/get-review-summary.provider';
 import { ReviewEligibilityProvider } from './providers/review-eligibility.provider';
 
 @Module({
@@ -19,7 +20,9 @@ import { ReviewEligibilityProvider } from './providers/review-eligibility.provid
     UpdateReviewProvider,
     DeleteReviewProvider,
     ReviewOwnershipProvider,
+    GetReviewSummaryProvider,
     ReviewEligibilityProvider,
   ],
+  exports: [ReviewsService],
 })
 export class ReviewsModule {}

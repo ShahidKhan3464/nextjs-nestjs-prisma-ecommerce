@@ -58,6 +58,18 @@ export async function POST(req: Request) {
     return jsonMessage("Invalid checkout response", 500);
   }
 
-  const body: ApiResponse<CheckoutSession> = { data };
+  const session: CheckoutSession = {
+    clientSecret: data.clientSecret,
+    paymentIntentId: data.paymentIntentId,
+    checkoutSessionId: String(data.checkoutSessionId ?? ""),
+    orderIds: Array.isArray(data.orderIds) ? data.orderIds.map(String) : [],
+    preview: {
+      tax: Number(data.preview?.tax ?? 0),
+      total: Number(data.preview?.total ?? 0),
+      subtotal: Number(data.preview?.subtotal ?? 0),
+    },
+  };
+
+  const body: ApiResponse<CheckoutSession> = { data: session };
   return jsonOk(body, { status: 201 });
 }

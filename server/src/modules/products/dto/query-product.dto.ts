@@ -1,14 +1,17 @@
 import { Type } from 'class-transformer';
+import { Transform } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { ProductStatus } from '../constants/product.constants';
 import { PaginationQueryDto } from 'src/common/pagination/dto/pagination-query.dto';
 import {
   Min,
+  Max,
   IsIn,
   IsInt,
   IsEnum,
   IsNumber,
   IsString,
+  IsBoolean,
   MaxLength,
   IsOptional,
 } from 'class-validator';
@@ -27,6 +30,15 @@ export class QueryProductDto extends PaginationQueryDto {
   @IsInt()
   @Min(1)
   storeId?: number;
+
+  @ApiPropertyOptional({
+    description: 'Filter by seller profile id',
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  sellerId?: number;
 
   @ApiPropertyOptional({ enum: ProductStatus })
   @IsOptional()
@@ -65,12 +77,53 @@ export class QueryProductDto extends PaginationQueryDto {
   maxPrice?: number;
 
   @ApiPropertyOptional({
+    description: 'Minimum average product rating (1–5)',
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(1)
+  @Max(5)
+  minRating?: number;
+
+  @ApiPropertyOptional({
+    description: 'Only products with at least one in-stock variant',
+  })
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (value === true || value === 'true' || value === '1') return true;
+    if (value === false || value === 'false' || value === '0') return false;
+    return undefined;
+  })
+  @IsBoolean()
+  inStock?: boolean;
+
+  @ApiPropertyOptional({
     description: 'Catalog sort preset',
-    enum: ['newest', 'oldest', 'price_asc', 'price_desc', 'name_asc'],
+    enum: [
+      'newest',
+      'oldest',
+      'price_asc',
+      'price_desc',
+      'name_asc',
+      'rating_desc',
+    ],
     default: 'newest',
   })
   @IsOptional()
-  @IsIn(['newest', 'oldest', 'price_asc', 'price_desc', 'name_asc'])
-  sort?: 'newest' | 'oldest' | 'price_asc' | 'price_desc' | 'name_asc' =
-    'newest';
+  @IsIn([
+    'newest',
+    'oldest',
+    'price_asc',
+    'price_desc',
+    'name_asc',
+    'rating_desc',
+  ])
+  sort?:
+    | 'newest'
+    | 'oldest'
+    | 'price_asc'
+    | 'price_desc'
+    | 'name_asc'
+    | 'rating_desc' = 'newest';
 }

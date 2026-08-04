@@ -15,6 +15,21 @@ type NestCustomerDashboardPayload = {
   recentOrders: NestOrderPayload[];
   ordersByStatus: { status: string; count: number }[];
   spendingByMonth: { month: string; amount: number }[];
+  recentNotifications?: {
+    id: string;
+    type: string;
+    title: string;
+    message: string;
+    isRead: boolean;
+    createdAt: string;
+  }[];
+  recentlyPurchased?: {
+    name: string;
+    slug: string;
+    productId: string;
+    purchasedAt: string;
+    imageUrl: string | null;
+  }[];
 };
 
 export async function GET(req: Request) {
@@ -48,6 +63,8 @@ export async function GET(req: Request) {
     data: {
       ...payload,
       recentOrders: (payload.recentOrders ?? []).map(normalizeNestOrderPayload),
+      recentNotifications: payload.recentNotifications ?? [],
+      recentlyPurchased: payload.recentlyPurchased ?? [],
     },
   });
 }

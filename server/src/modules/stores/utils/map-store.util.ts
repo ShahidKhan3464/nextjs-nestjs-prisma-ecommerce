@@ -38,6 +38,9 @@ export type StoreMapped = {
     status: SellerProfileStatus;
     businessName: string;
   };
+  averageRating?: number;
+  totalReviews?: number;
+  productsSold?: number;
 };
 
 type StoreFileSource = {

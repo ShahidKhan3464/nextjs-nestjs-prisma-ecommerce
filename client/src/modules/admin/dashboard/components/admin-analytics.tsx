@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { ROUTES } from "@/constants/routes";
+import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/constants/query-keys";
 import { formatOrderDate } from "@/lib/format-date";
@@ -10,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { buttonVariants } from "@/components/ui/button";
 import { fetchAdminAnalytics } from "../services/analytics.service";
 import { EmptyState } from "@/shared/components/feedback/empty-state";
+import { RatingStars } from "@/shared/components/marketplace/rating-stars";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   OrderStatusBadge,
@@ -38,6 +40,7 @@ import {
   TableHeader,
 } from "@/components/ui/table";
 
+
 function formatStatusLabel(status: string) {
   return status.charAt(0) + status.slice(1).toLowerCase();
 }
@@ -46,6 +49,7 @@ export function AdminAnalytics() {
   const { data, isPending } = useQuery({
     queryKey: queryKeys.admin.analytics,
     queryFn: fetchAdminAnalytics,
+    staleTime: 30_000,
   });
 
   if (isPending || !data) {
@@ -138,6 +142,18 @@ export function AdminAnalytics() {
           <CardContent>
             <p className="text-2xl font-semibold tabular-nums">
               {data.totals.variants}
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm font-medium">
+              Pending seller approvals
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-semibold tabular-nums">
+              {data.totals.pendingSellerApprovals ?? 0}
             </p>
           </CardContent>
         </Card>
@@ -296,6 +312,227 @@ export function AdminAnalytics() {
                 ))}
               </TableBody>
             </Table>
+          )}
+        </CardContent>
+      </Card>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Pending approvals</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {(data.pendingApprovals?.length ?? 0) === 0 ? (
+              <EmptyState
+                title="No pending approvals"
+                description="Seller and store approval requests will appear here."
+              />
+            ) : (
+              <ul className="divide-y">
+                {data.pendingApprovals.map((item) => (
+                  <li
+                    key={`${item.kind}-${item.id}`}
+                    className="flex items-start justify-between gap-3 py-3 first:pt-0 last:pb-0"
+                  >
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium">{item.name}</p>
+                      <div className="flex flex-wrap gap-2">
+                        <Badge variant="outline">{item.kind}</Badge>
+                        <Badge variant="secondary">
+                          {formatStatusLabel(item.status)}
+                        </Badge>
+                      </div>
+                    </div>
+                    <time className="text-muted-foreground shrink-0 text-xs tabular-nums">
+                      {formatOrderDate(item.createdAt)}
+                    </time>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent activity</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {(data.recentNotifications?.length ?? 0) === 0 ? (
+              <EmptyState
+                title="No recent activity"
+                description="Platform notifications will show up here."
+              />
+            ) : (
+              <ul className="divide-y">
+                {data.recentNotifications.slice(0, 8).map((item) => (
+                  <li
+                    key={item.id}
+                    className={cn(
+                      "flex flex-col gap-1 py-3 first:pt-0 last:pb-0",
+                      !item.isRead && "bg-muted/40 -mx-2 rounded-md px-2"
+                    )}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <p className="text-sm font-medium leading-snug">
+                        {item.title}
+                      </p>
+                      <time className="text-muted-foreground shrink-0 text-xs tabular-nums">
+                        {formatOrderDate(item.createdAt)}
+                      </time>
+                    </div>
+                    <p className="text-muted-foreground text-sm leading-snug">
+                      {item.message}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent reviews</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {(data.recentReviews?.length ?? 0) === 0 ? (
+              <EmptyState
+                title="No reviews yet"
+                description="Marketplace product reviews will appear here."
+              />
+            ) : (
+              <ul className="divide-y">
+                {data.recentReviews.slice(0, 8).map((review) => (
+                  <li key={review.id} className="space-y-1 py-3 first:pt-0 last:pb-0">
+                    <div className="flex items-start justify-between gap-3">
+                      <Link
+                        href={ROUTES.product(review.productSlug)}
+                        className="text-sm font-medium hover:underline"
+                      >
+                        {review.productName}
+                      </Link>
+                      <RatingStars readOnly value={review.rating} size="sm" />
+                    </div>
+                    {review.comment ? (
+                      <p className="text-muted-foreground line-clamp-2 text-sm">
+                        {review.comment}
+                      </p>
+                    ) : null}
+                    <p className="text-muted-foreground text-xs">
+                      {review.buyerName} · {formatOrderDate(review.createdAt)}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent customers</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {(data.recentCustomers?.length ?? 0) === 0 ? (
+              <EmptyState
+                title="No customers yet"
+                description="Recent buyers will appear here as orders come in."
+              />
+            ) : (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Customer</TableHead>
+                      <TableHead className="text-right">Orders</TableHead>
+                      <TableHead className="text-right">Last order</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {data.recentCustomers.map((customer) => (
+                      <TableRow key={customer.id}>
+                        <TableCell>
+                          <div className="space-y-0.5">
+                            <p className="font-medium">{customer.fullName}</p>
+                            <p className="text-muted-foreground text-xs">
+                              {customer.email}
+                            </p>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right tabular-nums">
+                          {customer.ordersCount}
+                        </TableCell>
+                        <TableCell className="text-right text-muted-foreground text-xs tabular-nums">
+                          {formatOrderDate(customer.lastOrderAt)}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Top products</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {(data.topProducts?.length ?? 0) === 0 ? (
+            <EmptyState
+              title="No sales data yet"
+              description="Best-selling products across the marketplace will show here."
+            />
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Product</TableHead>
+                    <TableHead className="text-right">Sold</TableHead>
+                    <TableHead className="text-right">Revenue</TableHead>
+                    <TableHead className="text-right">Rating</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {data.topProducts.map((product) => (
+                    <TableRow key={product.productId}>
+                      <TableCell>
+                        <Link
+                          href={ROUTES.product(product.slug)}
+                          className="font-medium hover:underline"
+                        >
+                          {product.name}
+                        </Link>
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums">
+                        {product.unitsSold}
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums">
+                        ${product.revenue.toFixed(2)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="inline-flex items-center justify-end gap-1.5">
+                          <RatingStars
+                            readOnly
+                            value={product.averageRating}
+                            size="sm"
+                          />
+                          <span className="text-muted-foreground text-xs tabular-nums">
+                            ({product.reviewCount})
+                          </span>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>

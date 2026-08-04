@@ -1,5 +1,7 @@
 import { PrismaService } from 'src/prisma/prisma.service';
 import { RejectSellerProfileDto } from '../dto/reject-seller-profile.dto';
+import { NotificationService } from 'src/modules/notifications/notification.service';
+import { NotificationType } from 'src/modules/notifications/constants/notification.constants';
 import {
   Injectable,
   NotFoundException,
@@ -16,7 +18,10 @@ import {
 
 @Injectable()
 export class RejectSellerProfileProvider {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notificationService: NotificationService,
+  ) {}
 
   public async reject(
     id: number,
@@ -53,6 +58,18 @@ export class RejectSellerProfileProvider {
       include: SELLER_PROFILE_INCLUDE,
     });
 
-    return mapSellerProfileToResponse(updated);
+    const response = mapSellerProfileToResponse(updated);
+
+    void this.notificationService
+      .create({
+        userId: response.userId,
+        type: NotificationType.SELLER_REJECTED,
+        title: 'Seller profile rejected',
+        message:
+          'Your seller profile application was rejected. Please review the reason and reapply if needed.',
+      })
+      .catch(() => undefined);
+
+    return response;
   }
 }

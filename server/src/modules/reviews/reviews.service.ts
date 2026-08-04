@@ -8,6 +8,7 @@ import { GetReviewsProvider } from './providers/get-reviews.provider';
 import { CreateReviewProvider } from './providers/create-review.provider';
 import { UpdateReviewProvider } from './providers/update-review.provider';
 import { DeleteReviewProvider } from './providers/delete-review.provider';
+import { GetReviewSummaryProvider } from './providers/get-review-summary.provider';
 
 @Injectable()
 export class ReviewsService {
@@ -17,10 +18,19 @@ export class ReviewsService {
     private readonly createReviewProvider: CreateReviewProvider,
     private readonly updateReviewProvider: UpdateReviewProvider,
     private readonly deleteReviewProvider: DeleteReviewProvider,
+    private readonly getReviewSummaryProvider: GetReviewSummaryProvider,
   ) {}
 
   findByProduct(productId: number, query: QueryReviewDto) {
     return this.getReviewsProvider.findByProduct(productId, query);
+  }
+
+  getProductSummary(productId: number) {
+    return this.getReviewSummaryProvider.getProductSummary(productId);
+  }
+
+  getStoreReputation(storeId: number) {
+    return this.getReviewSummaryProvider.getStoreReputation(storeId);
   }
 
   findMine(userId: number, query: QueryReviewDto) {

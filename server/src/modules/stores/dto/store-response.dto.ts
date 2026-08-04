@@ -113,4 +113,13 @@ export class StoreResponseDto {
 
   @ApiProperty({ type: [StoreFileResponseDto] })
   files: StoreFileResponseDto[];
+
+  @ApiPropertyOptional({ description: 'Average product review rating' })
+  averageRating?: number;
+
+  @ApiPropertyOptional()
+  totalReviews?: number;
+
+  @ApiPropertyOptional()
+  productsSold?: number;
 }

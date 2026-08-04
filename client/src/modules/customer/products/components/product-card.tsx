@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { ProductBadges } from "./product-badges";
 import { wishlistToggle } from "@/lib/wishlist-actions";
 import { useWishlistStore } from "@/store/wishlist-store";
+import { RatingStars } from "@/shared/components/marketplace/rating-stars";
 
 type Props = {
   product: Product;
@@ -81,6 +82,22 @@ export function ProductCard({ product, className }: Props) {
             {product.name}
           </Link>
           <p className="text-muted-foreground text-xs">{product.category}</p>
+          {product.averageRating != null && product.averageRating > 0 ? (
+            <span className="inline-flex items-center gap-1.5">
+              <RatingStars
+                readOnly
+                size="sm"
+                value={product.averageRating}
+                ariaLabel={`Rated ${product.averageRating.toFixed(1)} out of 5`}
+              />
+              <span className="text-muted-foreground text-xs tabular-nums">
+                {product.averageRating.toFixed(1)}
+                {product.reviewCount != null
+                  ? ` (${product.reviewCount})`
+                  : ""}
+              </span>
+            </span>
+          ) : null}
           {product.store ? (
             <StoreChip store={product.store} compact showVerified />
           ) : null}

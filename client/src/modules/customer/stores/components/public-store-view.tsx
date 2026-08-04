@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { fetchStoreBySlug } from "../services/stores.service";
 import { EmptyState } from "@/shared/components/feedback/empty-state";
+import { RatingStars } from "@/shared/components/marketplace/rating-stars";
 import { VerifiedBadge } from "@/modules/customer/products/components/verified-badge";
 import { ProductFilters } from "@/modules/customer/products/components/product-filters";
 import { ProductListing } from "@/modules/customer/products/components/product-listing";
@@ -136,6 +137,34 @@ export function PublicStoreView({ slug, initialStore }: Props) {
             <p className="text-muted-foreground text-sm">
               {store.sellerProfile.businessName}
             </p>
+            {store.averageRating != null && (store.totalReviews ?? 0) > 0 ? (
+              <div className="flex flex-wrap items-center gap-3 text-sm">
+                <div className="flex items-center gap-1.5">
+                  <RatingStars
+                    readOnly
+                    value={store.averageRating}
+                    size="sm"
+                    ariaLabel={`${store.averageRating.toFixed(1)} out of 5`}
+                  />
+                  <span className="tabular-nums font-medium">
+                    {store.averageRating.toFixed(1)}
+                  </span>
+                  <span className="text-muted-foreground">
+                    ({store.totalReviews} review
+                    {store.totalReviews === 1 ? "" : "s"})
+                  </span>
+                </div>
+                {store.productsSold != null && store.productsSold > 0 ? (
+                  <span className="text-muted-foreground">
+                    {store.productsSold.toLocaleString()} sold
+                  </span>
+                ) : null}
+              </div>
+            ) : store.productsSold != null && store.productsSold > 0 ? (
+              <p className="text-muted-foreground text-sm">
+                {store.productsSold.toLocaleString()} products sold
+              </p>
+            ) : null}
             {store.description?.trim() ? (
               <p className="text-muted-foreground max-w-2xl text-sm leading-relaxed whitespace-pre-wrap">
                 {store.description}

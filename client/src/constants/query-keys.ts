@@ -3,6 +3,10 @@ export const queryKeys = {
     all: ["products"] as const,
     list: (filters: Record<string, unknown>) =>
       [...queryKeys.products.all, "list", filters] as const,
+    bySlug: (slug: string) =>
+      [...queryKeys.products.all, "slug", slug] as const,
+    reviews: (productId: string) =>
+      [...queryKeys.products.all, "reviews", productId] as const,
     categories: ["products", "categories"] as const,
   },
   stores: {
@@ -11,6 +15,39 @@ export const queryKeys = {
   },
   wishlist: {
     all: ["wishlist"] as const,
+  },
+  profile: {
+    me: ["profile", "me"] as const,
+  },
+  addresses: {
+    all: ["addresses"] as const,
+  },
+  cart: {
+    all: ["cart"] as const,
+  },
+  checkout: {
+    all: ["checkout"] as const,
+    session: (id: string) => ["checkout", "session", id] as const,
+  },
+  notifications: {
+    all: ["notifications"] as const,
+    list: (filters?: Record<string, unknown>) =>
+      [...queryKeys.notifications.all, "list", filters ?? {}] as const,
+    unreadCount: ["notifications", "unread-count"] as const,
+  },
+  reviews: {
+    all: ["reviews"] as const,
+    product: (productId: string, filters?: Record<string, unknown>) =>
+      [...queryKeys.reviews.all, "product", productId, filters ?? {}] as const,
+    summary: (productId: string) =>
+      [...queryKeys.reviews.all, "summary", productId] as const,
+    storeReputation: (storeId: string) =>
+      [...queryKeys.reviews.all, "store-reputation", storeId] as const,
+    mine: ["reviews", "mine"] as const,
+    seller: (filters?: Record<string, unknown>) =>
+      [...queryKeys.reviews.all, "seller", filters ?? {}] as const,
+    admin: (filters?: Record<string, unknown>) =>
+      [...queryKeys.reviews.all, "admin", filters ?? {}] as const,
   },
   dashboard: {
     customer: ["dashboard", "customer"] as const,

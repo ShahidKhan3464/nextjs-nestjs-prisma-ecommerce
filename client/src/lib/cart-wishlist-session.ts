@@ -72,7 +72,7 @@ export async function hydrateWishlistOnce(): Promise<void> {
 
   if (!wishlistHydrateInFlight) {
     wishlistHydrateInFlight = (async () => {
-      const productIds = await fetchWishlist();
+      const { productIds } = await fetchWishlist();
       useWishlistStore.getState().setProductIds(productIds);
       wishlistLoadedForSession = true;
       sessionUserId = uid;

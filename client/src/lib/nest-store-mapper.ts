@@ -128,6 +128,19 @@ export function mapNestStore(raw: unknown): Store | null {
     ? o.files.map(mapStoreFile).filter((f): f is StoreFile => f != null)
     : [];
 
+  const averageRating =
+    typeof o.averageRating === "number" && Number.isFinite(o.averageRating)
+      ? o.averageRating
+      : undefined;
+  const totalReviews =
+    typeof o.totalReviews === "number" && Number.isFinite(o.totalReviews)
+      ? o.totalReviews
+      : undefined;
+  const productsSold =
+    typeof o.productsSold === "number" && Number.isFinite(o.productsSold)
+      ? o.productsSold
+      : undefined;
+
   return {
     id,
     sellerProfileId,
@@ -147,5 +160,8 @@ export function mapNestStore(raw: unknown): Store | null {
     updatedAt: toIso(o.updatedAt),
     sellerProfile,
     files,
+    ...(averageRating !== undefined ? { averageRating } : {}),
+    ...(totalReviews !== undefined ? { totalReviews } : {}),
+    ...(productsSold !== undefined ? { productsSold } : {}),
   };
 }

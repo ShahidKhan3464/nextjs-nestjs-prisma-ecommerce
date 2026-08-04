@@ -1,11 +1,24 @@
 import { getBackendUrl } from "@/lib/backend-url";
 import type { SellerOrder } from "@/modules/seller/orders/types";
-import type { Order, OrderLineItem } from "@/modules/customer/orders/types";
+import type {
+  Order,
+  OrderLineItem,
+  OrderStore,
+} from "@/modules/customer/orders/types";
 
 export type NestOrderBuyerPayload = {
   email: string;
   fullName: string;
   id: string | number;
+};
+
+export type NestOrderStorePayload = {
+  id: string | number;
+  name: string;
+  slug: string;
+  verified?: boolean;
+  logoUrl?: string | null;
+  sellerName?: string;
 };
 
 export type NestOrderPayload = {
@@ -21,8 +34,10 @@ export type NestOrderPayload = {
   cancelledAt?: string;
   paymentStatus: string;
   userId: string | number;
+  storeId?: string | number;
   cancellationReason?: string;
   paymentMethodSummary: string;
+  store?: NestOrderStorePayload;
   buyer?: NestOrderBuyerPayload;
   items: NestOrderLineItemPayload[];
   shippingAddress: {
@@ -47,7 +62,7 @@ type NestOrderLineItemPayload = {
   productId: string | number;
 };
 
-function normalizeImage(image?: string): string | undefined {
+function normalizeImage(image?: string | null): string | undefined {
   if (!image) return undefined;
   const backend = getBackendUrl();
   return image.startsWith("/") ? `${backend}${image}` : image;
@@ -65,6 +80,20 @@ function normalizeLineItem(item: NestOrderLineItemPayload): OrderLineItem {
   };
 }
 
+function normalizeStore(
+  store?: NestOrderStorePayload
+): OrderStore | undefined {
+  if (!store) return undefined;
+  return {
+    id: String(store.id),
+    name: store.name,
+    slug: store.slug,
+    verified: Boolean(store.verified),
+    logoUrl: store.logoUrl ? normalizeImage(store.logoUrl) ?? null : null,
+    sellerName: store.sellerName ?? store.name,
+  };
+}
+
 export function normalizeNestOrderPayload(order: NestOrderPayload): Order {
   return {
     id: String(order.id),
@@ -76,6 +105,8 @@ export function normalizeNestOrderPayload(order: NestOrderPayload): Order {
     deliveredAt: order.deliveredAt,
     cancelledAt: order.cancelledAt,
     subtotal: Number(order.subtotal),
+    storeId: order.storeId != null ? String(order.storeId) : undefined,
+    store: normalizeStore(order.store),
     shippingAddress: order.shippingAddress,
     cancellationReason: order.cancellationReason,
     paymentMethodSummary: order.paymentMethodSummary,

@@ -4,6 +4,7 @@ export const PRODUCT_SORT_OPTIONS = [
   "price_asc",
   "price_desc",
   "name_asc",
+  "rating_desc",
 ] as const;
 
 export type ProductSort = (typeof PRODUCT_SORT_OPTIONS)[number];
@@ -13,8 +14,11 @@ export type ProductListParams = {
   page?: number;
   limit?: number;
   storeId?: number;
+  sellerId?: number;
   minPrice?: number;
   maxPrice?: number;
+  minRating?: number;
+  inStock?: boolean;
   sort?: ProductSort;
   categoryId?: number;
 };
@@ -57,6 +61,7 @@ export type Product = {
   name: string;
   slug: string;
   category: string;
+  categoryId?: number;
   images: string[];
   basePrice: number;
   description: string;
@@ -64,6 +69,8 @@ export type Product = {
   store?: ProductStore;
   publishedAt?: string | null;
   variants: ProductVariant[];
+  averageRating?: number;
+  reviewCount?: number;
 };
 
 export function isProductSort(value: string): value is ProductSort {

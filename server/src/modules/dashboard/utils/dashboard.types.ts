@@ -21,6 +21,60 @@ export type DashboardLowStockItem = {
   stock: number;
 };
 
+export type DashboardActivityItem = {
+  id: string;
+  type: string;
+  title: string;
+  message: string;
+  isRead: boolean;
+  createdAt: string;
+};
+
+export type DashboardReviewItem = {
+  id: string;
+  rating: number;
+  title: string | null;
+  comment: string | null;
+  productName: string;
+  productSlug: string;
+  buyerName: string;
+  createdAt: string;
+};
+
+export type DashboardTopProduct = {
+  productId: string;
+  name: string;
+  slug: string;
+  unitsSold: number;
+  revenue: number;
+  averageRating: number;
+  reviewCount: number;
+};
+
+export type DashboardRecentCustomer = {
+  id: string;
+  fullName: string;
+  email: string;
+  ordersCount: number;
+  lastOrderAt: string;
+};
+
+export type DashboardPendingApproval = {
+  id: string;
+  kind: 'seller' | 'store';
+  name: string;
+  status: string;
+  createdAt: string;
+};
+
+export type DashboardPurchasedProduct = {
+  productId: string;
+  name: string;
+  slug: string;
+  imageUrl: string | null;
+  purchasedAt: string;
+};
+
 export type AdminDashboardResponse = {
   totals: {
     revenue: number;
@@ -29,11 +83,17 @@ export type AdminDashboardResponse = {
     variants: number;
     customers: number;
     pendingOrders: number;
+    pendingSellerApprovals: number;
   };
   recentOrders: OrderResponse[];
   lowStock: DashboardLowStockItem[];
+  topProducts: DashboardTopProduct[];
+  recentReviews: DashboardReviewItem[];
   revenueByDay: DashboardRevenuePoint[];
   ordersByStatus: DashboardStatusCount[];
+  recentCustomers: DashboardRecentCustomer[];
+  recentNotifications: DashboardActivityItem[];
+  pendingApprovals: DashboardPendingApproval[];
 };
 
 export type CustomerDashboardResponse = {
@@ -44,6 +104,8 @@ export type CustomerDashboardResponse = {
   recentOrders: OrderResponse[];
   ordersByStatus: DashboardStatusCount[];
   spendingByMonth: DashboardSpendingPoint[];
+  recentNotifications: DashboardActivityItem[];
+  recentlyPurchased: DashboardPurchasedProduct[];
 };
 
 export type SellerStoreSummary = {
@@ -57,15 +119,9 @@ export type SellerStoreSummary = {
   businessName: string;
   verifiedAt: Date | null;
   description: string | null;
-};
-
-export type DashboardActivityItem = {
-  id: string;
-  type: string;
-  title: string;
-  message: string;
-  isRead: boolean;
-  createdAt: string;
+  averageRating: number;
+  totalReviews: number;
+  productsSold: number;
 };
 
 export type SellerDashboardResponse = {
@@ -75,11 +131,15 @@ export type SellerDashboardResponse = {
     revenue: number;
     products: number;
     variants: number;
+    totalReviews: number;
     pendingOrders: number;
     lowStockCount: number;
+    averageRating: number;
   };
   recentOrders: OrderResponse[];
   lowStock: DashboardLowStockItem[];
+  topProducts: DashboardTopProduct[];
+  recentReviews: DashboardReviewItem[];
   revenueByDay: DashboardRevenuePoint[];
   ordersByStatus: DashboardStatusCount[];
   recentActivity: DashboardActivityItem[];

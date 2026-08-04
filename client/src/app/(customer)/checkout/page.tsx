@@ -4,7 +4,7 @@ import { CheckoutWizard } from "@/modules/customer/checkout";
 
 export const metadata: Metadata = {
   title: "Checkout",
-  description: `Checkout — ${siteConfig.name}`,
+  description: `Secure multi-vendor checkout — ${siteConfig.name}`,
 };
 
 export default function CheckoutPage() {
@@ -15,8 +15,8 @@ export default function CheckoutPage() {
           Checkout
         </h1>
         <p className="text-muted-foreground text-sm">
-          Enter shipping details, pay securely with your card, then review
-          before you place your order.
+          Choose a shipping address, pay securely, then review your order. Items
+          from different stores become separate orders after payment.
         </p>
       </header>
       <CheckoutWizard />

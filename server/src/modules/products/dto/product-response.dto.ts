@@ -167,6 +167,12 @@ export class ProductResponseDto {
 
   @ApiPropertyOptional({ type: [ProductVariantEmbeddedDto] })
   variants?: ProductVariantEmbeddedDto[];
+
+  @ApiPropertyOptional({ description: 'Average rating 0–5' })
+  averageRating?: number;
+
+  @ApiPropertyOptional({ description: 'Total review count' })
+  reviewCount?: number;
 }
 
 export class PaginatedProductResponseDto {

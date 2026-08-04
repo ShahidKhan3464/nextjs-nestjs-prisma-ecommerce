@@ -1,11 +1,13 @@
-import { UsersService } from 'src/modules/users/users.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UserRole } from 'src/common/enums/user-role.enum';
 import { OrderStatus } from '../constants/order.constants';
-import { MailService } from 'src/integrations/mail/providers/mail.service';
+import { UsersService } from 'src/modules/users/users.service';
 import { OrderOwnershipProvider } from './order-ownership.provider';
 import { findOrderWithImages } from 'src/common/prisma/file-query.util';
+import { MailService } from 'src/integrations/mail/providers/mail.service';
 import { OrderResponse, mapOrderToResponse } from '../utils/map-order.util';
+import { NotificationService } from 'src/modules/notifications/notification.service';
+import { NotificationType } from 'src/modules/notifications/constants/notification.constants';
 import {
   Injectable,
   NotFoundException,
@@ -30,6 +32,7 @@ export class UpdateOrderStatusProvider {
     private readonly mailService: MailService,
     private readonly usersService: UsersService,
     private readonly orderOwnershipProvider: OrderOwnershipProvider,
+    private readonly notificationService: NotificationService,
   ) {}
 
   async update(
@@ -91,6 +94,26 @@ export class UpdateOrderStatusProvider {
             response,
             status,
           )
+          .catch(() => undefined);
+      }
+
+      if (status === OrderStatus.SHIPPED) {
+        void this.notificationService
+          .create({
+            userId: order.userId,
+            type: NotificationType.ORDER_SHIPPED,
+            title: 'Order shipped',
+            message: `Your order #${order.id} has been shipped.`,
+          })
+          .catch(() => undefined);
+      } else if (status === OrderStatus.DELIVERED) {
+        void this.notificationService
+          .create({
+            userId: order.userId,
+            type: NotificationType.ORDER_DELIVERED,
+            title: 'Order delivered',
+            message: `Your order #${order.id} has been delivered. We'd love your review!`,
+          })
           .catch(() => undefined);
       }
     }

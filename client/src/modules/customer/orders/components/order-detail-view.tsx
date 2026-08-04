@@ -15,7 +15,11 @@ import { getApiErrorMessage } from "@/lib/api-error";
 import { Separator } from "@/components/ui/separator";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { fetchOrder, cancelOrder } from "../services/orders.service";
 import { EmptyState } from "@/shared/components/feedback/empty-state";
+import { OrderStatusBadge, PaymentStatusBadge } from "./order-status-badges";
+import { StoreGroupHeader } from "@/modules/customer/shared/store-group-header";
+import { VerifiedBadge } from "@/modules/customer/products/components/verified-badge";
 import {
   AlertDialog,
   AlertDialogTitle,
@@ -26,8 +30,7 @@ import {
   AlertDialogContent,
   AlertDialogDescription,
 } from "@/components/ui/alert-dialog";
-import { fetchOrder, cancelOrder } from "../services/orders.service";
-import { OrderStatusBadge, PaymentStatusBadge } from "./order-status-badges";
+
 
 type Props = {
   orderId: string;
@@ -119,6 +122,49 @@ export function OrderDetailView({ orderId }: Props) {
           Cancellation reason: {data.cancellationReason}
         </p>
       ) : null}
+
+      {data.store ? (
+        <section className="space-y-3 rounded-xl border p-4">
+          <h2 className="text-sm font-medium tracking-wide uppercase">
+            Store
+          </h2>
+          <StoreGroupHeader
+            store={{
+              name: data.store.name,
+              slug: data.store.slug,
+              verified: data.store.verified,
+              logoUrl: data.store.logoUrl,
+              sellerName: data.store.sellerName,
+            }}
+            trailing={data.store.verified ? <VerifiedBadge /> : null}
+          />
+        </section>
+      ) : null}
+
+      <section className="space-y-3">
+        <h2 className="text-sm font-medium tracking-wide uppercase">
+          Tracking
+        </h2>
+        <div className="text-muted-foreground space-y-1 rounded-xl border px-4 py-3 text-sm">
+          <p>
+            Status:{" "}
+            <span className="text-foreground font-medium capitalize">
+              {data.status}
+            </span>
+          </p>
+          {data.shippedAt ? (
+            <p>Shipped {formatOrderDate(data.shippedAt)}</p>
+          ) : (
+            <p>Not shipped yet</p>
+          )}
+          {data.deliveredAt ? (
+            <p>Delivered {formatOrderDate(data.deliveredAt)}</p>
+          ) : null}
+          {data.cancelledAt ? (
+            <p>Cancelled {formatOrderDate(data.cancelledAt)}</p>
+          ) : null}
+        </div>
+      </section>
 
       <section className="space-y-3">
         <h2 className="text-sm font-medium tracking-wide uppercase">Items</h2>

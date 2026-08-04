@@ -45,6 +45,9 @@ export type Store = {
   updatedAt: string;
   sellerProfile: StoreSellerProfile;
   files: StoreFile[];
+  averageRating?: number;
+  totalReviews?: number;
+  productsSold?: number;
 };
 
 export type UpdateStoreInput = {

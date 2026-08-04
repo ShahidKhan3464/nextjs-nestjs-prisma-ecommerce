@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { SellerService } from './seller.service';
+import { NotificationModule } from 'src/modules/notifications/notification.module';
 import { GetSellerProfilesProvider } from './providers/get-seller-profiles.provider';
 import { CreateSellerProfileProvider } from './providers/create-seller-profile.provider';
 import { UpdateSellerProfileProvider } from './providers/update-seller-profile.provider';
@@ -12,6 +13,7 @@ import {
   SellerProfilesController,
 } from './seller.controller';
 @Module({
+  imports: [NotificationModule],
   controllers: [SellerController, SellerProfilesController],
   providers: [
     SellerService,

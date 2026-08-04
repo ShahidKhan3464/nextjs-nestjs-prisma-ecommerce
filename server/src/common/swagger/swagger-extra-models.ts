@@ -2,8 +2,14 @@ import { LoginResponseDto } from 'src/modules/auth/dto/login-response.dto';
 import { RegisterResponseDto } from 'src/modules/auth/dto/register-response.dto';
 import { AuthenticatedUserDto } from 'src/modules/auth/dto/authenticated-user.dto';
 import { CartItemResponseDto } from 'src/modules/carts/dto/cart-item-response.dto';
+import { AddressResponseDto } from 'src/modules/addresses/dto/address-response.dto';
+import { CartItemStoreResponseDto } from 'src/modules/carts/dto/cart-item-response.dto';
 import { RefreshTokenResponseDto } from 'src/modules/auth/dto/refresh-token-response.dto';
 import { AuthenticatedUserWithTokensDto } from 'src/modules/auth/dto/authenticated-user-with-tokens.dto';
+import {
+  CategoryResponseDto,
+  PaginatedCategoryResponseDto,
+} from 'src/modules/categories/dto/category-response.dto';
 import {
   UserResponseDto,
   UserMeResponseDto,
@@ -48,10 +54,7 @@ import {
   CheckoutSessionResponseDto,
   CompleteCheckoutResponseDto,
 } from 'src/modules/orders/dto/order-response.dto';
-import {
-  CategoryResponseDto,
-  PaginatedCategoryResponseDto,
-} from 'src/modules/categories/dto/category-response.dto';
+
 import {
   AdminDashboardTotalsDto,
   DashboardStatusCountDto,
@@ -70,6 +73,7 @@ export const SWAGGER_EXTRA_MODELS = [
   UserMeResponseDto,
   CheckoutPreviewDto,
   ProductResponseDto,
+  AddressResponseDto,
   RegisterResponseDto,
   CartItemResponseDto,
   CategoryResponseDto,
@@ -84,6 +88,7 @@ export const SWAGGER_EXTRA_MODELS = [
   ProductImageResponseDto,
   RefreshTokenResponseDto,
   DashboardStatusCountDto,
+  CartItemStoreResponseDto,
   DashboardLowStockItemDto,
   OrderLineItemResponseDto,
   PaginatedUserResponseDto,

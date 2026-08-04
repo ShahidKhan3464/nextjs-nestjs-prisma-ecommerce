@@ -5,6 +5,23 @@ type DashboardStatusCount = {
   status: string;
 };
 
+export type DashboardActivityItem = {
+  id: string;
+  type: string;
+  title: string;
+  message: string;
+  isRead: boolean;
+  createdAt: string;
+};
+
+export type DashboardPurchasedProduct = {
+  productId: string;
+  name: string;
+  slug: string;
+  imageUrl: string | null;
+  purchasedAt: string;
+};
+
 export type CustomerDashboardData = {
   totalOrders: number;
   totalSpending: number;
@@ -13,4 +30,6 @@ export type CustomerDashboardData = {
   recentOrders: Order[];
   ordersByStatus: DashboardStatusCount[];
   spendingByMonth: { month: string; amount: number }[];
+  recentNotifications: DashboardActivityItem[];
+  recentlyPurchased: DashboardPurchasedProduct[];
 };
