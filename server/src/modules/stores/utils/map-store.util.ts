@@ -34,7 +34,8 @@ export type StoreMapped = {
   files: StoreFileMapped[];
   sellerProfile: {
     id: number;
-    userId: number;
+    /** Present for owner/admin responses; omitted on public storefront payloads. */
+    userId?: number;
     status: SellerProfileStatus;
     businessName: string;
   };
@@ -118,5 +119,17 @@ export function mapStoreToResponse(store: StoreSource): StoreMapped {
         originalName: entry.file.originalName,
       },
     })),
+  };
+}
+
+/** Public storefront payload — no seller userId or suspension internals. */
+export function mapPublicStoreToResponse(store: StoreSource): StoreMapped {
+  const mapped = mapStoreToResponse(store);
+  const { userId: _userId, ...sellerProfile } = mapped.sellerProfile;
+  return {
+    ...mapped,
+    suspendedAt: null,
+    suspensionReason: null,
+    sellerProfile,
   };
 }

@@ -81,6 +81,8 @@ export function NotificationsList() {
   const {
     data,
     isPending,
+    isError,
+    refetch,
     isFetchingNextPage,
     hasNextPage,
     fetchNextPage,
@@ -194,6 +196,20 @@ export function NotificationsList() {
   const hasFilters = typeFilter !== "all" || readFilter !== "all";
 
   if (isPending) return <NotificationsSkeleton />;
+
+  if (isError) {
+    return (
+      <EmptyState
+        title="Could not load notifications"
+        description="Something went wrong while loading your notifications."
+        action={
+          <Button type="button" onClick={() => void refetch()}>
+            Retry
+          </Button>
+        }
+      />
+    );
+  }
 
   return (
     <div className="space-y-4">

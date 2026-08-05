@@ -1,10 +1,10 @@
-import { createReadStream } from 'fs';
 import type { Response } from 'express';
+import { createReadStream, existsSync } from 'fs';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UserRole } from 'src/common/enums/user-role.enum';
-import { LocalStorageProvider } from 'src/integrations/storage/providers/local-storage.provider';
 import { isSuperAdmin } from 'src/common/utils/authorization.util';
 import { UserFileType, isPrivateStorageKey } from '../constants/file.constants';
+import { LocalStorageProvider } from 'src/integrations/storage/providers/local-storage.provider';
 import {
   Injectable,
   StreamableFile,
@@ -70,6 +70,10 @@ export class SecureFileAccessProvider {
     }
 
     const absolutePath = this.storage.resolveAbsolutePath(file.storageKey);
+    if (!existsSync(absolutePath)) {
+      throw new NotFoundException('File not found');
+    }
+
     res.setHeader('Content-Type', file.mimeType);
     res.setHeader(
       'Content-Disposition',
@@ -77,6 +81,15 @@ export class SecureFileAccessProvider {
     );
     res.setHeader('Cache-Control', 'private, no-store');
 
-    return new StreamableFile(createReadStream(absolutePath));
+    const stream = createReadStream(absolutePath);
+    stream.on('error', () => {
+      if (!res.headersSent) {
+        res.status(404).end();
+      } else {
+        res.destroy();
+      }
+    });
+
+    return new StreamableFile(stream);
   }
 }

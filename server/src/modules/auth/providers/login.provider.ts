@@ -21,6 +21,10 @@ export type LoggedInUser = Pick<
   refreshToken: string;
 };
 
+/** Valid bcrypt hash used only to equalize timing when the email is unknown. */
+const DUMMY_PASSWORD_HASH =
+  '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy';
+
 @Injectable()
 export class LoginProvider {
   constructor(
@@ -38,16 +42,15 @@ export class LoginProvider {
         );
       });
 
-    if (!user || user.deletedAt) {
-      throw new UnauthorizedException('Invalid credentials');
-    }
+    const passwordHash =
+      user && !user.deletedAt ? user.password : DUMMY_PASSWORD_HASH;
 
     const isPasswordValid = await this.hashingProvider.compare(
       dto.password,
-      user.password,
+      passwordHash,
     );
 
-    if (!isPasswordValid) {
+    if (!user || user.deletedAt || !isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials');
     }
 

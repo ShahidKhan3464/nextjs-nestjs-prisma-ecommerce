@@ -41,8 +41,8 @@ export function WishlistGrid() {
   useWishlistHydrate();
   const ids = useWishlistStore((s) => s.productIds);
 
-  const { data, isPending } = useQuery({
-    queryKey: [...queryKeys.wishlist.all, ids.join(",")],
+  const { data, isPending, isError, refetch } = useQuery({
+    queryKey: queryKeys.wishlist.list(ids.join(",")),
     queryFn: fetchWishlist,
     enabled: ids.length > 0,
   });
@@ -61,13 +61,27 @@ export function WishlistGrid() {
     );
   }
 
-  if (isPending || !data) {
+  if (isPending && !data) {
     return (
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
         {Array.from({ length: 8 }).map((_, i) => (
           <Skeleton key={i} className="h-72 rounded-2xl" />
         ))}
       </div>
+    );
+  }
+
+  if (isError || !data) {
+    return (
+      <EmptyState
+        title="Could not load wishlist"
+        description="Please try again in a moment."
+        action={
+          <Button type="button" onClick={() => void refetch()}>
+            Retry
+          </Button>
+        }
+      />
     );
   }
 

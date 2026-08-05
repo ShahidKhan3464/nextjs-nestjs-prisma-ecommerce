@@ -40,8 +40,11 @@ export class StoreSellerProfileSummaryDto {
   @ApiProperty({ example: 1 })
   id: number;
 
-  @ApiProperty({ example: 42 })
-  userId: number;
+  @ApiPropertyOptional({
+    example: 42,
+    description: 'Seller user id (owner/admin only; omitted on public storefront)',
+  })
+  userId?: number;
 
   @ApiProperty({
     enum: SellerProfileStatus,

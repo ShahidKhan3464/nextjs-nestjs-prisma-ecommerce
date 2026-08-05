@@ -7,6 +7,7 @@ import {
   type NestCartItemPayload,
   normalizeNestCartItemPayload,
 } from "@/lib/nest-cart-mapper";
+import { requireUser } from "@/lib/require-auth";
 
 function mapCartList(raw: unknown): CartItem[] {
   const list = Array.isArray(raw) ? raw : [];
@@ -14,6 +15,9 @@ function mapCartList(raw: unknown): CartItem[] {
 }
 
 export async function GET(req: Request) {
+  const auth = await requireUser(req);
+  if (auth instanceof Response) return auth;
+
   const backend = getBackendUrl();
   const res = await fetch(`${backend}/cart`, {
     headers: { ...forwardAuthorization(req) },
@@ -38,6 +42,9 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
+  const auth = await requireUser(req);
+  if (auth instanceof Response) return auth;
+
   const backend = getBackendUrl();
   const payload = await req.json();
 
@@ -70,6 +77,9 @@ export async function POST(req: Request) {
 }
 
 export async function DELETE(req: Request) {
+  const auth = await requireUser(req);
+  if (auth instanceof Response) return auth;
+
   const backend = getBackendUrl();
   const res = await fetch(`${backend}/cart`, {
     method: "DELETE",

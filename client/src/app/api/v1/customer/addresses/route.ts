@@ -11,8 +11,12 @@ import {
   type NestAddressPayload,
   normalizeNestAddressPayload,
 } from "@/lib/nest-address-mapper";
+import { requireUser } from "@/lib/require-auth";
 
 export async function GET(req: Request) {
+  const auth = await requireUser(req);
+  if (auth instanceof Response) return auth;
+
   const backend = getBackendUrl();
   const res = await fetch(`${backend}/addresses`, {
     headers: { ...forwardAuthorization(req) },
@@ -39,6 +43,9 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
+  const auth = await requireUser(req);
+  if (auth instanceof Response) return auth;
+
   const backend = getBackendUrl();
   let payload: unknown;
   try {

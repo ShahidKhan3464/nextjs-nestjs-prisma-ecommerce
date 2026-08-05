@@ -117,6 +117,7 @@ export class StoreController {
   }
 
   @Get(':id')
+  @Roles(UserRole.SUPER_ADMIN)
   @ApiOkResponse({ type: StoreResponseDto })
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.storeService.getById(id);

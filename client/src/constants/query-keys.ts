@@ -15,6 +15,7 @@ export const queryKeys = {
   },
   wishlist: {
     all: ["wishlist"] as const,
+    list: (ids: string) => [...queryKeys.wishlist.all, ids] as const,
   },
   profile: {
     me: ["profile", "me"] as const,
@@ -89,6 +90,7 @@ export const queryKeys = {
     orders: (filters?: Record<string, unknown>) =>
       ["admin", "orders", filters ?? {}] as const,
     products: ["admin", "products"] as const,
+    product: (id: string) => ["admin", "products", "detail", id] as const,
     analytics: ["admin", "analytics"] as const,
     categories: ["admin", "categories"] as const,
     order: (id: string) => ["admin", "orders", id] as const,

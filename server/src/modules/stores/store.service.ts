@@ -1,13 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { StoreMapped } from './utils/map-store.util';
-import { CreateStoreDto } from './dto/create-store.dto';
 import { UpdateStoreDto } from './dto/update-store.dto';
 import { QueryStoresDto } from './dto/query-stores.dto';
 import { SuspendStoreDto } from './dto/suspend-store.dto';
 import { UserRole } from 'src/common/enums/user-role.enum';
 import { StoreFileType } from './constants/store.constants';
 import { GetStoresProvider } from './providers/get-stores.provider';
-import { CreateStoreProvider } from './providers/create-store.provider';
 import { UpdateStoreProvider } from './providers/update-store.provider';
 import { VerifyStoreProvider } from './providers/verify-store.provider';
 import { SuspendStoreProvider } from './providers/suspend-store.provider';
@@ -20,7 +18,6 @@ import { PaginateQueryResult } from 'src/common/pagination/interfaces/paginated.
 export class StoreService {
   constructor(
     private readonly getStoresProvider: GetStoresProvider,
-    private readonly createStoreProvider: CreateStoreProvider,
     private readonly updateStoreProvider: UpdateStoreProvider,
     private readonly verifyStoreProvider: VerifyStoreProvider,
     private readonly suspendStoreProvider: SuspendStoreProvider,
@@ -28,17 +25,6 @@ export class StoreService {
     private readonly uploadStoreFileProvider: UploadStoreFileProvider,
     private readonly removeStoreFileProvider: RemoveStoreFileProvider,
   ) {}
-
-  /**
-   * Creates a store for an APPROVED SellerProfile.
-   * Not exposed via controllers — call from services / admin flows only.
-   */
-  public createForApprovedSeller(
-    sellerProfileId: number,
-    dto: CreateStoreDto,
-  ): Promise<StoreMapped> {
-    return this.createStoreProvider.create(sellerProfileId, dto);
-  }
 
   public getMyStore(userId: number): Promise<StoreMapped> {
     return this.getStoresProvider.findMe(userId);

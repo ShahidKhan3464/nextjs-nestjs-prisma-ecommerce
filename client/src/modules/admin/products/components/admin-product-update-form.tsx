@@ -127,7 +127,7 @@ export function AdminProductUpdateForm({ initial }: { initial: Product }) {
       toast.success("Product updated");
       await qc.invalidateQueries({ queryKey: queryKeys.admin.products });
       await qc.invalidateQueries({
-        queryKey: ["admin", "products", "detail", initial.id],
+        queryKey: queryKeys.admin.product(initial.id),
       });
       router.push(ROUTES.products);
     } catch (error: unknown) {

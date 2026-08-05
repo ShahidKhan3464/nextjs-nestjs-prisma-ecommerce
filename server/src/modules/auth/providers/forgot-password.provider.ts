@@ -40,6 +40,7 @@ export class ForgotPasswordProvider {
 
     const token = await this.generateTokensProvider.signPasswordResetToken(
       user.id,
+      user.password,
     );
 
     const base = (
@@ -59,7 +60,8 @@ export class ForgotPasswordProvider {
       this.logger.warn(
         `Password reset email failed for ${user.email}: ${detail}`,
       );
-      throw err;
+      // Do not leak whether the account exists via SMTP failures.
+      return { sent: true };
     }
 
     return { sent: true };

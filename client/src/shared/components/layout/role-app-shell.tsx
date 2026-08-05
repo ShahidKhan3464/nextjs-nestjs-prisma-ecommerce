@@ -36,6 +36,14 @@ export function RoleAppShell({
 
   const sidebarVisibility =
     sidebarVisibleFrom === "lg" ? "hidden lg:flex" : "hidden md:flex";
+  const mobileNavVisibility =
+    sidebarVisibleFrom === "lg" ? "lg:hidden" : "md:hidden";
+  const mainBottomPad =
+    showMobileNav
+      ? sidebarVisibleFrom === "lg"
+        ? "pb-20 lg:pb-0"
+        : "pb-20 md:pb-0"
+      : undefined;
 
   return (
     <div className="bg-background flex min-h-screen">
@@ -80,14 +88,20 @@ export function RoleAppShell({
 
       <div className="flex min-w-0 flex-1 flex-col">
         <AppChromeHeader sectionTitle={meta.title} sectionHint={meta.hint} />
-        <div id="main-content" className="flex-1 p-4 lg:p-6">
+        <div
+          id="main-content"
+          className={cn("flex-1 p-4 lg:p-6", mainBottomPad)}
+        >
           {children}
         </div>
       </div>
 
       {showMobileNav ? (
         <nav
-          className="border-border bg-background fixed right-0 bottom-0 left-0 z-40 flex border-t px-2 py-2 md:hidden"
+          className={cn(
+            "border-border bg-background fixed right-0 bottom-0 left-0 z-40 flex border-t px-2 py-2",
+            mobileNavVisibility
+          )}
           aria-label={mobileAriaLabel}
         >
           {nav.map((item) => {

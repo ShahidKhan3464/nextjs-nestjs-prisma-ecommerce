@@ -204,7 +204,7 @@ export class UpdateProductProvider {
             size: variantDto.size,
             color: variantDto.color,
             price: variantDto.price,
-            stockQuantity: variantDto.stock,
+            stockQuantity: variantDto.stockQuantity,
           },
         });
         continue;
@@ -217,7 +217,7 @@ export class UpdateProductProvider {
           size: variantDto.size,
           color: variantDto.color,
           price: variantDto.price,
-          stockQuantity: variantDto.stock,
+          stockQuantity: variantDto.stockQuantity,
         },
       });
     }

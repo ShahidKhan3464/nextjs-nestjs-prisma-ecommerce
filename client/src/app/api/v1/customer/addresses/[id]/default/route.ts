@@ -11,10 +11,14 @@ import {
   type NestAddressPayload,
   normalizeNestAddressPayload,
 } from "@/lib/nest-address-mapper";
+import { requireUser } from "@/lib/require-auth";
 
 type Ctx = { params: Promise<{ id: string }> };
 
 export async function PATCH(req: Request, ctx: Ctx) {
+  const auth = await requireUser(req);
+  if (auth instanceof Response) return auth;
+
   const { id } = await ctx.params;
   const backend = getBackendUrl();
   let payload: unknown;

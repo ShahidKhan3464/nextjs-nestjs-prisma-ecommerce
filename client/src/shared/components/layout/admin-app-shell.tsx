@@ -15,11 +15,13 @@ type Props = {
 export function AdminAppShell({ roles, children }: Props) {
   return (
     <RoleAppShell
+      showMobileNav
       sidebarVisibleFrom="lg"
       sidebarId="admin-sidebar"
       nav={getNavForRoles(roles)}
       sidebarAriaLabel="Admin navigation"
       portalTitle={shopChromeTitle("admin")}
+      mobileAriaLabel="Mobile admin navigation"
     >
       {children}
     </RoleAppShell>

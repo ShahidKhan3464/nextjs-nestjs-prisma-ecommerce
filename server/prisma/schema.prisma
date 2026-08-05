@@ -196,6 +196,7 @@ model ProductVariant {
   product              Product               @relation(fields: [productId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_f515690c571a03400a9876600b5")
 
   @@unique([productId, color, size], map: "UQ_product_variants_product_id_color_size")
+  @@index([productId], map: "IDX_product_variants_product_id")
   @@map("product_variants")
 }
 
@@ -287,6 +288,7 @@ model CartItem {
   variant          ProductVariant @relation(fields: [productVariantId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_98ba4bbf6e3611d2062b898f5c1")
 
   @@unique([userId, productVariantId], map: "UQ_029e3499726b1681378523174da")
+  @@index([productVariantId], map: "IDX_cart_items_product_variant_id")
   @@map("cart_items")
 }
 
@@ -299,6 +301,7 @@ model WishlistItem {
   product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_485ece8ab9b569d1c560144aa25")
 
   @@unique([userId, productId], map: "UQ_d461b3ed3990144aa6d5c45083b")
+  @@index([productId], map: "IDX_wishlist_items_product_id")
   @@map("wishlist_items")
 }
 
@@ -326,6 +329,7 @@ model Order {
   @@index([userId], map: "IDX_orders_user_id")
   @@index([status], map: "IDX_orders_status")
   @@index([storeId], map: "IDX_orders_store_id")
+  @@index([createdAt], map: "IDX_orders_created_at")
   @@map("orders")
 }
 
@@ -344,6 +348,7 @@ model OrderItem {
   order           Order          @relation(fields: [orderId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_f1d359a55923bb45b057fbdab0d")
 
   @@unique([orderId, variantId], map: "UQ_order_items_order_id_variant_id")
+  @@index([variantId], map: "IDX_order_items_variant_id")
   @@map("order_items")
 }
 
@@ -434,6 +439,7 @@ model Notification {
 
   @@index([userId], map: "IDX_notifications_user_id")
   @@index([userId, readAt], map: "IDX_notifications_user_id_is_read")
+  @@index([createdAt], map: "IDX_notifications_created_at")
   @@map("notifications")
 }
 

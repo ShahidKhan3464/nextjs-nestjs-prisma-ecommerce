@@ -82,6 +82,8 @@ function OptionPills({
             <button
               key={opt}
               type="button"
+              aria-pressed={selected}
+              aria-label={`${label}: ${opt}`}
               onClick={() => onChange(opt)}
               className={cn(
                 "min-w-11 cursor-pointer rounded-md border px-4 py-2 text-sm font-medium transition-all",
@@ -364,6 +366,7 @@ export function ProductDetailView({ product }: Props) {
                             key={v.id}
                             type="button"
                             disabled={disabled}
+                            aria-pressed={selected}
                             onClick={() => setVariantId(v.id)}
                             className={cn(
                               "rounded-md border px-4 py-2 text-sm font-medium transition-all",

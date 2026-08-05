@@ -2,7 +2,7 @@ import Joi from 'joi';
 
 export default Joi.object({
   NODE_ENV: Joi.string().valid('development', 'production', 'test').required(),
-  PORT: Joi.number().default(3000),
+  PORT: Joi.number().default(3001),
   FRONTEND_URL: Joi.when('NODE_ENV', {
     is: 'production',
     then: Joi.string().uri().required(),

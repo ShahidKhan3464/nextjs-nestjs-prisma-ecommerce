@@ -6,6 +6,7 @@ import { calculateOrderPricing } from '../utils/order-pricing.util';
 import { lockProductVariants } from '../utils/lock-product-variants.util';
 import { findCartItemsWithImages } from 'src/common/prisma/file-query.util';
 import { validateAndGroupCheckoutCart } from '../utils/validate-checkout-cart.util';
+import { ExpireAbandonedCheckoutsProvider } from './expire-abandoned-checkouts.provider';
 import {
   type StockLine,
   adjustVariantStock,
@@ -42,6 +43,7 @@ export class CreateCheckoutProvider {
   constructor(
     private readonly prisma: PrismaService,
     stripeService: StripeService,
+    private readonly expireAbandonedCheckouts: ExpireAbandonedCheckoutsProvider,
   ) {
     this.stripe = stripeService.client;
   }
@@ -50,7 +52,7 @@ export class CreateCheckoutProvider {
     userId: number,
     dto: CreateCheckoutDto,
   ): Promise<CheckoutSessionResponse> {
-    await this.clearAbandonedCheckout(userId);
+    await this.expireAbandonedCheckouts.clearForUser(userId);
 
     const cartItems = await findCartItemsWithImages(this.prisma, { userId });
     const storeGroups = validateAndGroupCheckoutCart(cartItems);
@@ -148,9 +150,9 @@ export class CreateCheckoutProvider {
             tax: pricing.tax,
             totalAmount: pricing.total,
             subtotal: pricing.subtotal,
-            status: CheckoutSessionStatus.PENDING,
             stripePaymentIntentId: 'pending',
             shippingAddress: shippingAddressJson,
+            status: CheckoutSessionStatus.PENDING,
           },
         });
 
@@ -260,98 +262,6 @@ export class CreateCheckoutProvider {
         subtotal: pricing.subtotal,
       },
     };
-  }
-
-  private async clearAbandonedCheckout(userId: number): Promise<void> {
-    const existingSessions = await this.prisma.checkoutSession.findMany({
-      where: {
-        userId,
-        status: CheckoutSessionStatus.PENDING,
-      },
-      select: { id: true, stripePaymentIntentId: true },
-    });
-
-    if (existingSessions.length === 0) {
-      return;
-    }
-
-    const protectedSessionIds = new Set<number>();
-
-    for (const session of existingSessions) {
-      const piId = session.stripePaymentIntentId;
-      if (!piId || piId === 'pending') {
-        continue;
-      }
-
-      try {
-        const paymentIntent = await this.stripe.paymentIntents.retrieve(piId);
-        if (
-          paymentIntent.status === 'succeeded' ||
-          paymentIntent.status === 'processing'
-        ) {
-          // Do not delete orders that may already be paid — leave for complete/webhook.
-          protectedSessionIds.add(session.id);
-          continue;
-        }
-
-        if (
-          paymentIntent.status === 'requires_payment_method' ||
-          paymentIntent.status === 'requires_confirmation' ||
-          paymentIntent.status === 'requires_action' ||
-          paymentIntent.status === 'requires_capture'
-        ) {
-          await this.stripe.paymentIntents.cancel(piId).catch(() => undefined);
-        }
-      } catch {
-        /* continue cleanup for unreachable PI lookups */
-      }
-    }
-
-    const sessionsToExpire = existingSessions.filter(
-      (session) => !protectedSessionIds.has(session.id),
-    );
-
-    if (sessionsToExpire.length === 0) {
-      return;
-    }
-
-    const transactionIds = sessionsToExpire
-      .map((session) => session.stripePaymentIntentId)
-      .filter((id) => id && id !== 'pending');
-
-    await this.prisma.$transaction(async (tx) => {
-      const pendingPayments = await tx.payment.findMany({
-        where: {
-          status: PaymentStatus.PENDING,
-          order: { userId, status: OrderStatus.PENDING },
-          OR: [
-            ...(transactionIds.length > 0
-              ? [{ transactionId: { in: transactionIds } }]
-              : []),
-            { transactionId: 'pending' },
-          ],
-        },
-        select: { orderId: true },
-      });
-
-      const orderIds = [...new Set(pendingPayments.map((p) => p.orderId))];
-      if (orderIds.length > 0) {
-        const items = await tx.orderItem.findMany({
-          where: { orderId: { in: orderIds } },
-          select: { variantId: true, quantity: true },
-        });
-        await adjustVariantStock(tx, items, 'release');
-        await tx.order.deleteMany({ where: { id: { in: orderIds } } });
-      }
-
-      await tx.checkoutSession.updateMany({
-        where: {
-          id: { in: sessionsToExpire.map((session) => session.id) },
-          status: CheckoutSessionStatus.PENDING,
-        },
-        data: { status: CheckoutSessionStatus.EXPIRED },
-      });
-    });
   }
 
   private async rollbackCheckout(

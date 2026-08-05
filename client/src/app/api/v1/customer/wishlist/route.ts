@@ -12,6 +12,7 @@ import type {
   WishlistItem,
   WishlistStore,
 } from "@/modules/customer/wishlist/types";
+import { requireUser } from "@/lib/require-auth";
 
 type NestWishlistStore = {
   id: string | number;
@@ -64,6 +65,9 @@ function mapItem(item: NestWishlistItem): WishlistItem {
 }
 
 export async function GET(req: Request) {
+  const auth = await requireUser(req);
+  if (auth instanceof Response) return auth;
+
   const backend = getBackendUrl();
   const res = await fetch(`${backend}/wishlist`, {
     headers: { ...forwardAuthorization(req) },

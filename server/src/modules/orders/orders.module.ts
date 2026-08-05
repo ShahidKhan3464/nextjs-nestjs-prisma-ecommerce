@@ -14,6 +14,7 @@ import { OrderOwnershipProvider } from './providers/order-ownership.provider';
 import { CompleteCheckoutProvider } from './providers/complete-checkout.provider';
 import { NotificationModule } from 'src/modules/notifications/notification.module';
 import { UpdateOrderStatusProvider } from './providers/update-order-status.provider';
+import { ExpireAbandonedCheckoutsProvider } from './providers/expire-abandoned-checkouts.provider';
 
 @Module({
   imports: [UsersModule, PaymentsModule, StripeModule, NotificationModule],
@@ -29,6 +30,7 @@ import { UpdateOrderStatusProvider } from './providers/update-order-status.provi
     CancelCheckoutProvider,
     CompleteCheckoutProvider,
     UpdateOrderStatusProvider,
+    ExpireAbandonedCheckoutsProvider,
   ],
 })
 export class OrdersModule {}

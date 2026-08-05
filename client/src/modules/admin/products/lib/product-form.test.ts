@@ -42,7 +42,7 @@ describe("product-form helpers", () => {
         sku: "SKU-1",
         size: "M",
         color: "Black",
-        stock: DEFAULT_PRODUCT_VARIANT.stock,
+        stockQuantity: DEFAULT_PRODUCT_VARIANT.stock,
         price: DEFAULT_PRODUCT_VARIANT.price,
       },
     ]);

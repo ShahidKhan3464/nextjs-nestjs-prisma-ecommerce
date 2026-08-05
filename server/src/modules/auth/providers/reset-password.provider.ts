@@ -1,3 +1,4 @@
+import { createHash } from 'crypto';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { ResetPasswordDto } from '../dto/reset-password.dto';
@@ -46,12 +47,24 @@ export class ResetPasswordProvider {
       throw new UnauthorizedException('Invalid or expired reset link');
     }
 
-    if (payload.typ !== JwtTokenType.PASSWORD_RESET) {
+    if (payload.typ !== JwtTokenType.PASSWORD_RESET || !payload.pwd) {
       throw new UnauthorizedException('Invalid or expired reset link');
     }
 
     const userId = Number(payload.sub);
     if (!Number.isFinite(userId)) {
+      throw new UnauthorizedException('Invalid or expired reset link');
+    }
+
+    const user = await this.usersService.findOneById(userId);
+    if (!user || user.deletedAt) {
+      throw new UnauthorizedException('Invalid or expired reset link');
+    }
+
+    const passwordFingerprint = createHash('sha256')
+      .update(user.password)
+      .digest('hex');
+    if (payload.pwd !== passwordFingerprint) {
       throw new UnauthorizedException('Invalid or expired reset link');
     }
 

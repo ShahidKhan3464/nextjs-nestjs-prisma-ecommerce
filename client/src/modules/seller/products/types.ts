@@ -72,7 +72,7 @@ export type CreateSellerProductInput = {
     size: string;
     color: string;
     sku: string;
-    stock: number;
+    stockQuantity: number;
     price: number;
   }[];
   images: File[];

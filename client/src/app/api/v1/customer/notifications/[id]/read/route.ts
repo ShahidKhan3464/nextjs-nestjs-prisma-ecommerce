@@ -10,6 +10,7 @@ import type {
   Notification,
   NotificationType,
 } from "@/modules/customer/notifications/types";
+import { requireUser } from "@/lib/require-auth";
 
 type NestNotification = {
   id: string | number;
@@ -36,6 +37,9 @@ function mapNotification(row: NestNotification): Notification {
 type Ctx = { params: Promise<{ id: string }> };
 
 export async function PATCH(req: Request, ctx: Ctx) {
+  const auth = await requireUser(req);
+  if (auth instanceof Response) return auth;
+
   const { id } = await ctx.params;
   const backend = getBackendUrl();
   const res = await fetch(

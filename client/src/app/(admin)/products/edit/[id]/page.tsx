@@ -29,9 +29,10 @@ export default function EditProductPage() {
     (isAdmin || isSeller);
 
   const adminQuery = useQuery({
-    queryKey: enabled && isAdmin
-      ? (["admin", "products", "detail", id] as const)
-      : (["admin", "products", "detail", "idle"] as const),
+    queryKey:
+      enabled && isAdmin
+        ? queryKeys.admin.product(id)
+        : queryKeys.admin.product("idle"),
     queryFn: () => fetchAdminProduct(id),
     enabled: enabled && isAdmin,
   });

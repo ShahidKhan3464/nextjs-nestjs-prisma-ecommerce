@@ -5,19 +5,22 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 /**
  * Sets up Swagger UI at `/api` when enabled.
- * Enablement and document config match the previous inline bootstrap behavior exactly.
+ * Disabled in production regardless of SWAGGER_ENABLED.
  */
 export function setupSwagger(
   app: INestApplication,
   configService: ConfigService,
   isProduction: boolean,
 ): void {
-  const swaggerEnabled =
-    !isProduction ||
-    configService.get<string>('SWAGGER_ENABLED') === 'true' ||
-    process.env.SWAGGER_ENABLED === 'true';
+  if (isProduction) {
+    return;
+  }
 
-  if (!swaggerEnabled) {
+  const swaggerDisabled =
+    configService.get<string>('SWAGGER_ENABLED') === 'false' ||
+    process.env.SWAGGER_ENABLED === 'false';
+
+  if (swaggerDisabled) {
     return;
   }
 

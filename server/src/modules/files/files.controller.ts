@@ -4,6 +4,8 @@ import { UserRole } from 'src/common/enums/user-role.enum';
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { UploadUserFileDto } from './dto/upload-user-file.dto';
 import { UploadStoreFileDto } from './dto/upload-store-file.dto';
+import { Auth } from 'src/modules/auth/decorators/auth.decorator';
+import { AuthType } from 'src/modules/auth/constants/auth.constants';
 import { UploadProductFileDto } from './dto/upload-product-file.dto';
 import { ActiveUser } from 'src/common/decorators/active-user.decorator';
 import { RequireUploadedFilePipe } from './pipes/require-uploaded-file.pipe';
@@ -57,6 +59,7 @@ export class FilesController {
   // ── Product files ──────────────────────────────────────────────
 
   @Get('products/:productId')
+  @Auth(AuthType.NONE)
   @ApiOkResponse({ type: [FileAssociationResponseDto] })
   listProductFiles(@Param('productId', ParseIntPipe) productId: number) {
     return this.filesService.listProductFiles(productId);
@@ -111,6 +114,7 @@ export class FilesController {
   }
 
   @Get('stores/:storeId')
+  @Auth(AuthType.NONE)
   @ApiOkResponse({ type: [FileAssociationResponseDto] })
   listStoreFiles(@Param('storeId', ParseIntPipe) storeId: number) {
     return this.filesService.listStoreFiles(storeId);

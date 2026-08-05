@@ -61,7 +61,7 @@ export function AddressesManager() {
   const [editingId, setEditingId] = React.useState<string | null>(null);
   const [showForm, setShowForm] = React.useState(false);
 
-  const { data: addresses = [], isPending } = useQuery({
+  const { data: addresses = [], isPending, isError, refetch } = useQuery({
     queryKey: queryKeys.addresses.all,
     queryFn: fetchAddresses,
   });
@@ -210,6 +210,20 @@ export function AddressesManager() {
   }
 
   if (isPending) return <AddressesSkeleton />;
+
+  if (isError) {
+    return (
+      <EmptyState
+        title="Could not load addresses"
+        description="Something went wrong while loading your saved addresses."
+        action={
+          <Button type="button" onClick={() => void refetch()}>
+            Retry
+          </Button>
+        }
+      />
+    );
+  }
 
   return (
     <div className="space-y-6">

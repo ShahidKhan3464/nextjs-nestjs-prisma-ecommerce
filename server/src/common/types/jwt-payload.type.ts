@@ -17,9 +17,6 @@ export type JwtRefreshTokenPayload = {
 export type JwtPasswordResetPayload = {
   sub: number;
   typ: JwtTokenType.PASSWORD_RESET;
-};
-
-export type JwtEmailVerificationPayload = {
-  sub: number;
-  typ: JwtTokenType.EMAIL_VERIFICATION;
+  /** SHA-256 of the password hash at issue time — invalidates the token after reset. */
+  pwd: string;
 };

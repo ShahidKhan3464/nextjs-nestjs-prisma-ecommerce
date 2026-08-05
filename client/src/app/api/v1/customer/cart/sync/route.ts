@@ -7,8 +7,12 @@ import {
   type NestCartItemPayload,
   normalizeNestCartItemPayload,
 } from "@/lib/nest-cart-mapper";
+import { requireUser } from "@/lib/require-auth";
 
 export async function POST(req: Request) {
+  const auth = await requireUser(req);
+  if (auth instanceof Response) return auth;
+
   const backend = getBackendUrl();
   const payload = await req.json();
 

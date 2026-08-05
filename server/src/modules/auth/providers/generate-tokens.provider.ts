@@ -1,3 +1,4 @@
+import { createHash } from 'crypto';
 import { JwtService } from '@nestjs/jwt';
 import jwtConfig from 'src/config/jwt.config';
 import type { SignOptions } from 'jsonwebtoken';
@@ -122,15 +123,13 @@ export class GenerateTokensProvider {
     };
   }
 
-  public async signPasswordResetToken(userId: number): Promise<string> {
+  public async signPasswordResetToken(
+    userId: number,
+    passwordHash: string,
+  ): Promise<string> {
     return this.signToken(userId, '1h', {
       typ: JwtTokenType.PASSWORD_RESET,
-    });
-  }
-
-  public async signEmailVerificationToken(userId: number): Promise<string> {
-    return this.signToken(userId, '24h', {
-      typ: JwtTokenType.EMAIL_VERIFICATION,
+      pwd: createHash('sha256').update(passwordHash).digest('hex'),
     });
   }
 

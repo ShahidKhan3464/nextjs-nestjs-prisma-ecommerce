@@ -14,6 +14,7 @@ import { fetchAdminOrders } from "../services/orders.service";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { EmptyState } from "@/shared/components/feedback/empty-state";
 import {
   OrderStatusBadge,
   PaymentStatusBadge,
@@ -71,7 +72,7 @@ export function AdminOrdersList() {
     return Object.keys(params).length > 0 ? params : undefined;
   }, [statusFilter, paymentFilter]);
 
-  const { data, isPending } = useQuery({
+  const { data, isPending, isError, refetch } = useQuery({
     queryKey: queryKeys.admin.orders(listParams ?? {}),
     queryFn: () => fetchAdminOrders(listParams),
   });
@@ -97,7 +98,7 @@ export function AdminOrdersList() {
     if (page !== pageClamped) setPage(pageClamped);
   }, [page, pageClamped]);
 
-  if (isPending || !data) {
+  if (isPending && !data) {
     return (
       <AdminTableSkeleton
         filterWidths={["w-72", "w-32", "w-32", "w-24"]}
@@ -109,6 +110,20 @@ export function AdminOrdersList() {
           { className: "w-24" },
           { className: "w-36 shrink-0", isAction: true },
         ]}
+      />
+    );
+  }
+
+  if (isError || !data) {
+    return (
+      <EmptyState
+        title="Could not load orders"
+        description="Please try again in a moment."
+        action={
+          <Button type="button" onClick={() => void refetch()}>
+            Retry
+          </Button>
+        }
       />
     );
   }

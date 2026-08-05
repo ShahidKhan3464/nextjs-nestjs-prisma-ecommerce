@@ -29,7 +29,7 @@ export function parseCategoryId(value: string): number | null {
 
 export function mapFormVariantsToPayload(variants: ProductValues["variants"]) {
   return variants.map((v) => ({
-    stock: v.stock,
+    stockQuantity: v.stock,
     price: v.price,
     sku: v.sku.trim(),
     size: v.size.trim(),

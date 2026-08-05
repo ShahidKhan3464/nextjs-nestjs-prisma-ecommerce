@@ -4,10 +4,14 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { StoreOwnershipProvider } from './store-ownership.provider';
 import { StoreStatus, STORE_INCLUDE } from '../constants/store.constants';
-import { StoreMapped, mapStoreToResponse } from '../utils/map-store.util';
 import { getStoreReviewStats } from 'src/modules/reviews/utils/review-stats.util';
 import { PaginationProviders } from 'src/common/pagination/providers/pagination.providers';
 import { PaginateQueryResult } from 'src/common/pagination/interfaces/paginated.interfaces';
+import {
+  StoreMapped,
+  mapStoreToResponse,
+  mapPublicStoreToResponse,
+} from '../utils/map-store.util';
 
 @Injectable()
 export class GetStoresProvider {
@@ -60,7 +64,7 @@ export class GetStoresProvider {
       throw new NotFoundException('Store not found');
     }
 
-    return this.withReputation(mapStoreToResponse(store));
+    return this.withReputation(mapPublicStoreToResponse(store));
   }
 
   public async findAllPaginated(

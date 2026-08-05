@@ -7,11 +7,15 @@ import {
   type NestCartItemPayload,
   normalizeNestCartItemPayload,
 } from "@/lib/nest-cart-mapper";
+import { requireUser } from "@/lib/require-auth";
 
 export async function PATCH(
   req: Request,
   ctx: { params: Promise<{ variantId: string }> }
 ) {
+  const auth = await requireUser(req);
+  if (auth instanceof Response) return auth;
+
   const { variantId } = await ctx.params;
   const backend = getBackendUrl();
   const payload = await req.json();
@@ -51,6 +55,9 @@ export async function DELETE(
   req: Request,
   ctx: { params: Promise<{ variantId: string }> }
 ) {
+  const auth = await requireUser(req);
+  if (auth instanceof Response) return auth;
+
   const { variantId } = await ctx.params;
   const backend = getBackendUrl();
 

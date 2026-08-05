@@ -17,6 +17,11 @@ export function isSellerOrAdminProductPath(pathname: string): boolean {
   );
 }
 
+/** Seller store settings — SUPER_ADMIN or SELLER (not public `/stores/...`). */
+export function isSellerOrAdminStorePath(pathname: string): boolean {
+  return pathname === "/store" || pathname.startsWith("/store/");
+}
+
 /** Public catalog — storefront + product browse (seller manage/edit stay protected). */
 function isPublicCatalogPath(pathname: string): boolean {
   if (pathname.startsWith("/stores")) return true;
@@ -41,8 +46,7 @@ export function isProtectedShopPath(pathname: string): boolean {
     pathname.startsWith("/reviews") ||
     pathname.startsWith("/become-seller") ||
     // Exact seller store settings — do not match public `/stores/...`
-    pathname === "/store" ||
-    pathname.startsWith("/store/")
+    isSellerOrAdminStorePath(pathname)
   );
 }
 

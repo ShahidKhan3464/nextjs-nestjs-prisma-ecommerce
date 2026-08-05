@@ -88,7 +88,7 @@ export class CreateProductProvider {
           color: variant.color,
           price: variant.price,
           productId: product.id,
-          stockQuantity: variant.stock,
+          stockQuantity: variant.stockQuantity,
         })),
       });
 

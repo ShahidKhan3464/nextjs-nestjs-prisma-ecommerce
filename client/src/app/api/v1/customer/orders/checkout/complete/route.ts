@@ -7,12 +7,16 @@ import {
   type NestOrderPayload,
   normalizeNestOrderPayload,
 } from "@/lib/nest-order-mapper";
+import { requireUser } from "@/lib/require-auth";
 
 const completeSchema = z.object({
   paymentIntentId: z.string().min(1),
 });
 
 export async function POST(req: Request) {
+  const auth = await requireUser(req);
+  if (auth instanceof Response) return auth;
+
   let json: unknown;
   try {
     json = await req.json();

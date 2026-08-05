@@ -8,7 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/constants/query-keys";
 import { formatOrderDate } from "@/lib/format-date";
 import { Skeleton } from "@/components/ui/skeleton";
-import { buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { fetchAdminAnalytics } from "../services/analytics.service";
 import { EmptyState } from "@/shared/components/feedback/empty-state";
 import { RatingStars } from "@/shared/components/marketplace/rating-stars";
@@ -46,13 +46,13 @@ function formatStatusLabel(status: string) {
 }
 
 export function AdminAnalytics() {
-  const { data, isPending } = useQuery({
+  const { data, isPending, isError, refetch } = useQuery({
     queryKey: queryKeys.admin.analytics,
     queryFn: fetchAdminAnalytics,
     staleTime: 30_000,
   });
 
-  if (isPending || !data) {
+  if (isPending && !data) {
     return (
       <div className="space-y-4">
         <Skeleton className="h-10 w-64" />
@@ -63,6 +63,20 @@ export function AdminAnalytics() {
         </div>
         <Skeleton className="h-72 w-full" />
       </div>
+    );
+  }
+
+  if (isError || !data) {
+    return (
+      <EmptyState
+        title="Could not load analytics"
+        description="Please try again in a moment."
+        action={
+          <Button type="button" onClick={() => void refetch()}>
+            Retry
+          </Button>
+        }
+      />
     );
   }
 

@@ -34,7 +34,7 @@ export class CreateProductVariantDto {
   @Type(() => Number)
   @IsInt()
   @Min(0)
-  stock: number;
+  stockQuantity: number;
 
   @ApiProperty({ example: 99.99 })
   @Type(() => Number)

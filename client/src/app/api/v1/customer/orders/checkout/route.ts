@@ -4,6 +4,7 @@ import { getBackendUrl } from "@/lib/backend-url";
 import { jsonMessage, jsonOk } from "@/lib/api-response";
 import type { CheckoutSession } from "@/modules/customer/checkout/types";
 import { nestErrorMessage, forwardAuthorization } from "@/lib/nest-http";
+import { requireUser } from "@/lib/require-auth";
 
 const checkoutSchema = z.object({
   shippingAddress: z.object({
@@ -19,6 +20,9 @@ const checkoutSchema = z.object({
 });
 
 export async function POST(req: Request) {
+  const auth = await requireUser(req);
+  if (auth instanceof Response) return auth;
+
   let json: unknown;
   try {
     json = await req.json();

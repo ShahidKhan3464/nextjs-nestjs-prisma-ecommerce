@@ -2,7 +2,6 @@ import { Module } from '@nestjs/common';
 import { StoreService } from './store.service';
 import { StoreController } from './store.controller';
 import { GetStoresProvider } from './providers/get-stores.provider';
-import { CreateStoreProvider } from './providers/create-store.provider';
 import { UpdateStoreProvider } from './providers/update-store.provider';
 import { VerifyStoreProvider } from './providers/verify-store.provider';
 import { SuspendStoreProvider } from './providers/suspend-store.provider';
@@ -16,7 +15,6 @@ import { RemoveStoreFileProvider } from './providers/remove-store-file.provider'
   providers: [
     StoreService,
     GetStoresProvider,
-    CreateStoreProvider,
     UpdateStoreProvider,
     VerifyStoreProvider,
     SuspendStoreProvider,
