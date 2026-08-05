@@ -21,6 +21,11 @@ export type SellerProductVariant = {
   stock: number;
 };
 
+export type FormMode =
+  | { type: "closed" }
+  | { type: "create" }
+  | { type: "edit"; variant: SellerProductVariant };
+
 export type SellerProduct = {
   id: string;
   name: string;

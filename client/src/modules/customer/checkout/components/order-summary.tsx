@@ -5,7 +5,7 @@ import type { Order } from "../types";
 import { PriceBreakdown } from "./price-breakdown";
 import { formatMoney } from "../utils/format-money";
 import { Separator } from "@/components/ui/separator";
-import { StoreGroupHeader } from "@/modules/customer/shared/store-group-header";
+import { StoreGroupHeader } from "@/modules/customer/shared";
 import {
   OrderStatusBadge,
   PaymentStatusBadge,

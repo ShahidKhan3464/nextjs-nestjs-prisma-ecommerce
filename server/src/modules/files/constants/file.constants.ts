@@ -60,8 +60,10 @@ export const DOCUMENT_EXTENSIONS = [
   'pdf',
 ] as const;
 
-export const IMAGE_MAX_BYTES = 5 * 1024 * 1024;
-export const DOCUMENT_MAX_BYTES = 10 * 1024 * 1024;
+export {
+  IMAGE_MAX_BYTES,
+  DOCUMENT_MAX_BYTES,
+} from 'src/integrations/storage/constants/storage.constants';
 
 export const STORED_FILE_SELECT = {
   id: true,

@@ -3,14 +3,9 @@
 import Link from "next/link";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
+import type { StoreLike } from "./types";
 import { ROUTES } from "@/constants/routes";
-import type { CartItemStore } from "@/modules/customer/cart/types";
-import { VerifiedBadge } from "@/modules/customer/products/components/verified-badge";
-
-type StoreLike = Pick<
-  CartItemStore,
-  "name" | "slug" | "verified" | "logoUrl" | "sellerName"
->;
+import { VerifiedBadge } from "@/shared/components/marketplace";
 
 type Props = {
   store: StoreLike | null;

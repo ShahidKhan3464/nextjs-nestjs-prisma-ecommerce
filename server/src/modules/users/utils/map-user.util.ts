@@ -1,21 +1,8 @@
-import { UserRole } from 'src/common/enums/user-role.enum';
 import { UserWithRoles } from 'src/common/types/user-with-roles.type';
 import { extractUserRoles } from 'src/common/utils/authorization.util';
+import type { UserResponse } from '../types/user.types';
 
-export type UserResponse = {
-  id: number;
-  email: string;
-  createDate: Date;
-  fullName: string;
-  updateDate: Date;
-  roles: UserRole[];
-  isBlocked: boolean;
-  phoneNumber: string | null;
-};
-
-export type UserMeResponse = UserResponse & {
-  avatarUrl?: string;
-};
+export type { UserResponse, UserMeResponse } from '../types/user.types';
 
 export function mapUserToResponse(user: UserWithRoles): UserResponse {
   return {

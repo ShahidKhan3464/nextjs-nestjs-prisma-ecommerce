@@ -1,4 +1,4 @@
-import { OrderResponse } from 'src/modules/orders/utils/map-order.util';
+import type { OrderResponse } from 'src/modules/orders/types/order.types';
 
 export type DashboardStatusCount = {
   status: string;

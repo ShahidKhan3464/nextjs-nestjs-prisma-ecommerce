@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import type { SellerProductVariant } from "../types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, type Resolver } from "react-hook-form";
-import { DEFAULT_PRODUCT_VARIANT } from "../lib/product-form";
+import { DEFAULT_PRODUCT_VARIANT } from "../utils/product-form";
 import {
   sellerVariantSchema,
   type SellerVariantValues,

@@ -13,13 +13,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { getApiErrorMessage } from "@/lib/api-error";
 import { Separator } from "@/components/ui/separator";
+import { StoreGroupHeader } from "@/modules/customer/shared";
+import { VerifiedBadge } from "@/shared/components/marketplace";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { fetchOrder, cancelOrder } from "../services/orders.service";
 import { EmptyState } from "@/shared/components/feedback/empty-state";
 import { OrderStatusBadge, PaymentStatusBadge } from "./order-status-badges";
-import { StoreGroupHeader } from "@/modules/customer/shared/store-group-header";
-import { VerifiedBadge } from "@/modules/customer/products/components/verified-badge";
 import {
   AlertDialog,
   AlertDialogTitle,

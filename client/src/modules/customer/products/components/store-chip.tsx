@@ -5,7 +5,7 @@ import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { ROUTES } from "@/constants/routes";
 import type { ProductStore } from "../types";
-import { VerifiedBadge } from "./verified-badge";
+import { VerifiedBadge } from "@/shared/components/marketplace";
 
 type Props = {
   compact?: boolean;

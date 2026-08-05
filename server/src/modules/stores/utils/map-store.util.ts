@@ -1,48 +1,8 @@
+import type { StoreMapped } from '../types/store.types';
 import { StoreStatus, StoreFileType } from '../constants/store.constants';
 import { SellerProfileStatus } from 'src/modules/sellers/constants/seller.constants';
 
-export type StoreFileMapped = {
-  id: number;
-  type: StoreFileType;
-  sortOrder: number;
-  file: {
-    id: number;
-    urlPath: string;
-    mimeType: string;
-    fileSize: number;
-    createdAt: Date;
-    originalName: string;
-  };
-};
-
-export type StoreMapped = {
-  id: number;
-  name: string;
-  slug: string;
-  city: string;
-  address: string;
-  country: string;
-  postalCode: string;
-  createdAt: Date;
-  updatedAt: Date;
-  sellerProfileId: number;
-  status: StoreStatus;
-  verifiedAt: Date | null;
-  suspendedAt: Date | null;
-  description: string | null;
-  suspensionReason: string | null;
-  files: StoreFileMapped[];
-  sellerProfile: {
-    id: number;
-    /** Present for owner/admin responses; omitted on public storefront payloads. */
-    userId?: number;
-    status: SellerProfileStatus;
-    businessName: string;
-  };
-  averageRating?: number;
-  totalReviews?: number;
-  productsSold?: number;
-};
+export type { StoreFileMapped, StoreMapped } from '../types/store.types';
 
 type StoreFileSource = {
   id: number;
@@ -97,14 +57,14 @@ export function mapStoreToResponse(store: StoreSource): StoreMapped {
     verifiedAt: store.verifiedAt,
     suspendedAt: store.suspendedAt,
     description: store.description,
-    sellerProfileId: store.sellerProfileId,
     status: store.status as StoreStatus,
+    sellerProfileId: store.sellerProfileId,
     suspensionReason: store.suspensionReason,
     sellerProfile: {
       id: store.sellerProfile.id,
       userId: store.sellerProfile.userId,
-      status: store.sellerProfile.status as SellerProfileStatus,
       businessName: store.sellerProfile.businessName,
+      status: store.sellerProfile.status as SellerProfileStatus,
     },
     files: (store.files ?? []).map((entry) => ({
       id: entry.id,

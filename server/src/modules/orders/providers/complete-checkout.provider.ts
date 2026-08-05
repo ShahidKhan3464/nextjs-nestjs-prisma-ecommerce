@@ -1,17 +1,23 @@
 import { PrismaService } from 'src/prisma/prisma.service';
+import { mapOrderToResponse } from '../utils/map-order.util';
 import { UsersService } from 'src/modules/users/users.service';
+import { MailService } from 'src/integrations/mail/mail.service';
 import { CompleteCheckoutDto } from '../dto/complete-checkout.dto';
-import { MailService } from 'src/integrations/mail/providers/mail.service';
-import { OrderResponse, mapOrderToResponse } from '../utils/map-order.util';
 import { NotificationService } from 'src/modules/notifications/notification.service';
 import { NotificationType } from 'src/modules/notifications/constants/notification.constants';
 import { PaymentLifecycleProvider } from 'src/modules/payments/providers/payment-lifecycle.provider';
+import type {
+  OrderResponse,
+  CompleteCheckoutResponse,
+} from '../types/order.types';
 import {
-  StripeClient,
   StripeService,
-} from 'src/integrations/stripe/stripe.service';
+  type StripePaymentIntent,
+} from 'src/integrations/stripe';
 import {
+  OrderStatus,
   PaymentStatus,
+  CHECKOUT_CURRENCY,
   CheckoutSessionStatus,
 } from '../constants/order.constants';
 import {
@@ -25,24 +31,16 @@ import {
   findCheckoutSessionWithImages,
 } from 'src/common/prisma/file-query.util';
 
-export type CompleteCheckoutResponse = {
-  orders: OrderResponse[];
-};
-
 @Injectable()
 export class CompleteCheckoutProvider {
-  private readonly stripe: StripeClient;
-
   constructor(
     private readonly prisma: PrismaService,
     private readonly mailService: MailService,
     private readonly usersService: UsersService,
+    private readonly stripeService: StripeService,
     private readonly notificationService: NotificationService,
     private readonly paymentLifecycleProvider: PaymentLifecycleProvider,
-    stripeService: StripeService,
-  ) {
-    this.stripe = stripeService.client;
-  }
+  ) {}
 
   async complete(
     userId: number,
@@ -56,7 +54,7 @@ export class CompleteCheckoutProvider {
     paymentIntentId: string,
   ): Promise<CompleteCheckoutResponse> {
     const paymentIntent =
-      await this.stripe.paymentIntents.retrieve(paymentIntentId);
+      await this.stripeService.retrievePaymentIntent(paymentIntentId);
     const userId = Number(paymentIntent.metadata?.userId);
     if (!Number.isFinite(userId)) {
       throw new BadRequestException('Invalid checkout payment metadata');
@@ -68,7 +66,7 @@ export class CompleteCheckoutProvider {
     userId: number,
     paymentIntentId: string,
   ): Promise<CompleteCheckoutResponse> {
-    const paymentIntent = await this.stripe.paymentIntents.retrieve(
+    const paymentIntent = await this.stripeService.retrievePaymentIntent(
       paymentIntentId,
       { expand: ['payment_method'] },
     );
@@ -119,7 +117,7 @@ export class CompleteCheckoutProvider {
     const expectedCents = Math.round(Number(session.totalAmount) * 100);
     if (
       paymentIntent.amount_received !== expectedCents ||
-      paymentIntent.currency.toLowerCase() !== 'usd'
+      paymentIntent.currency.toLowerCase() !== CHECKOUT_CURRENCY
     ) {
       throw new BadRequestException('Payment amount mismatch');
     }
@@ -128,7 +126,7 @@ export class CompleteCheckoutProvider {
       where: {
         transactionId: paymentIntent.id,
         status: PaymentStatus.PENDING,
-        order: { userId, status: 'PENDING' },
+        order: { userId, status: OrderStatus.PENDING },
       },
       include: {
         order: {
@@ -273,11 +271,7 @@ export class CompleteCheckoutProvider {
     return orders;
   }
 
-  private formatPaymentSummary(
-    paymentIntent: Awaited<
-      ReturnType<StripeClient['paymentIntents']['retrieve']>
-    >,
-  ): string {
+  private formatPaymentSummary(paymentIntent: StripePaymentIntent): string {
     const pm = paymentIntent.payment_method;
     if (
       pm &&

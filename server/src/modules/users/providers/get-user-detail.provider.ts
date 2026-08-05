@@ -1,13 +1,14 @@
+import type { UserResponse } from '../types/user.types';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { mapUserToResponse } from '../utils/map-user.util';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { findOrdersWithImages } from 'src/common/prisma/file-query.util';
-import { UserResponse, mapUserToResponse } from '../utils/map-user.util';
+import { mapOrderToResponse } from 'src/modules/orders/utils/map-order.util';
 import { USER_ROLES_INCLUDE } from 'src/common/constants/user-roles.constants';
-import {
+import type {
   OrderAddress,
   OrderResponse,
-  mapOrderToResponse,
-} from 'src/modules/orders/utils/map-order.util';
+} from 'src/modules/orders/types/order.types';
 
 export type UserDetailResponse = {
   user: UserResponse;

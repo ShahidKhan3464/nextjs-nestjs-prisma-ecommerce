@@ -3,8 +3,10 @@ import { randomUUID } from 'crypto';
 import { diskStorage } from 'multer';
 import { existsSync, mkdirSync } from 'fs';
 import { BadRequestException } from '@nestjs/common';
-
-const IMAGE_MIME = /^image\/(jpeg|jpg|png|gif|webp)$/i;
+import {
+  IMAGE_MAX_BYTES,
+  IMAGE_MIME_REGEX,
+} from '../constants/storage.constants';
 
 /**
  * Disk storage for validated image uploads under `{uploadsRoot}/{subdir}/`.
@@ -30,13 +32,13 @@ export function createImageDiskMulterOptions(
         cb(null, `${randomUUID()}${safeExt}`);
       },
     }),
-    limits: { fileSize: 5 * 1024 * 1024 },
+    limits: { fileSize: IMAGE_MAX_BYTES },
     fileFilter: (
       _req: unknown,
       file: Express.Multer.File,
       cb: (error: Error | null, acceptFile: boolean) => void,
     ) => {
-      if (!IMAGE_MIME.test(file.mimetype)) {
+      if (!IMAGE_MIME_REGEX.test(file.mimetype)) {
         cb(
           new BadRequestException(
             'Only image files are allowed (jpeg, png, gif, webp)',

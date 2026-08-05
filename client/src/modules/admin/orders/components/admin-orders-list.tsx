@@ -11,10 +11,10 @@ import { useEffect, useMemo, useState } from "react";
 import { Pagination } from "@/components/ui/pagination";
 import { AdminTableSkeleton } from "@/modules/admin/shared";
 import { fetchAdminOrders } from "../services/orders.service";
-import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { EmptyState } from "@/shared/components/feedback/empty-state";
+import { useDebouncedValue } from "@/shared/hooks/use-debounced-value";
 import {
   OrderStatusBadge,
   PaymentStatusBadge,

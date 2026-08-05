@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { StoreMapped } from './utils/map-store.util';
+import type { StoreMapped } from './types/store.types';
 import { UpdateStoreDto } from './dto/update-store.dto';
 import { QueryStoresDto } from './dto/query-stores.dto';
 import { SuspendStoreDto } from './dto/suspend-store.dto';

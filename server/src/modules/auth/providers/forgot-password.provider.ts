@@ -2,8 +2,8 @@ import { ConfigService } from '@nestjs/config';
 import { User } from 'src/generated/prisma/client';
 import { UsersService } from 'src/modules/users/users.service';
 import { ForgotPasswordDto } from '../dto/forgot-password.dto';
+import { MailService } from 'src/integrations/mail/mail.service';
 import { GenerateTokensProvider } from './generate-tokens.provider';
-import { MailService } from 'src/integrations/mail/providers/mail.service';
 import {
   Logger,
   Injectable,

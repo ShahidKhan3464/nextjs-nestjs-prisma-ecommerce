@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { SyncCartDto } from '../dto/sync-cart.dto';
 import { GetCartProvider } from './get-cart.provider';
 import { PrismaService } from 'src/prisma/prisma.service';
-import type { CartItemResponse } from '../utils/map-cart-item.util';
+import type { CartItemResponse } from '../types/cart.types';
 import { AVAILABLE_VARIANT_WHERE } from '../utils/available-variant.util';
 
 @Injectable()

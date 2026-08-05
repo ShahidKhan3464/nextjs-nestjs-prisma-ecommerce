@@ -1,14 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { findOrdersWithImages } from 'src/common/prisma/file-query.util';
+import type { OrderResponse } from 'src/modules/orders/types/order.types';
+import { mapOrderToResponse } from 'src/modules/orders/utils/map-order.util';
 import {
   OrderStatus,
   PaymentStatus,
 } from 'src/modules/orders/constants/order.constants';
-import {
-  OrderResponse,
-  mapOrderToResponse,
-} from 'src/modules/orders/utils/map-order.util';
 import {
   DashboardStatusCount,
   DashboardActivityItem,
@@ -19,8 +17,8 @@ import {
 
 const SPENDING_MONTHS = 6;
 const RECENT_ORDERS_LIMIT = 5;
-const RECENT_NOTIFICATIONS_LIMIT = 8;
 const RECENTLY_PURCHASED_LIMIT = 8;
+const RECENT_NOTIFICATIONS_LIMIT = 8;
 
 @Injectable()
 export class GetCustomerDashboardProvider {

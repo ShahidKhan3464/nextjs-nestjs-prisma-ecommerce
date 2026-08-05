@@ -1,37 +1,23 @@
-export type AddressResponse = {
-  id: string;
-  userId: string;
-  label: string | null;
-  fullName: string;
-  line1: string;
-  line2: string | null;
-  city: string;
-  region: string;
-  postalCode: string;
-  country: string;
-  phone: string | null;
-  isDefaultShipping: boolean;
-  isDefaultBilling: boolean;
-  createdAt: string;
-  updatedAt: string;
-};
+import type { AddressResponse } from '../types/address.types';
+
+export type { AddressResponse } from '../types/address.types';
 
 type AddressRow = {
   id: number;
-  userId: number;
-  label: string | null;
-  fullName: string;
-  line1: string;
-  line2: string | null;
   city: string;
+  line1: string;
+  userId: number;
   region: string;
-  postalCode: string;
   country: string;
-  phone: string | null;
-  isDefaultShipping: boolean;
-  isDefaultBilling: boolean;
   createdAt: Date;
   updatedAt: Date;
+  fullName: string;
+  postalCode: string;
+  line2: string | null;
+  label: string | null;
+  phone: string | null;
+  isDefaultBilling: boolean;
+  isDefaultShipping: boolean;
 };
 
 export function mapAddressToResponse(row: AddressRow): AddressResponse {

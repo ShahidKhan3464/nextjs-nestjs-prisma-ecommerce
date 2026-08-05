@@ -1,15 +1,13 @@
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { findOrdersWithImages } from 'src/common/prisma/file-query.util';
+import type { OrderResponse } from 'src/modules/orders/types/order.types';
+import { mapOrderToResponse } from 'src/modules/orders/utils/map-order.util';
 import { ProductStatus } from 'src/modules/products/constants/product.constants';
 import {
   OrderStatus,
   PaymentStatus,
 } from 'src/modules/orders/constants/order.constants';
-import {
-  OrderResponse,
-  mapOrderToResponse,
-} from 'src/modules/orders/utils/map-order.util';
 import {
   getStoreReviewStats,
   getReviewStatsForProducts,
@@ -24,13 +22,20 @@ import {
   DashboardActivityItem,
   SellerDashboardResponse,
 } from '../utils/dashboard.types';
+import {
+  LOW_STOCK_THRESHOLD,
+  DASHBOARD_REVENUE_DAYS,
+  DASHBOARD_TOP_PRODUCTS_LIMIT,
+  DASHBOARD_RECENT_ORDERS_LIMIT,
+  DASHBOARD_RECENT_REVIEWS_LIMIT,
+  DASHBOARD_RECENT_ACTIVITY_LIMIT,
+} from '../constants/dashboard.constants';
 
-const REVENUE_DAYS = 7;
-const LOW_STOCK_THRESHOLD = 5;
-const RECENT_ORDERS_LIMIT = 5;
-const RECENT_ACTIVITY_LIMIT = 8;
-const RECENT_REVIEWS_LIMIT = 5;
-const TOP_PRODUCTS_LIMIT = 5;
+const REVENUE_DAYS = DASHBOARD_REVENUE_DAYS;
+const TOP_PRODUCTS_LIMIT = DASHBOARD_TOP_PRODUCTS_LIMIT;
+const RECENT_ORDERS_LIMIT = DASHBOARD_RECENT_ORDERS_LIMIT;
+const RECENT_REVIEWS_LIMIT = DASHBOARD_RECENT_REVIEWS_LIMIT;
+const RECENT_ACTIVITY_LIMIT = DASHBOARD_RECENT_ACTIVITY_LIMIT;
 
 type SellerStoreBase = Omit<
   SellerStoreSummary,
@@ -153,8 +158,8 @@ export class GetSellerDashboardProvider {
       status: store.status,
       country: store.country,
       address: store.address,
-      description: store.description,
       verifiedAt: store.verifiedAt,
+      description: store.description,
       businessName: store.sellerProfile.businessName,
     };
   }

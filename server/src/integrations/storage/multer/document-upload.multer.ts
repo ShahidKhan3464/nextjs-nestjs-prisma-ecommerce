@@ -3,8 +3,10 @@ import { extname, join } from 'path';
 import { diskStorage } from 'multer';
 import { existsSync, mkdirSync } from 'fs';
 import { BadRequestException } from '@nestjs/common';
-
-const DOCUMENT_MIME = /^(image\/(jpeg|jpg|png|webp)|application\/pdf)$/i;
+import {
+  DOCUMENT_MAX_BYTES,
+  DOCUMENT_MIME_REGEX,
+} from '../constants/storage.constants';
 
 /**
  * Disk storage for seller verification documents under `{uploadsRoot}/{subdir}/`.
@@ -30,13 +32,13 @@ export function createDocumentDiskMulterOptions(
         cb(null, `${randomUUID()}${safeExt}`);
       },
     }),
-    limits: { fileSize: 10 * 1024 * 1024 },
+    limits: { fileSize: DOCUMENT_MAX_BYTES },
     fileFilter: (
       _req: unknown,
       file: Express.Multer.File,
       cb: (error: Error | null, acceptFile: boolean) => void,
     ) => {
-      if (!DOCUMENT_MIME.test(file.mimetype)) {
+      if (!DOCUMENT_MIME_REGEX.test(file.mimetype)) {
         cb(
           new BadRequestException(
             'Only PDF and image files are allowed (jpeg, png, webp, pdf)',

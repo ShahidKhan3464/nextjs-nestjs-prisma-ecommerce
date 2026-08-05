@@ -15,7 +15,7 @@ import { Eye, Ban, CheckCircle } from "lucide-react";
 import { Pagination } from "@/components/ui/pagination";
 import { AdminTableSkeleton } from "@/modules/admin/shared";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { useDebouncedValue } from "@/hooks/use-debounced-value";
+import { useDebouncedValue } from "@/shared/hooks/use-debounced-value";
 import { fetchAdminUsers, blockAdminUser } from "../services/users.service";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import {
@@ -38,9 +38,9 @@ import {
   AlertDialogTitle,
   AlertDialogAction,
   AlertDialogCancel,
-  AlertDialogContent,
   AlertDialogFooter,
   AlertDialogHeader,
+  AlertDialogContent,
   AlertDialogDescription,
 } from "@/components/ui/alert-dialog";
 

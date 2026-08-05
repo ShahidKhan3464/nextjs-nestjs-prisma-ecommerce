@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
-import type { PaymentProviderMeta } from "../payment-providers";
+import type { PaymentProviderMeta } from "../types";
 
 type Props = {
   provider: PaymentProviderMeta;

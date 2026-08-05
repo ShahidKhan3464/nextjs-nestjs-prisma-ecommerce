@@ -1,11 +1,12 @@
 import { join } from 'path';
 import { unlink } from 'fs/promises';
+import type { StoreMapped } from '../types/store.types';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UserRole } from 'src/common/enums/user-role.enum';
+import { mapStoreToResponse } from '../utils/map-store.util';
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { getUploadsRoot } from 'src/integrations/storage/uploads-root';
 import { StoreOwnershipProvider } from './store-ownership.provider';
-import { StoreMapped, mapStoreToResponse } from '../utils/map-store.util';
+import { getUploadsRoot } from 'src/integrations/storage/uploads-root';
 import { StoreFileType, STORE_INCLUDE } from '../constants/store.constants';
 
 @Injectable()

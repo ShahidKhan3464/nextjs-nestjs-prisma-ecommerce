@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { MailerService } from '@nestjs-modules/mailer';
+import type { OrderResponse } from 'src/modules/orders/types/order.types';
 import { OrderStatus } from 'src/modules/orders/constants/order.constants';
-import type { OrderResponse } from 'src/modules/orders/utils/map-order.util';
+import { MAIL_SUBJECTS, MAIL_TEMPLATES } from './constants/mail.constants';
 
 @Injectable()
 export class MailService {
@@ -10,8 +11,8 @@ export class MailService {
   public async sendWelcomeEmail(email: string, name: string) {
     await this.mailerService.sendMail({
       to: email,
-      subject: 'Welcome to Our Store',
-      template: 'welcome',
+      subject: MAIL_SUBJECTS.WELCOME,
+      template: MAIL_TEMPLATES.WELCOME,
       context: { name },
     });
   }
@@ -23,8 +24,8 @@ export class MailService {
   ) {
     await this.mailerService.sendMail({
       to: email,
-      subject: 'Password Reset Request',
-      template: 'reset-password',
+      subject: MAIL_SUBJECTS.RESET_PASSWORD,
+      template: MAIL_TEMPLATES.RESET_PASSWORD,
       context: { name, resetUrl },
     });
   }
@@ -43,8 +44,8 @@ export class MailService {
 
     await this.mailerService.sendMail({
       to: email,
-      subject: `Order confirmed — ${order.orderNumber}`,
-      template: 'order-confirmation',
+      subject: MAIL_SUBJECTS.orderConfirmation(order.orderNumber),
+      template: MAIL_TEMPLATES.ORDER_CONFIRMATION,
       context: {
         name,
         items,
@@ -65,8 +66,8 @@ export class MailService {
 
     await this.mailerService.sendMail({
       to: email,
-      subject: `Order ${order.orderNumber} — ${statusLabel}`,
-      template: 'order-status-update',
+      subject: MAIL_SUBJECTS.orderStatusUpdate(order.orderNumber, statusLabel),
+      template: MAIL_TEMPLATES.ORDER_STATUS_UPDATE,
       context: {
         name,
         statusLabel,

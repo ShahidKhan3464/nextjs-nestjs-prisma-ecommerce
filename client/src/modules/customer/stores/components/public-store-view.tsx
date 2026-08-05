@@ -8,9 +8,9 @@ import { queryKeys } from "@/constants/query-keys";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { fetchStoreBySlug } from "../services/stores.service";
+import { VerifiedBadge } from "@/shared/components/marketplace";
 import { EmptyState } from "@/shared/components/feedback/empty-state";
 import { RatingStars } from "@/shared/components/marketplace/rating-stars";
-import { VerifiedBadge } from "@/modules/customer/products/components/verified-badge";
 import { ProductFilters } from "@/modules/customer/products/components/product-filters";
 import { ProductListing } from "@/modules/customer/products/components/product-listing";
 import { ProductFiltersSkeleton } from "@/modules/customer/products/components/product-filters-skeleton";
@@ -142,8 +142,8 @@ export function PublicStoreView({ slug, initialStore }: Props) {
                 <div className="flex items-center gap-1.5">
                   <RatingStars
                     readOnly
-                    value={store.averageRating}
                     size="sm"
+                    value={store.averageRating}
                     ariaLabel={`${store.averageRating.toFixed(1)} out of 5`}
                   />
                   <span className="tabular-nums font-medium">

@@ -20,8 +20,8 @@ import { updateSellerProduct } from "../services/products.service";
 import { fetchSellerCategories } from "../services/categories.service";
 import { useProductImageFilePreviews } from "../hooks/use-product-image-previews";
 import {
-  productImageFileSchema,
   productSchema,
+  productImageFileSchema,
   type ProductValues,
 } from "../schemas";
 import {
@@ -31,7 +31,7 @@ import {
   mapFormVariantsToPayload,
   mapProductImagesToRetainPaths,
   mapProductVariantsToFormValues,
-} from "../lib/product-form";
+} from "../utils/product-form";
 import {
   Form,
   FormItem,

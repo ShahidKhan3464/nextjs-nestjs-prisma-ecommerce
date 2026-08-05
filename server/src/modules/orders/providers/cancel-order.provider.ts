@@ -1,21 +1,19 @@
+import { StripeService } from 'src/integrations/stripe';
 import { CancelOrderDto } from '../dto/cancel-order.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
+import type { OrderResponse } from '../types/order.types';
 import { UserRole } from 'src/common/enums/user-role.enum';
+import { mapOrderToResponse } from '../utils/map-order.util';
 import { UsersService } from 'src/modules/users/users.service';
+import { MailService } from 'src/integrations/mail/mail.service';
 import { OrderOwnershipProvider } from './order-ownership.provider';
 import { findOrderWithImages } from 'src/common/prisma/file-query.util';
 import { adjustVariantStock } from '../utils/adjust-variant-stock.util';
 import { OrderStatus, PaymentStatus } from '../constants/order.constants';
-import { MailService } from 'src/integrations/mail/providers/mail.service';
-import { OrderResponse, mapOrderToResponse } from '../utils/map-order.util';
 import { NotificationService } from 'src/modules/notifications/notification.service';
 import { PaymentFailureReason } from 'src/modules/payments/constants/payment.constants';
 import { NotificationType } from 'src/modules/notifications/constants/notification.constants';
 import { PaymentLifecycleProvider } from 'src/modules/payments/providers/payment-lifecycle.provider';
-import {
-  StripeClient,
-  StripeService,
-} from 'src/integrations/stripe/stripe.service';
 import {
   Injectable,
   NotFoundException,
@@ -24,19 +22,15 @@ import {
 
 @Injectable()
 export class CancelOrderProvider {
-  private readonly stripe: StripeClient;
-
   constructor(
     private readonly prisma: PrismaService,
     private readonly mailService: MailService,
     private readonly usersService: UsersService,
+    private readonly stripeService: StripeService,
+    private readonly notificationService: NotificationService,
     private readonly orderOwnershipProvider: OrderOwnershipProvider,
     private readonly paymentLifecycleProvider: PaymentLifecycleProvider,
-    private readonly notificationService: NotificationService,
-    stripeService: StripeService,
-  ) {
-    this.stripe = stripeService.client;
-  }
+  ) {}
 
   async cancel(
     orderId: number,
@@ -93,7 +87,7 @@ export class CancelOrderProvider {
           throw new BadRequestException('Refundable amount is too small');
         }
 
-        const refund = await this.stripe.refunds.create(
+        const refund = await this.stripeService.createRefund(
           {
             payment_intent: payment.transactionId,
             amount: refundAmountCents,

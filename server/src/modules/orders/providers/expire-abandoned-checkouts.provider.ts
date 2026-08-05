@@ -1,4 +1,5 @@
 import { Prisma } from 'src/generated/prisma/client';
+import { StripeService } from 'src/integrations/stripe';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { adjustVariantStock } from '../utils/adjust-variant-stock.util';
 import {
@@ -11,14 +12,9 @@ import {
   OrderStatus,
   PaymentStatus,
   CheckoutSessionStatus,
+  CHECKOUT_ABANDON_TTL_MS,
 } from '../constants/order.constants';
-import {
-  StripeClient,
-  StripeService,
-} from 'src/integrations/stripe/stripe.service';
 
-/** Pending checkouts older than this release reserved stock. */
-export const CHECKOUT_ABANDON_TTL_MS = 30 * 60 * 1000;
 const SWEEP_INTERVAL_MS = 5 * 60 * 1000;
 
 type CheckoutSessionRow = {
@@ -33,15 +29,12 @@ export class ExpireAbandonedCheckoutsProvider
   implements OnModuleInit, OnModuleDestroy
 {
   private readonly logger = new Logger(ExpireAbandonedCheckoutsProvider.name);
-  private readonly stripe: StripeClient;
   private timer: ReturnType<typeof setInterval> | null = null;
 
   constructor(
     private readonly prisma: PrismaService,
-    stripeService: StripeService,
-  ) {
-    this.stripe = stripeService.client;
-  }
+    private readonly stripeService: StripeService,
+  ) {}
 
   onModuleInit(): void {
     this.timer = setInterval(() => {
@@ -113,7 +106,8 @@ export class ExpireAbandonedCheckoutsProvider
     const piId = session.stripePaymentIntentId;
     if (piId && piId !== 'pending') {
       try {
-        const paymentIntent = await this.stripe.paymentIntents.retrieve(piId);
+        const paymentIntent =
+          await this.stripeService.retrievePaymentIntent(piId);
         if (
           paymentIntent.status === 'succeeded' ||
           paymentIntent.status === 'processing'
@@ -127,7 +121,9 @@ export class ExpireAbandonedCheckoutsProvider
           paymentIntent.status === 'requires_action' ||
           paymentIntent.status === 'requires_capture'
         ) {
-          await this.stripe.paymentIntents.cancel(piId).catch(() => undefined);
+          await this.stripeService
+            .cancelPaymentIntent(piId)
+            .catch(() => undefined);
         }
       } catch {
         /* continue cleanup for unreachable PI lookups */

@@ -1,15 +1,13 @@
 import { PrismaService } from 'src/prisma/prisma.service';
 import { AddCartItemDto } from '../dto/add-cart-item.dto';
+import type { CartItemResponse } from '../types/cart.types';
 import { Injectable, BadRequestException } from '@nestjs/common';
+import { mapCartItemToResponse } from '../utils/map-cart-item.util';
 import { findCartItemsWithImages } from 'src/common/prisma/file-query.util';
 import {
-  AVAILABLE_VARIANT_INCLUDE,
   assertVariantAvailable,
+  AVAILABLE_VARIANT_INCLUDE,
 } from '../utils/available-variant.util';
-import {
-  CartItemResponse,
-  mapCartItemToResponse,
-} from '../utils/map-cart-item.util';
 
 @Injectable()
 export class AddCartItemProvider {

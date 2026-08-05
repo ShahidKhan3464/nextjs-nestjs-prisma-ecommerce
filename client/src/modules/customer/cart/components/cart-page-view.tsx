@@ -13,8 +13,10 @@ import { useCartHydrate } from "@/shared/hooks/use-cart-hydrate";
 import { cartRemoveItem, cartUpdateQty } from "@/lib/cart-actions";
 import { ContinueShoppingCta } from "@/modules/customer/discovery";
 import { EmptyState } from "@/shared/components/feedback/empty-state";
-import { StoreGroupHeader } from "@/modules/customer/shared/store-group-header";
-import { groupCartItemsByStore } from "@/modules/customer/shared/group-cart-by-store";
+import {
+  StoreGroupHeader,
+  groupCartItemsByStore,
+} from "@/modules/customer/shared";
 
 function CartPageHeader() {
   return (

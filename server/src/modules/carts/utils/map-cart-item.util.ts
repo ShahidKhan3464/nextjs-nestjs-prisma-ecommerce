@@ -2,29 +2,12 @@ import {
   CartItemWithRelations,
   ProductVariantWithRelations,
 } from 'src/common/types/domain.types';
+import type { CartItemResponse } from '../types/cart.types';
 
-export type CartItemStoreResponse = {
-  id: string;
-  name: string;
-  slug: string;
-  verified: boolean;
-  sellerName: string;
-  logoUrl: string | null;
-};
-
-export type CartItemResponse = {
-  id: number;
-  slug: string;
-  name: string;
-  price: number;
-  image: string;
-  maxQty: number;
-  quantity: number;
-  variantId: string;
-  productId: string;
-  variantLabel: string;
-  store: CartItemStoreResponse | null;
-};
+export type {
+  CartItemStoreResponse,
+  CartItemResponse,
+} from '../types/cart.types';
 
 function formatVariantLabel(variant: ProductVariantWithRelations): string {
   const parts = [variant.size, variant.color].filter(

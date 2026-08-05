@@ -1,33 +1,63 @@
-import Stripe from 'stripe';
-import type { ConfigType } from '@nestjs/config';
-import { Inject, Injectable } from '@nestjs/common';
-import stripeConfig from 'src/config/stripe.config';
-
-/** Stripe SDK client type — import this instead of `stripe` outside the integration layer. */
-export type StripeClient = Stripe;
-export type StripeEvent = Stripe.Event;
-export type StripePaymentIntent = Stripe.PaymentIntent;
+import { Injectable } from '@nestjs/common';
+import { CancelPaymentProvider } from './providers/cancel-payment.provider';
+import { RefundPaymentProvider } from './providers/refund-payment.provider';
+import { RetrievePaymentProvider } from './providers/retrieve-payment.provider';
+import { ConstructWebhookProvider } from './providers/construct-webhook.provider';
+import { CreatePaymentIntentProvider } from './providers/create-payment-intent.provider';
+import type {
+  CreatePaymentIntentParams,
+  CreateRefundParams,
+  CreateRefundRequestOptions,
+  RetrievePaymentIntentParams,
+  StripeEvent,
+  StripePaymentIntent,
+  StripeRefund,
+} from './types/stripe.types';
 
 /**
- * Single shared Stripe SDK client for the application.
- * Business workflows (checkout, refunds, webhooks) stay in domain modules.
+ * Stripe integration facade. Domain modules call these methods;
+ * SDK construction and low-level calls live in providers/.
  */
 @Injectable()
 export class StripeService {
-  /** Shared Stripe SDK instance — same construction as the previous per-provider clients. */
-  readonly client: StripeClient;
-  /** Webhook signing secret from config (may be empty outside production). */
-  readonly webhookSecret: string | undefined;
-
   constructor(
-    @Inject(stripeConfig.KEY)
-    stripeConfiguration: ConfigType<typeof stripeConfig>,
-  ) {
-    const secretKey = stripeConfiguration.secretKey;
-    if (!secretKey) {
-      throw new Error('STRIPE_SECRET_KEY is not configured');
-    }
-    this.client = new Stripe(secretKey);
-    this.webhookSecret = stripeConfiguration.webhookSecret;
+    private readonly createPaymentIntentProvider: CreatePaymentIntentProvider,
+    private readonly retrievePaymentProvider: RetrievePaymentProvider,
+    private readonly cancelPaymentProvider: CancelPaymentProvider,
+    private readonly refundPaymentProvider: RefundPaymentProvider,
+    private readonly constructWebhookProvider: ConstructWebhookProvider,
+  ) {}
+
+  /** Webhook signing secret from config (may be empty outside production). */
+  get webhookSecret(): string | undefined {
+    return this.constructWebhookProvider.webhookSigningSecret;
+  }
+
+  createPaymentIntent(
+    params: CreatePaymentIntentParams,
+  ): Promise<StripePaymentIntent> {
+    return this.createPaymentIntentProvider.execute(params);
+  }
+
+  retrievePaymentIntent(
+    paymentIntentId: string,
+    params?: RetrievePaymentIntentParams,
+  ): Promise<StripePaymentIntent> {
+    return this.retrievePaymentProvider.execute(paymentIntentId, params);
+  }
+
+  cancelPaymentIntent(paymentIntentId: string): Promise<StripePaymentIntent> {
+    return this.cancelPaymentProvider.execute(paymentIntentId);
+  }
+
+  createRefund(
+    params: CreateRefundParams,
+    options?: CreateRefundRequestOptions,
+  ): Promise<StripeRefund> {
+    return this.refundPaymentProvider.execute(params, options);
+  }
+
+  constructWebhookEvent(rawBody: Buffer, signature: string): StripeEvent {
+    return this.constructWebhookProvider.execute(rawBody, signature);
   }
 }

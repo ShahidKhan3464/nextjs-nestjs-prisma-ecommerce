@@ -14,8 +14,8 @@ import { Pagination } from "@/components/ui/pagination";
 import { ProductStatusBadge } from "./product-status-badge";
 import { AdminTableSkeleton } from "@/modules/admin/shared";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { EmptyState } from "@/shared/components/feedback/empty-state";
+import { useDebouncedValue } from "@/shared/hooks/use-debounced-value";
 import { fetchSellerCategories } from "../services/categories.service";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {

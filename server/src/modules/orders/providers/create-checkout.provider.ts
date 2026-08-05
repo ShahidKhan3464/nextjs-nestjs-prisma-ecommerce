@@ -3,8 +3,11 @@ import { generateOrderNumber } from '../utils/map-order.util';
 import { CreateCheckoutDto } from '../dto/create-checkout.dto';
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { calculateOrderPricing } from '../utils/order-pricing.util';
+import type { CheckoutSessionResponse } from '../types/order.types';
 import { lockProductVariants } from '../utils/lock-product-variants.util';
+import { StoreStatus } from 'src/modules/stores/constants/store.constants';
 import { findCartItemsWithImages } from 'src/common/prisma/file-query.util';
+import { ProductStatus } from 'src/modules/products/constants/product.constants';
 import { validateAndGroupCheckoutCart } from '../utils/validate-checkout-cart.util';
 import { ExpireAbandonedCheckoutsProvider } from './expire-abandoned-checkouts.provider';
 import {
@@ -12,41 +15,24 @@ import {
   adjustVariantStock,
 } from '../utils/adjust-variant-stock.util';
 import {
-  StripeClient,
   StripeService,
-} from 'src/integrations/stripe/stripe.service';
+  type StripePaymentIntent,
+} from 'src/integrations/stripe';
 import {
   OrderStatus,
   PaymentStatus,
   PaymentProvider,
+  CHECKOUT_CURRENCY,
   CheckoutSessionStatus,
 } from '../constants/order.constants';
 
-type CheckoutPreview = {
-  tax: number;
-  total: number;
-  subtotal: number;
-};
-
-export type CheckoutSessionResponse = {
-  clientSecret: string;
-  paymentIntentId: string;
-  preview: CheckoutPreview;
-  checkoutSessionId: string;
-  orderIds: string[];
-};
-
 @Injectable()
 export class CreateCheckoutProvider {
-  private readonly stripe: StripeClient;
-
   constructor(
     private readonly prisma: PrismaService,
-    stripeService: StripeService,
+    private readonly stripeService: StripeService,
     private readonly expireAbandonedCheckouts: ExpireAbandonedCheckoutsProvider,
-  ) {
-    this.stripe = stripeService.client;
-  }
+  ) {}
 
   async create(
     userId: number,
@@ -126,10 +112,10 @@ export class CreateCheckoutProvider {
           if (
             !product ||
             product.deletedAt ||
-            product.status !== 'ACTIVE' ||
+            product.status !== ProductStatus.ACTIVE ||
             !product.store ||
             product.store.deletedAt ||
-            product.store.status !== 'ACTIVE' ||
+            product.store.status !== StoreStatus.ACTIVE ||
             !product.store.sellerProfile ||
             product.store.sellerProfile.deletedAt
           ) {
@@ -197,7 +183,7 @@ export class CreateCheckoutProvider {
                 create: {
                   provider: PaymentProvider.STRIPE,
                   amount: orderPricing.total,
-                  currency: 'usd',
+                  currency: CHECKOUT_CURRENCY,
                   status: PaymentStatus.PENDING,
                   transactionId: 'pending',
                 },
@@ -215,13 +201,11 @@ export class CreateCheckoutProvider {
       },
     );
 
-    let paymentIntent: Awaited<
-      ReturnType<StripeClient['paymentIntents']['create']>
-    >;
+    let paymentIntent: StripePaymentIntent;
     try {
-      paymentIntent = await this.stripe.paymentIntents.create({
+      paymentIntent = await this.stripeService.createPaymentIntent({
         amount: amountCents,
-        currency: 'usd',
+        currency: CHECKOUT_CURRENCY,
         automatic_payment_methods: { enabled: false },
         payment_method_types: ['card'],
         metadata: {

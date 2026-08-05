@@ -2,9 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { Prisma } from 'src/generated/prisma/client';
 import { QueryOrderDto } from '../dto/query-order.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
+import type { OrderResponse } from '../types/order.types';
+import { mapOrderToResponse } from '../utils/map-order.util';
 import { OrderOwnershipProvider } from './order-ownership.provider';
 import { findOrdersWithImages } from 'src/common/prisma/file-query.util';
-import { OrderResponse, mapOrderToResponse } from '../utils/map-order.util';
 import { PaginationProviders } from 'src/common/pagination/providers/pagination.providers';
 import { PaginateQueryResult } from 'src/common/pagination/interfaces/paginated.interfaces';
 

@@ -5,8 +5,6 @@ export const queryKeys = {
       [...queryKeys.products.all, "list", filters] as const,
     bySlug: (slug: string) =>
       [...queryKeys.products.all, "slug", slug] as const,
-    reviews: (productId: string) =>
-      [...queryKeys.products.all, "reviews", productId] as const,
     categories: ["products", "categories"] as const,
   },
   stores: {
@@ -26,10 +24,6 @@ export const queryKeys = {
   cart: {
     all: ["cart"] as const,
   },
-  checkout: {
-    all: ["checkout"] as const,
-    session: (id: string) => ["checkout", "session", id] as const,
-  },
   notifications: {
     all: ["notifications"] as const,
     list: (filters?: Record<string, unknown>) =>
@@ -42,8 +36,6 @@ export const queryKeys = {
       [...queryKeys.reviews.all, "product", productId, filters ?? {}] as const,
     summary: (productId: string) =>
       [...queryKeys.reviews.all, "summary", productId] as const,
-    storeReputation: (storeId: string) =>
-      [...queryKeys.reviews.all, "store-reputation", storeId] as const,
     mine: ["reviews", "mine"] as const,
     seller: (filters?: Record<string, unknown>) =>
       [...queryKeys.reviews.all, "seller", filters ?? {}] as const,

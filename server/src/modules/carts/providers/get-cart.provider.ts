@@ -1,10 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
+import type { CartItemResponse } from '../types/cart.types';
+import { mapCartItemToResponse } from '../utils/map-cart-item.util';
 import { findCartItemsWithImages } from 'src/common/prisma/file-query.util';
-import {
-  CartItemResponse,
-  mapCartItemToResponse,
-} from '../utils/map-cart-item.util';
 
 @Injectable()
 export class GetCartProvider {

@@ -24,7 +24,7 @@ import {
   sortCategoriesByName,
   DEFAULT_PRODUCT_VARIANT,
   mapFormVariantsToPayload,
-} from "../lib/product-form";
+} from "../utils/product-form";
 import {
   Form,
   FormItem,

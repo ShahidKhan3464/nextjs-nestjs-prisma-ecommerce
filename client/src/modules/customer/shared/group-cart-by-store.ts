@@ -1,17 +1,7 @@
-import type { CartItem, CartItemStore } from "@/modules/customer/cart/types";
+import type { GroupedCart, StoreCartGroup } from "./types";
+import type { CartItem } from "@/modules/customer/cart/types";
 
-export type StoreCartGroup = {
-  storeKey: string;
-  store: CartItemStore | null;
-  items: CartItem[];
-  subtotal: number;
-};
-
-export type GroupedCart = {
-  groups: StoreCartGroup[];
-  grandTotal: number;
-  itemCount: number;
-};
+export type { StoreCartGroup, GroupedCart } from "./types";
 
 const UNKNOWN_STORE_KEY = "__unknown__";
 

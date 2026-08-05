@@ -1,4 +1,6 @@
+import { PaymentStatus } from 'src/common/enums/payment-status.enum';
 import { PaymentProvider } from 'src/common/enums/payment-provider.enum';
+import { CHECKOUT_CURRENCY } from 'src/modules/orders/constants/order.constants';
 
 /**
  * Capability flags for payment providers.
@@ -49,12 +51,15 @@ export function getPaymentProviderCapabilities(
 }
 
 /** Initial create payload for a COD payment (checkout wiring uses this later). */
-export function buildCodPaymentCreateData(amount: number, currency = 'usd') {
+export function buildCodPaymentCreateData(
+  amount: number,
+  currency = CHECKOUT_CURRENCY,
+) {
   const capabilities = getPaymentProviderCapabilities(PaymentProvider.COD);
   return {
     amount,
     currency,
-    status: 'PENDING' as const,
+    status: PaymentStatus.PENDING,
     provider: PaymentProvider.COD,
     transactionId: null as string | null,
     methodSummary: capabilities.defaultMethodSummary,

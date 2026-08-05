@@ -1,72 +1,13 @@
 /**
- * Frontend payment provider registry.
- * Mirrors backend capabilities without exposing secrets.
- * Active capture today: Stripe. Others are prepared for future wiring.
+ * Frontend payment provider helpers.
+ * Registry lives in `constants.ts`; types in `types.ts`.
  */
 
-export type PaymentProviderId =
-  | "stripe"
-  | "cod"
-  | "paypal"
-  | "easypaisa"
-  | "jazzcash";
+import { PAYMENT_PROVIDERS } from "./constants";
+import type { PaymentProviderId, PaymentProviderMeta } from "./types";
 
-export type PaymentProviderMeta = {
-  id: PaymentProviderId;
-  label: string;
-  description: string;
-  /** Shown in checkout UI; only enabled providers can be selected. */
-  enabled: boolean;
-  /** Online SDK / redirect capture (Stripe, PayPal, wallets). */
-  supportsOnlineCapture: boolean;
-  /** Placeholder until Nest checkout wires the provider. */
-  comingSoon: boolean;
-};
-
-export const PAYMENT_PROVIDERS: PaymentProviderMeta[] = [
-  {
-    id: "stripe",
-    label: "Card",
-    description: "Pay securely with credit or debit card via Stripe.",
-    enabled: true,
-    supportsOnlineCapture: true,
-    comingSoon: false,
-  },
-  {
-    id: "cod",
-    label: "Cash on Delivery",
-    description: "Pay with cash when your order arrives.",
-    enabled: false,
-    supportsOnlineCapture: false,
-    comingSoon: true,
-  },
-  {
-    id: "paypal",
-    label: "PayPal",
-    description: "Checkout with your PayPal account.",
-    enabled: false,
-    supportsOnlineCapture: true,
-    comingSoon: true,
-  },
-  {
-    id: "easypaisa",
-    label: "Easypaisa",
-    description: "Pay with your Easypaisa wallet.",
-    enabled: false,
-    supportsOnlineCapture: true,
-    comingSoon: true,
-  },
-  {
-    id: "jazzcash",
-    label: "JazzCash",
-    description: "Pay with your JazzCash wallet.",
-    enabled: false,
-    supportsOnlineCapture: true,
-    comingSoon: true,
-  },
-];
-
-export const DEFAULT_PAYMENT_PROVIDER: PaymentProviderId = "stripe";
+export type { PaymentProviderId, PaymentProviderMeta } from "./types";
+export { PAYMENT_PROVIDERS, DEFAULT_PAYMENT_PROVIDER } from "./constants";
 
 export function getPaymentProvider(
   id: PaymentProviderId

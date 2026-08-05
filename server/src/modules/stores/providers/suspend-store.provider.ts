@@ -1,8 +1,9 @@
+import type { StoreMapped } from '../types/store.types';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { SuspendStoreDto } from '../dto/suspend-store.dto';
+import { mapStoreToResponse } from '../utils/map-store.util';
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { StoreOwnershipProvider } from './store-ownership.provider';
-import { StoreMapped, mapStoreToResponse } from '../utils/map-store.util';
 import { StoreStatus, STORE_INCLUDE } from '../constants/store.constants';
 
 @Injectable()

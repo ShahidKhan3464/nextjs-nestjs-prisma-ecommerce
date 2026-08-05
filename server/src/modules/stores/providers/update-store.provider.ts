@@ -1,11 +1,12 @@
+import type { StoreMapped } from '../types/store.types';
 import { UpdateStoreDto } from '../dto/update-store.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UserRole } from 'src/common/enums/user-role.enum';
 import { STORE_INCLUDE } from '../constants/store.constants';
+import { mapStoreToResponse } from '../utils/map-store.util';
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { StoreOwnershipProvider } from './store-ownership.provider';
 import { generateStoreSlug } from '../utils/generate-store-slug.util';
-import { StoreMapped, mapStoreToResponse } from '../utils/map-store.util';
 import { resolveUniqueStoreSlug } from '../utils/resolve-unique-store-slug.util';
 
 @Injectable()

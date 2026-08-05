@@ -27,7 +27,7 @@ import {
   mapFormVariantsToPayload,
   mapProductImagesToRetainPaths,
   mapProductVariantsToFormValues,
-} from "../lib/product-form";
+} from "../utils/product-form";
 import {
   Form,
   FormItem,

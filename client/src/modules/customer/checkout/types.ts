@@ -1,8 +1,26 @@
 import type { Order } from "@/modules/customer/orders/types";
-import type { PaymentProviderId } from "./payment-providers";
 import type { Address } from "@/modules/customer/orders/types";
 
 export type { Address, Order };
+
+export type PaymentProviderId =
+  | "stripe"
+  | "cod"
+  | "paypal"
+  | "easypaisa"
+  | "jazzcash";
+
+export type PaymentProviderMeta = {
+  id: PaymentProviderId;
+  label: string;
+  description: string;
+  /** Shown in checkout UI; only enabled providers can be selected. */
+  enabled: boolean;
+  /** Online SDK / redirect capture (Stripe, PayPal, wallets). */
+  supportsOnlineCapture: boolean;
+  /** Placeholder until Nest checkout wires the provider. */
+  comingSoon: boolean;
+};
 
 export type CreateCheckoutInput = {
   shippingAddress: Address;

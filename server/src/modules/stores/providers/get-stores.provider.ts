@@ -1,4 +1,5 @@
 import { Prisma } from 'src/generated/prisma/client';
+import type { StoreMapped } from '../types/store.types';
 import { QueryStoresDto } from '../dto/query-stores.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Injectable, NotFoundException } from '@nestjs/common';
@@ -8,7 +9,6 @@ import { getStoreReviewStats } from 'src/modules/reviews/utils/review-stats.util
 import { PaginationProviders } from 'src/common/pagination/providers/pagination.providers';
 import { PaginateQueryResult } from 'src/common/pagination/interfaces/paginated.interfaces';
 import {
-  StoreMapped,
   mapStoreToResponse,
   mapPublicStoreToResponse,
 } from '../utils/map-store.util';

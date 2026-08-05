@@ -1,15 +1,14 @@
 import { create } from "zustand";
 import type { Address } from "@/modules/customer/checkout/types";
+import type { PaymentProviderId } from "@/modules/customer/checkout/types";
+import { DEFAULT_PAYMENT_PROVIDER } from "@/modules/customer/checkout/constants";
 import type {
   CheckoutPreview,
   CheckoutStep,
   PaymentFailure,
   PaymentUiStatus,
 } from "@/modules/customer/checkout/types";
-import {
-  type PaymentProviderId,
-  DEFAULT_PAYMENT_PROVIDER,
-} from "@/modules/customer/checkout/payment-providers";
+
 import {
   clearPersistedCheckoutSession,
   loadPersistedCheckoutSession,
@@ -52,16 +51,16 @@ interface CheckoutState {
 const initialState = {
   step: "shipping" as CheckoutStep,
   hydrated: false,
-  clientSecret: null as string | null,
-  paymentIntentId: null as string | null,
-  checkoutSessionId: null as string | null,
   orderIds: [] as string[],
-  preview: null as CheckoutPreview | null,
+  clientSecret: null as string | null,
   paymentSummary: null as string | null,
-  paymentProvider: DEFAULT_PAYMENT_PROVIDER as PaymentProviderId,
+  paymentIntentId: null as string | null,
+  preview: null as CheckoutPreview | null,
+  checkoutSessionId: null as string | null,
   paymentStatus: "idle" as PaymentUiStatus,
   paymentFailure: null as PaymentFailure | null,
   shippingAddress: null as Partial<Address> | null,
+  paymentProvider: DEFAULT_PAYMENT_PROVIDER as PaymentProviderId,
   submitting: false,
 };
 

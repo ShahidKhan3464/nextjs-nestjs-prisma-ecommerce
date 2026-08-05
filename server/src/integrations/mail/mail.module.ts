@@ -1,8 +1,9 @@
 import { join } from 'path';
+import { MailService } from './mail.service';
 import { Global, Module } from '@nestjs/common';
 import { MailerModule } from '@nestjs-modules/mailer';
-import { MailService } from './providers/mail.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { MAIL_DEFAULT_FROM } from './constants/mail.constants';
 import { EjsAdapter } from '@nestjs-modules/mailer/adapters/ejs.adapter';
 
 @Global()
@@ -22,7 +23,7 @@ import { EjsAdapter } from '@nestjs-modules/mailer/adapters/ejs.adapter';
           },
         },
         defaults: {
-          from: '"No Reply" <noreply@example.com>',
+          from: MAIL_DEFAULT_FROM,
         },
         template: {
           dir: join(__dirname, 'templates'),

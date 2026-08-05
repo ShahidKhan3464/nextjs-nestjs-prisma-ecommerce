@@ -2,7 +2,9 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UserRole } from 'src/common/enums/user-role.enum';
 import { findOrdersWithImages } from 'src/common/prisma/file-query.util';
+import type { OrderResponse } from 'src/modules/orders/types/order.types';
 import { NotificationType } from 'src/common/enums/notification-type.enum';
+import { mapOrderToResponse } from 'src/modules/orders/utils/map-order.util';
 import { ProductStatus } from 'src/modules/products/constants/product.constants';
 import { SellerProfileStatus } from 'src/modules/sellers/constants/seller.constants';
 import { getReviewStatsForProducts } from 'src/modules/reviews/utils/review-stats.util';
@@ -10,10 +12,6 @@ import {
   OrderStatus,
   PaymentStatus,
 } from 'src/modules/orders/constants/order.constants';
-import {
-  OrderResponse,
-  mapOrderToResponse,
-} from 'src/modules/orders/utils/map-order.util';
 import {
   DashboardReviewItem,
   DashboardTopProduct,
@@ -25,15 +23,24 @@ import {
   DashboardRecentCustomer,
   DashboardPendingApproval,
 } from '../utils/dashboard.types';
+import {
+  LOW_STOCK_THRESHOLD,
+  DASHBOARD_REVENUE_DAYS,
+  DASHBOARD_RECENT_ORDERS_LIMIT,
+  DASHBOARD_RECENT_NOTIFICATIONS_LIMIT,
+  DASHBOARD_RECENT_REVIEWS_LIMIT,
+  DASHBOARD_TOP_PRODUCTS_LIMIT,
+  DASHBOARD_RECENT_CUSTOMERS_LIMIT,
+  DASHBOARD_PENDING_APPROVALS_LIMIT,
+} from '../constants/dashboard.constants';
 
-const LOW_STOCK_THRESHOLD = 5;
-const REVENUE_DAYS = 7;
-const RECENT_ORDERS_LIMIT = 5;
-const RECENT_NOTIFICATIONS_LIMIT = 8;
-const RECENT_REVIEWS_LIMIT = 5;
-const TOP_PRODUCTS_LIMIT = 5;
-const RECENT_CUSTOMERS_LIMIT = 5;
-const PENDING_APPROVALS_LIMIT = 10;
+const REVENUE_DAYS = DASHBOARD_REVENUE_DAYS;
+const TOP_PRODUCTS_LIMIT = DASHBOARD_TOP_PRODUCTS_LIMIT;
+const RECENT_ORDERS_LIMIT = DASHBOARD_RECENT_ORDERS_LIMIT;
+const RECENT_REVIEWS_LIMIT = DASHBOARD_RECENT_REVIEWS_LIMIT;
+const RECENT_CUSTOMERS_LIMIT = DASHBOARD_RECENT_CUSTOMERS_LIMIT;
+const PENDING_APPROVALS_LIMIT = DASHBOARD_PENDING_APPROVALS_LIMIT;
+const RECENT_NOTIFICATIONS_LIMIT = DASHBOARD_RECENT_NOTIFICATIONS_LIMIT;
 
 const ADMIN_ACTIVITY_NOTIFICATION_TYPES: NotificationType[] = [
   NotificationType.SELLER_APPROVED,

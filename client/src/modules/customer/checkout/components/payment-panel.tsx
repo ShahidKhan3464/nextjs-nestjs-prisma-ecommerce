@@ -1,9 +1,9 @@
 "use client";
 
-import { PAYMENT_PROVIDERS } from "../payment-providers";
+import { PAYMENT_PROVIDERS } from "../constants";
+import type { PaymentProviderId } from "../types";
 import { PaymentMethodCard } from "./payment-method-card";
 import { StripePaymentForm } from "./stripe-payment-form";
-import type { PaymentProviderId } from "../payment-providers";
 
 type Props = {
   selectedProvider: PaymentProviderId;

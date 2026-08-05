@@ -1,8 +1,8 @@
 import { User } from 'src/generated/prisma/client';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { MailService } from 'src/integrations/mail/mail.service';
 import { Logger, Injectable, BadRequestException } from '@nestjs/common';
-import { MailService } from 'src/integrations/mail/providers/mail.service';
 import { HashingProvider } from 'src/common/crypto/providers/hashing.provider';
 
 type TransactionClient = Parameters<

@@ -1,6 +1,6 @@
 import { slugify } from "@/lib/slugify";
 import { resolveUploadUrl } from "@/lib/resolve-upload-url";
-import { formatVariantNameFromNest } from "@/modules/customer/products/lib/variant-label";
+import { formatVariantNameFromNest } from "@/modules/customer/products/utils/variant-label";
 import type {
   Product,
   ProductStore,

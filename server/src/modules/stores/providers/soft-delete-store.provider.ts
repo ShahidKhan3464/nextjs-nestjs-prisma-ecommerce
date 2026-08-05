@@ -1,9 +1,10 @@
 import { Injectable } from '@nestjs/common';
+import type { StoreMapped } from '../types/store.types';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UserRole } from 'src/common/enums/user-role.enum';
 import { STORE_INCLUDE } from '../constants/store.constants';
+import { mapStoreToResponse } from '../utils/map-store.util';
 import { StoreOwnershipProvider } from './store-ownership.provider';
-import { StoreMapped, mapStoreToResponse } from '../utils/map-store.util';
 
 @Injectable()
 export class SoftDeleteStoreProvider {

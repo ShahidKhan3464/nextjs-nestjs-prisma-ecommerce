@@ -1,11 +1,12 @@
 import { PrismaService } from 'src/prisma/prisma.service';
+import type { OrderResponse } from '../types/order.types';
 import { UserRole } from 'src/common/enums/user-role.enum';
 import { OrderStatus } from '../constants/order.constants';
+import { mapOrderToResponse } from '../utils/map-order.util';
 import { UsersService } from 'src/modules/users/users.service';
+import { MailService } from 'src/integrations/mail/mail.service';
 import { OrderOwnershipProvider } from './order-ownership.provider';
 import { findOrderWithImages } from 'src/common/prisma/file-query.util';
-import { MailService } from 'src/integrations/mail/providers/mail.service';
-import { OrderResponse, mapOrderToResponse } from '../utils/map-order.util';
 import { NotificationService } from 'src/modules/notifications/notification.service';
 import { NotificationType } from 'src/modules/notifications/constants/notification.constants';
 import {

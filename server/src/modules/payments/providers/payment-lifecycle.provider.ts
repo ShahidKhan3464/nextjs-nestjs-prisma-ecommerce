@@ -1,6 +1,7 @@
 import { Prisma } from 'src/generated/prisma/client';
 import { PaymentStatus } from '../constants/payment.constants';
 import { Injectable, BadRequestException } from '@nestjs/common';
+import { OrderStatus } from 'src/modules/orders/constants/order.constants';
 import { assertPaymentStatusTransition } from '../utils/payment-status-transitions.util';
 
 type TxClient = Prisma.TransactionClient;
@@ -168,7 +169,7 @@ export class PaymentLifecycleProvider {
           in: [PaymentStatus.PENDING, PaymentStatus.PROCESSING],
         },
         ...(input.userId !== undefined
-          ? { order: { userId: input.userId, status: 'PENDING' } }
+          ? { order: { userId: input.userId, status: OrderStatus.PENDING } }
           : {}),
       },
       select: { orderId: true },

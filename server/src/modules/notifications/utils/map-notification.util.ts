@@ -1,24 +1,12 @@
-import { NotificationType } from '../constants/notification.constants';
+import type {
+  NotificationRow,
+  NotificationResponse,
+} from '../types/notification.types';
 
-export type NotificationRow = {
-  id: number;
-  title: string;
-  userId: number;
-  message: string;
-  createdAt: Date;
-  readAt: Date | null;
-  type: NotificationType;
-};
-
-export type NotificationResponse = {
-  id: string;
-  title: string;
-  message: string;
-  isRead: boolean;
-  createdAt: string;
-  readAt: string | null;
-  type: NotificationType;
-};
+export type {
+  NotificationRow,
+  NotificationResponse,
+} from '../types/notification.types';
 
 export function mapNotificationToResponse(
   notification: NotificationRow,

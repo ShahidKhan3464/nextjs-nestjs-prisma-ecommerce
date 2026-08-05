@@ -1,41 +1,34 @@
 import { CompleteCheckoutProvider } from './complete-checkout.provider';
 import {
-  StripeClient,
-  StripeEvent,
-  StripePaymentIntent,
   StripeService,
-} from 'src/integrations/stripe/stripe.service';
+  type StripeEvent,
+  type StripePaymentIntent,
+} from 'src/integrations/stripe';
 import {
-  Injectable,
   Logger,
-  HttpException,
+  Injectable,
   HttpStatus,
+  HttpException,
+  NotFoundException,
+  ForbiddenException,
   BadRequestException,
   ServiceUnavailableException,
-  ForbiddenException,
-  NotFoundException,
 } from '@nestjs/common';
 
 @Injectable()
 export class StripeWebhookProvider {
   private readonly logger = new Logger(StripeWebhookProvider.name);
-  private readonly stripe: StripeClient;
-  private readonly webhookSecret: string | undefined;
 
   constructor(
     private readonly completeCheckoutProvider: CompleteCheckoutProvider,
-    stripeService: StripeService,
-  ) {
-    this.stripe = stripeService.client;
-    this.webhookSecret = stripeService.webhookSecret;
-  }
+    private readonly stripeService: StripeService,
+  ) {}
 
   public async handle(
     rawBody: Buffer,
     signature: string | undefined,
   ): Promise<{ received: true }> {
-    const webhookSecret = this.webhookSecret;
-    if (!webhookSecret) {
+    if (!this.stripeService.webhookSecret) {
       throw new BadRequestException('Stripe webhook is not configured');
     }
 
@@ -45,11 +38,7 @@ export class StripeWebhookProvider {
 
     let event: StripeEvent;
     try {
-      event = this.stripe.webhooks.constructEvent(
-        rawBody,
-        signature,
-        webhookSecret,
-      );
+      event = this.stripeService.constructWebhookEvent(rawBody, signature);
     } catch (err) {
       const detail = err instanceof Error ? err.message : String(err);
       this.logger.warn(

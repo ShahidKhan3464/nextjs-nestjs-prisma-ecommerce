@@ -1,50 +1,17 @@
+import { PaymentStatus } from '../constants/payment.constants';
 import { PaymentWithRelations } from 'src/common/types/domain.types';
-import { PaymentProvider, PaymentStatus } from '../constants/payment.constants';
+import type {
+  MapPaymentOptions,
+  PaymentResponse,
+  PaymentWithOrder,
+} from '../types/payment.types';
 
-export type PaymentOrderSummary = {
-  id: string;
-  orderNumber: string;
-  storeId: string;
-  userId: string;
-};
-
-export type PaymentResponse = {
-  id: string;
-  orderId: string;
-  provider: PaymentProvider;
-  status: PaymentStatus;
-  amount: number;
-  currency: string;
-  refundedAmount: number;
-  createdAt: string;
-  updatedAt: string;
-  transactionId?: string;
-  methodSummary?: string;
-  paidAt?: string;
-  failureReason?: string;
-  refundReason?: string;
-  refundedAt?: string;
-  externalRefundId?: string;
-  order?: PaymentOrderSummary;
-};
-
-export type MapPaymentOptions = {
-  /** Include failure reason (buyer/seller/admin when payment failed or cancelled). */
-  includeFailureReason?: boolean;
-  /** Include refund details when any refund amount exists. */
-  includeRefundDetails?: boolean;
-};
-
-type PaymentOrderSource = {
-  id: number;
-  orderNumber: string;
-  storeId: number;
-  userId: number;
-};
-
-export type PaymentWithOrder = PaymentWithRelations & {
-  order?: PaymentOrderSource;
-};
+export type {
+  PaymentOrderSummary,
+  PaymentResponse,
+  MapPaymentOptions,
+  PaymentWithOrder,
+} from '../types/payment.types';
 
 function shouldExposeFailureReason(
   payment: PaymentWithRelations,

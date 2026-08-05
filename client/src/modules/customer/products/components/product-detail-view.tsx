@@ -29,7 +29,7 @@ import {
   findVariantByOptions,
   uniqueVariantOptionValues,
   hasUniqueVariantOptionMatrix,
-} from "../lib/variant-label";
+} from "../utils/variant-label";
 
 const ProductReviewsSection = dynamic(
   () =>

@@ -6,6 +6,7 @@ import { VARIANT_INCLUDE } from '../constants/product-variant.constants';
 import { QueryProductVariantDto } from '../dto/query-product-variant.dto';
 import { ProductVariantWithRelations } from 'src/common/types/domain.types';
 import { mapProductVariantToResponse } from '../utils/map-product-variant.util';
+import { ProductStatus } from 'src/modules/products/constants/product.constants';
 import { PaginationProviders } from 'src/common/pagination/providers/pagination.providers';
 import { PaginateQueryResult } from 'src/common/pagination/interfaces/paginated.interfaces';
 
@@ -27,7 +28,7 @@ export class GetProductVariantsProvider {
         ...(scope?.storeId !== undefined
           ? { storeId: scope.storeId }
           : {
-              status: 'ACTIVE',
+              status: ProductStatus.ACTIVE,
               ...(query.storeId ? { storeId: query.storeId } : {}),
             }),
       },
@@ -105,7 +106,7 @@ export class GetProductVariantsProvider {
       where: {
         id: productId,
         deletedAt: null,
-        status: 'ACTIVE',
+        status: ProductStatus.ACTIVE,
       },
       select: { id: true },
     });
@@ -145,7 +146,7 @@ export class GetProductVariantsProvider {
     const variant = await this.prisma.productVariant.findFirst({
       where: {
         id,
-        product: { deletedAt: null, status: 'ACTIVE' },
+        product: { deletedAt: null, status: ProductStatus.ACTIVE },
       },
       include: VARIANT_INCLUDE,
     });

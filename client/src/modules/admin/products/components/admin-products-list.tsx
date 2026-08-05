@@ -14,8 +14,8 @@ import { Pagination } from "@/components/ui/pagination";
 import { Pencil, Trash2, RotateCcw } from "lucide-react";
 import { AdminTableSkeleton } from "@/modules/admin/shared";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import type { Product } from "@/modules/customer/products/types";
+import { useDebouncedValue } from "@/shared/hooks/use-debounced-value";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   deleteAdminProduct,

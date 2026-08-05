@@ -14,9 +14,9 @@ import { wishlistToggle } from "@/lib/wishlist-actions";
 import { useWishlistStore } from "@/store/wishlist-store";
 import { fetchWishlist } from "../services/wishlist.service";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { VerifiedBadge } from "@/shared/components/marketplace";
 import { EmptyState } from "@/shared/components/feedback/empty-state";
 import { useWishlistHydrate } from "@/shared/hooks/use-wishlist-hydrate";
-import { VerifiedBadge } from "@/modules/customer/products/components/verified-badge";
 
 function availabilityLabel(value: WishlistAvailability) {
   switch (value) {
@@ -115,9 +115,9 @@ export function WishlistGrid() {
             <Image
               fill
               alt={item.name}
-              src={item.image ?? "/placeholder.svg"}
               className="object-cover"
               sizes="(max-width:640px) 100vw, 25vw"
+              src={item.image ?? "/placeholder.svg"}
             />
             <div className="absolute top-3 left-3 z-10">
               <Badge variant={availabilityVariant(item.availability)}>

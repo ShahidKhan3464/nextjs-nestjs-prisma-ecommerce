@@ -1,9 +1,6 @@
+import { StripeService } from 'src/integrations/stripe';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { adjustVariantStock } from '../utils/adjust-variant-stock.util';
-import {
-  StripeClient,
-  StripeService,
-} from 'src/integrations/stripe/stripe.service';
 import {
   OrderStatus,
   PaymentStatus,
@@ -18,14 +15,10 @@ import {
 
 @Injectable()
 export class CancelCheckoutProvider {
-  private readonly stripe: StripeClient;
-
   constructor(
     private readonly prisma: PrismaService,
-    stripeService: StripeService,
-  ) {
-    this.stripe = stripeService.client;
-  }
+    private readonly stripeService: StripeService,
+  ) {}
 
   async cancel(paymentIntentId: string, userId: number): Promise<void> {
     const session = await this.prisma.checkoutSession.findFirst({
@@ -45,7 +38,7 @@ export class CancelCheckoutProvider {
 
     try {
       const paymentIntent =
-        await this.stripe.paymentIntents.retrieve(paymentIntentId);
+        await this.stripeService.retrievePaymentIntent(paymentIntentId);
 
       if (paymentIntent.status === 'succeeded') {
         throw new BadRequestException(
@@ -54,9 +47,11 @@ export class CancelCheckoutProvider {
       }
 
       if (paymentIntent.status !== 'canceled') {
-        await this.stripe.paymentIntents.cancel(paymentIntentId).catch(() => {
-          /* best-effort cancel */
-        });
+        await this.stripeService
+          .cancelPaymentIntent(paymentIntentId)
+          .catch(() => {
+            /* best-effort cancel */
+          });
       }
     } catch (error) {
       if (error instanceof BadRequestException) {

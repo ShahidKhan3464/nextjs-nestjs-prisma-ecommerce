@@ -10,10 +10,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { buttonVariants } from "@/components/ui/button";
 import { useIsSeller, useIsSuperAdmin } from "@/modules/auth";
 import { SellerProductEditForm } from "@/modules/seller/products";
+import { AdminProductUpdateForm } from "@/modules/admin/products";
 import { EmptyState } from "@/shared/components/feedback/empty-state";
 import { fetchAdminProduct } from "@/modules/admin/products/services/products.service";
 import { fetchSellerProduct } from "@/modules/seller/products/services/products.service";
-import { AdminProductUpdateForm } from "@/modules/admin/products/components/admin-product-update-form";
 
 export default function EditProductPage() {
   const params = useParams();

@@ -2,8 +2,10 @@
 
 import Image from "next/image";
 import { formatMoney } from "../utils/format-money";
-import { StoreGroupHeader } from "@/modules/customer/shared/store-group-header";
-import type { StoreCartGroup } from "@/modules/customer/shared/group-cart-by-store";
+import {
+  StoreGroupHeader,
+  type StoreCartGroup,
+} from "@/modules/customer/shared";
 
 type Props = {
   group: StoreCartGroup;

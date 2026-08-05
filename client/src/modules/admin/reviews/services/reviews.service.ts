@@ -1,15 +1,7 @@
 import type { ApiResponse } from "@/types";
 import { api } from "@/services/api/client";
-import type {
-  ReviewListParams,
-  ReviewListResult,
-} from "@/modules/customer/reviews/types";
-
-export type AdminReviewListParams = ReviewListParams & {
-  productId?: string;
-  storeId?: string;
-  userId?: string;
-};
+import type { AdminReviewListParams } from "../types";
+import type { ReviewListResult } from "@/modules/customer/reviews/types";
 
 export async function fetchAdminReviews(
   params: AdminReviewListParams = {}

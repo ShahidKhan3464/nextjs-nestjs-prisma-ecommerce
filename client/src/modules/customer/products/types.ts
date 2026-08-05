@@ -1,3 +1,9 @@
+export type CustomerCategoryOption = {
+  id: number;
+  name: string;
+  description: string | null;
+};
+
 export const PRODUCT_SORT_OPTIONS = [
   "newest",
   "oldest",

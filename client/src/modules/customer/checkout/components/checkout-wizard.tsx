@@ -29,13 +29,13 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { shippingSchema, type ShippingValues } from "../schemas";
 import { useCartHydrate } from "@/shared/hooks/use-cart-hydrate";
 import { PaymentContinueButton } from "./payment-continue-button";
+import { groupCartItemsByStore } from "@/modules/customer/shared";
 import { EmptyState } from "@/shared/components/feedback/empty-state";
 import { persistCheckoutSuccess } from "../utils/checkout-session-storage";
 import { useCreateCheckoutSession } from "../hooks/use-checkout-mutations";
 import { LazyStripeCheckoutProvider } from "./lazy-stripe-checkout-provider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useInvalidateAfterCheckout } from "../hooks/use-invalidate-after-checkout";
-import { groupCartItemsByStore } from "@/modules/customer/shared/group-cart-by-store";
 import { fetchAddresses } from "@/modules/customer/addresses/services/addresses.service";
 import {
   Form,
@@ -282,8 +282,8 @@ export function CheckoutWizard() {
 
       <TabsContent value="review" className="space-y-6">
         <CheckoutAddressCard
-          address={shippingAddress}
           showManageLink
+          address={shippingAddress}
         />
         <Separator />
         <div className="space-y-3">
@@ -311,8 +311,8 @@ export function CheckoutWizard() {
         {paymentIntentId && paymentProvider === "stripe" ? (
           <PlaceOrderButton
             key={placeOrderKey}
-            onSuccess={(orders) => void handleOrderSuccess(orders)}
             onRetryReady={() => setPlaceOrderKey((k) => k + 1)}
+            onSuccess={(orders) => void handleOrderSuccess(orders)}
           />
         ) : null}
       </TabsContent>
@@ -341,15 +341,15 @@ export function CheckoutWizard() {
           </TabsTrigger>
           <TabsTrigger
             value="payment"
-            className="cursor-pointer"
             disabled={!clientSecret}
+            className="cursor-pointer"
           >
             Payment
           </TabsTrigger>
           <TabsTrigger
             value="review"
-            className="cursor-pointer"
             disabled={!clientSecret}
+            className="cursor-pointer"
           >
             Review
           </TabsTrigger>
@@ -532,8 +532,8 @@ export function CheckoutWizard() {
 
       <CheckoutSummary
         groups={groups}
-        merchandiseSubtotal={grandTotal}
         preview={preview}
+        merchandiseSubtotal={grandTotal}
       />
     </div>
   );

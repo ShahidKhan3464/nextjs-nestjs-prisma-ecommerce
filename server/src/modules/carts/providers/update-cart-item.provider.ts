@@ -1,5 +1,7 @@
 import { PrismaService } from 'src/prisma/prisma.service';
+import type { CartItemResponse } from '../types/cart.types';
 import { UpdateCartItemDto } from '../dto/update-cart-item.dto';
+import { mapCartItemToResponse } from '../utils/map-cart-item.util';
 import { assertVariantAvailable } from '../utils/available-variant.util';
 import { findCartItemsWithImages } from 'src/common/prisma/file-query.util';
 import {
@@ -7,10 +9,6 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
-import {
-  CartItemResponse,
-  mapCartItemToResponse,
-} from '../utils/map-cart-item.util';
 
 @Injectable()
 export class UpdateCartItemProvider {

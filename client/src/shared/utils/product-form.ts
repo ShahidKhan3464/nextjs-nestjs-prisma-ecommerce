@@ -1,7 +1,12 @@
-import type { ProductValues } from "../schemas";
-import type { SellerProduct, SellerProductImage } from "../types";
+export type ProductVariantFormValues = {
+  size: string;
+  color: string;
+  sku: string;
+  stock: number;
+  price: number;
+};
 
-export const DEFAULT_PRODUCT_VARIANT: ProductValues["variants"][number] = {
+export const DEFAULT_PRODUCT_VARIANT: ProductVariantFormValues = {
   size: "S",
   color: "Black",
   sku: "",
@@ -27,7 +32,9 @@ export function parseCategoryId(value: string): number | null {
   return categoryId;
 }
 
-export function mapFormVariantsToPayload(variants: ProductValues["variants"]) {
+export function mapFormVariantsToPayload(
+  variants: ProductVariantFormValues[]
+) {
   return variants.map((v) => ({
     stockQuantity: v.stock,
     price: v.price,
@@ -35,24 +42,4 @@ export function mapFormVariantsToPayload(variants: ProductValues["variants"]) {
     size: v.size.trim(),
     color: v.color.trim(),
   }));
-}
-
-export function mapProductVariantsToFormValues(
-  variants: SellerProduct["variants"]
-): ProductValues["variants"] {
-  return variants.map((v) => ({
-    size: v.size,
-    color: v.color,
-    sku: v.sku,
-    stock: v.stock,
-    price: v.price,
-  }));
-}
-
-export function mapProductImagesToRetainPaths(
-  images: SellerProductImage[]
-): string[] {
-  return images
-    .map((img) => img.urlPath)
-    .filter((path) => path && path !== "/placeholder.svg");
 }

@@ -23,14 +23,14 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createReviewSchema,
   type ReviewFormValues,
-} from "../schemas/review.schema";
+} from "../schemas";
 import {
   createReview,
   deleteReview,
+  updateReview,
   fetchMyReviews,
   fetchProductReviews,
   fetchProductSummary,
-  updateReview,
 } from "../services/reviews.service";
 import {
   Form,
@@ -260,8 +260,8 @@ export function ProductReviewsSection({
               </p>
               <div className="flex gap-2">
                 <Button
-                  type="button"
                   size="sm"
+                  type="button"
                   variant="outline"
                   onClick={() => {
                     setShowForm(true);
@@ -272,8 +272,8 @@ export function ProductReviewsSection({
                   Edit
                 </Button>
                 <Button
-                  type="button"
                   size="sm"
+                  type="button"
                   variant="destructive"
                   disabled={deleteMutation.isPending}
                   onClick={() => deleteMutation.mutate(myReview.id)}
@@ -317,8 +317,8 @@ export function ProductReviewsSection({
                             <RatingStars
                               size="lg"
                               value={field.value}
-                              onChange={field.onChange}
                               ariaLabel="Your rating"
+                              onChange={field.onChange}
                             />
                           </FormControl>
                           <FormMessage />

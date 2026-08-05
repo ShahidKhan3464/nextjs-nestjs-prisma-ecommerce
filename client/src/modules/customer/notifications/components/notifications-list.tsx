@@ -25,23 +25,20 @@ import {
 import {
   NOTIFICATION_TYPES,
   NOTIFICATION_TYPE_LABELS,
-  type NotificationListResult,
-  type NotificationType,
+} from "../constants";
+import type {
+  ReadFilter,
+  ListFilters,
+  NotificationType,
+  NotificationListResult,
 } from "../types";
 import {
   fetchNotifications,
-  markAllNotificationsRead,
   markNotificationRead,
+  markAllNotificationsRead,
 } from "../services/notifications.service";
 
 const PAGE_SIZE = 10;
-
-type ReadFilter = "all" | "unread" | "read";
-
-type ListFilters = {
-  type?: NotificationType;
-  isRead?: boolean;
-};
 
 function NotificationsSkeleton() {
   return (

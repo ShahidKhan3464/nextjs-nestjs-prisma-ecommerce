@@ -9,7 +9,11 @@ import { getApiErrorMessage } from "@/lib/api-error";
 import type { SellerVariantValues } from "../schemas";
 import { SellerVariantForm } from "./seller-variant-form";
 import { PencilIcon, PlusIcon, Trash2Icon } from "lucide-react";
-import type { SellerProduct, SellerProductVariant } from "../types";
+import type {
+  FormMode,
+  SellerProduct,
+  SellerProductVariant,
+} from "../types";
 import {
   useQuery,
   useMutation,
@@ -72,11 +76,6 @@ function syncProductDetailVariants(
     basePrice: Number.isFinite(basePrice) ? basePrice : product.basePrice,
   };
 }
-
-type FormMode =
-  | { type: "closed" }
-  | { type: "create" }
-  | { type: "edit"; variant: SellerProductVariant };
 
 type Props = {
   productId: string;
