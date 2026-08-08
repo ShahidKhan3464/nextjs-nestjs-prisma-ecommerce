@@ -11,9 +11,9 @@ export class SeedDemoOrchestratorProvider implements OnApplicationBootstrap {
 
   constructor(
     private readonly configService: ConfigService,
-    private readonly seedCategoriesProvider: SeedCategoriesProvider,
     private readonly seedProductsProvider: SeedProductsProvider,
     private readonly seedCustomersProvider: SeedCustomersProvider,
+    private readonly seedCategoriesProvider: SeedCategoriesProvider,
   ) {}
 
   public async onApplicationBootstrap(): Promise<void> {

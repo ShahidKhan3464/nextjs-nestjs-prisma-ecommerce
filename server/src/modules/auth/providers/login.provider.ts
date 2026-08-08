@@ -34,13 +34,7 @@ export class LoginProvider {
   ) {}
 
   public async login(dto: LoginDto): Promise<{ user: LoggedInUser }> {
-    const user = await this.usersService
-      .findOneByEmailWithRoles(dto.email)
-      .catch(() => {
-        throw new ServiceUnavailableException(
-          'Unable to process your request at the moment',
-        );
-      });
+    const user = await this.usersService.findOneByEmailWithRoles(dto.email);
 
     const passwordHash =
       user && !user.deletedAt ? user.password : DUMMY_PASSWORD_HASH;

@@ -8,7 +8,6 @@ import { FileValidationProvider } from './providers/file-validation.provider';
 import { FileAssociationProvider } from './providers/file-association.provider';
 import { SecureFileAccessProvider } from './providers/secure-file-access.provider';
 import { FileAuthorizationProvider } from './providers/file-authorization.provider';
-import { STORAGE_PROVIDER } from 'src/integrations/storage/interfaces/storage-provider.interface';
 
 @Module({
   imports: [StorageModule],
@@ -25,7 +24,6 @@ import { STORAGE_PROVIDER } from 'src/integrations/storage/interfaces/storage-pr
   exports: [
     FilesService,
     StorageModule,
-    STORAGE_PROVIDER,
     UploadFileProvider,
     DeleteFileProvider,
     FileValidationProvider,
