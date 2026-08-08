@@ -1,7 +1,7 @@
 import { UserRole } from 'src/common/enums/user-role.enum';
 import {
-  UserRole as UserRoleRecord,
   user_role_name_enum,
+  UserRole as UserRoleRecord,
 } from 'src/generated/prisma/client';
 
 export function mapPrismaRoleToUserRole(role: user_role_name_enum): UserRole {

@@ -1,10 +1,10 @@
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UserRole } from 'src/common/enums/user-role.enum';
-import { CreateUserDto } from 'src/modules/users/dto/create-user.dto';
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { CreateUserDto } from 'src/modules/users/dto/create-user.dto';
 import { extractUserRoles } from 'src/common/utils/authorization.util';
-import { CreateUserProvider } from 'src/modules/users/providers/create-user.provider';
 import { USER_ROLES_INCLUDE } from 'src/common/constants/user-roles.constants';
+import { CreateUserProvider } from 'src/modules/users/providers/create-user.provider';
 
 @Injectable()
 export class RegisterProvider {
