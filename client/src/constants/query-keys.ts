@@ -88,5 +88,8 @@ export const queryKeys = {
     order: (id: string) => ["admin", "orders", id] as const,
     category: (id: number) => ["admin", "categories", id] as const,
     userDetail: (id: string) => ["admin", "users", id, "detail"] as const,
+    sellerProfiles: ["admin", "seller-profiles"] as const,
+    sellerProfile: (id: string) =>
+      ["admin", "seller-profiles", "detail", id] as const,
   },
 } as const;

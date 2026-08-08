@@ -79,7 +79,12 @@ export function RoleAppShell({
                 )}
               >
                 <Icon className="size-4 shrink-0" aria-hidden />
-                {item.label}
+                <span className="min-w-0 flex-1 truncate">{item.label}</span>
+                {item.badge != null && item.badge > 0 ? (
+                  <span className="bg-primary text-primary-foreground ml-auto rounded-md px-1.5 py-0.5 text-[10px] font-medium tabular-nums">
+                    {item.badge > 99 ? "99+" : item.badge}
+                  </span>
+                ) : null}
               </Link>
             );
           })}

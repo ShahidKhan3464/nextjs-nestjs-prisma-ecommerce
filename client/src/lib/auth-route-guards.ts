@@ -3,7 +3,9 @@
 /** Paths that require SUPER_ADMIN (nav + middleware). */
 export function isAdminOnlyPath(pathname: string): boolean {
   return (
-    pathname.startsWith("/users") || pathname.startsWith("/categories")
+    pathname.startsWith("/users") ||
+    pathname.startsWith("/categories") ||
+    pathname.startsWith("/seller-profiles")
   );
 }
 
@@ -45,6 +47,7 @@ export function isProtectedShopPath(pathname: string): boolean {
     pathname.startsWith("/notifications") ||
     pathname.startsWith("/reviews") ||
     pathname.startsWith("/become-seller") ||
+    pathname.startsWith("/seller-profiles") ||
     // Exact seller store settings — do not match public `/stores/...`
     isSellerOrAdminStorePath(pathname)
   );

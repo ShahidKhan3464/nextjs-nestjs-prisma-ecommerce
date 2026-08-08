@@ -112,6 +112,12 @@ export function useAppSectionMeta(): { title: string; hint?: string } {
     if (pathname.startsWith("/users/")) {
       return { title: "User detail", hint: "Customer record" };
     }
+    if (pathname === "/seller-profiles") {
+      return { title: "Seller applications", hint: "Review & approve" };
+    }
+    if (pathname.startsWith("/seller-profiles/")) {
+      return { title: "Seller application", hint: "Application detail" };
+    }
 
     return { title: "Store" };
   }, [pathname, chrome]);

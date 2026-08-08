@@ -160,15 +160,24 @@ export function AdminAnalytics() {
           </CardContent>
         </Card>
         <Card>
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0">
             <CardTitle className="text-sm font-medium">
               Pending seller approvals
             </CardTitle>
+            <Link
+              href={ROUTES.sellerProfiles}
+              className={cn(buttonVariants({ variant: "ghost", size: "sm" }))}
+            >
+              Review
+            </Link>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-semibold tabular-nums">
+            <Link
+              href={ROUTES.sellerProfiles}
+              className="text-2xl font-semibold tabular-nums hover:underline"
+            >
               {data.totals.pendingSellerApprovals ?? 0}
-            </p>
+            </Link>
           </CardContent>
         </Card>
       </div>
@@ -332,8 +341,14 @@ export function AdminAnalytics() {
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Pending approvals</CardTitle>
+            <Link
+              href={ROUTES.sellerProfiles}
+              className={cn(buttonVariants({ variant: "ghost", size: "sm" }))}
+            >
+              View all
+            </Link>
           </CardHeader>
           <CardContent>
             {(data.pendingApprovals?.length ?? 0) === 0 ? (
@@ -343,25 +358,36 @@ export function AdminAnalytics() {
               />
             ) : (
               <ul className="divide-y">
-                {data.pendingApprovals.map((item) => (
-                  <li
-                    key={`${item.kind}-${item.id}`}
-                    className="flex items-start justify-between gap-3 py-3 first:pt-0 last:pb-0"
-                  >
-                    <div className="space-y-1">
-                      <p className="text-sm font-medium">{item.name}</p>
-                      <div className="flex flex-wrap gap-2">
-                        <Badge variant="outline">{item.kind}</Badge>
-                        <Badge variant="secondary">
-                          {formatStatusLabel(item.status)}
-                        </Badge>
+                {data.pendingApprovals.map((item) => {
+                  const href =
+                    item.kind === "seller"
+                      ? ROUTES.sellerProfile(item.id)
+                      : ROUTES.sellerProfiles;
+                  return (
+                    <li
+                      key={`${item.kind}-${item.id}`}
+                      className="flex items-start justify-between gap-3 py-3 first:pt-0 last:pb-0"
+                    >
+                      <div className="space-y-1">
+                        <Link
+                          href={href}
+                          className="text-sm font-medium hover:underline"
+                        >
+                          {item.name}
+                        </Link>
+                        <div className="flex flex-wrap gap-2">
+                          <Badge variant="outline">{item.kind}</Badge>
+                          <Badge variant="secondary">
+                            {formatStatusLabel(item.status)}
+                          </Badge>
+                        </div>
                       </div>
-                    </div>
-                    <time className="text-muted-foreground shrink-0 text-xs tabular-nums">
-                      {formatOrderDate(item.createdAt)}
-                    </time>
-                  </li>
-                ))}
+                      <time className="text-muted-foreground shrink-0 text-xs tabular-nums">
+                        {formatOrderDate(item.createdAt)}
+                      </time>
+                    </li>
+                  );
+                })}
               </ul>
             )}
           </CardContent>

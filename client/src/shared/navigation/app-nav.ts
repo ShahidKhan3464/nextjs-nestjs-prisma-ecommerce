@@ -15,6 +15,7 @@ import {
   MapPin,
   Package,
   UserRound,
+  BadgeCheck,
   ShoppingBag,
   ShoppingCart,
   LayoutDashboard,
@@ -29,6 +30,8 @@ export type AppNavItem = {
   icon: LucideIcon;
   /** Roles that may see this item when it appears in a chrome menu. */
   roles: UserRole[];
+  /** Optional count badge (e.g. pending seller applications). */
+  badge?: number;
 };
 
 const ADMIN_NAV: AppNavItem[] = [
@@ -45,6 +48,13 @@ const ADMIN_NAV: AppNavItem[] = [
     label: "Users",
     href: ROUTES.users,
     roles: ["SUPER_ADMIN"],
+  },
+  {
+    icon: BadgeCheck,
+    id: "seller-profiles",
+    roles: ["SUPER_ADMIN"],
+    href: ROUTES.sellerProfiles,
+    label: "Seller applications",
   },
   {
     icon: Store,
