@@ -1,10 +1,14 @@
 # Atelier Commerce — Client Walkthrough
 
+> AI agents: follow [`AGENTS.md`](./AGENTS.md) for frontend rules and [`../AGENTS.md`](../AGENTS.md) for global rules. Workflows/ADRs: [`../docs/ai-development.md`](../docs/ai-development.md).
+
 This document describes the **Next.js 15** storefront under `client/`: folder layout, request flow, pages, BFF routes, and feature modules. Paths are relative to `client/` unless noted.
 
 Stack: **Next.js 15.5** (App Router under `src/`), **React 19**, **TypeScript**, brand **“Atelier Commerce”**.
 
-The client talks to a **NestJS backend** through a **BFF layer** (`src/app/api/v1/**`) that proxies requests, sets auth cookies, and maps Nest shapes to UI types. The browser never calls Nest directly.
+The client talks to a **NestJS backend** through a **BFF layer** (`src/app/api/v1/**`) that proxies requests, sets auth cookies, and maps Nest shapes to UI types. Browser/SSR **JSON and auth** traffic goes through the BFF (Axios does not call Nest APIs). Public image assets may still load from Nest `/uploads/**`; private files use secure file endpoints.
+
+Auth is **custom JWT** (`jose` + Nest `/auth/*`) — not Clerk.
 
 ---
 
@@ -25,6 +29,7 @@ The client talks to a **NestJS backend** through a **BFF layer** (`src/app/api/v
 | `src/middleware.ts` | JWT cookie guards, role paths, legacy `/admin` redirects |
 | `src/i18n/messages/` | `en.json` (locale stub via `siteConfig`) |
 | `components.json` | **shadcn** CLI config (`npx shadcn add`) |
+| `vitest.config.ts` | Unit tests (`src/**/*.test.ts(x)`) |
 
 ---
 
@@ -40,11 +45,12 @@ Browser
 
 **Patterns in use:**
 
-- **BFF:** Route Handlers forward cookies / Bearer and normalize Nest `{ data, version }` envelopes.
+- **BFF:** Route Handlers forward cookies / Bearer, unwrap Nest `{ data, version }`, and return client `{ data }` (see `ApiResponse`; optional `meta`).
 - **Feature modules:** each of `admin`, `customer`, `seller`, `auth` owns components, services, types, schemas.
-- **Role-aware shared routes:** `/dashboard`, `/products`, `/orders`, `/reviews` pick UI from session role.
+- **Role-aware shared routes:** `/dashboard`, `/products`, `/orders`, `/payments`, `/reviews` pick UI from session role.
 - **Client state:** Zustand for cart, wishlist, auth UI, checkout wizard; TanStack Query for server lists/details.
 - **Thin server pages:** `page.tsx` branches on role or fetches data, then delegates to `"use client"` modules.
+- **Product CRUD is seller-owned:** create/edit pages live under the `(admin)` route group for layout reuse, but call **seller** modules and `/api/v1/seller/products/*` (no admin product BFF).
 
 ---
 
@@ -59,9 +65,9 @@ src/
 │   ├── (marketing)/              # Public landing
 │   ├── (auth)/                   # Login, register, password reset
 │   ├── (customer)/               # Cart, checkout, wishlist, profile, PDP, seller apply
-│   ├── (admin)/                  # Categories, users, product create/edit (shared with sellers)
-│   ├── (shared)/                 # Role-aware: dashboard, products, orders, store, reviews
-│   └── api/v1/                   # BFF Route Handlers
+│   ├── (admin)/                  # Users, categories, seller-profiles, stores; product create/edit (seller UI)
+│   ├── (shared)/                 # Role-aware: dashboard, products, orders, payments, store, reviews
+│   └── api/v1/                   # BFF Route Handlers (~91 routes)
 ├── components/ui/                # shadcn primitives
 ├── config/site.ts
 ├── constants/routes.ts, query-keys.ts
@@ -87,7 +93,7 @@ Parentheses in folder names are **route groups** — they organize files without
 | `(marketing)` | `SiteShell` | Public landing |
 | `(auth)` | `SiteShell` (centered card, no footer) | Login / register / password |
 | `(customer)` | `ShopMountedShell` → buyer chrome | Shopping + profile + become-seller |
-| `(admin)` | `ShopMountedShell` | Admin (also hosts product create/edit used by sellers) |
+| `(admin)` | `ShopMountedShell` | Admin pages + seller product create/edit |
 | `(shared)` | `ShopMountedShell` | Role-switching pages |
 
 ### Marketing — `(marketing)/`
@@ -130,23 +136,29 @@ URLs are **not** under `/admin`. Middleware redirects legacy `/admin/*` → thes
 | `/categories` | Category list |
 | `/categories/new` | Create category |
 | `/categories/[id]` | Edit category |
-| `/products/new` | Create product (**admin or seller** form by role) |
-| `/products/edit/[id]` | Edit product (**admin or seller**) |
+| `/seller-profiles` | Seller applications list |
+| `/seller-profiles/[id]` | Application detail (approve / reject / suspend) |
+| `/stores` | Admin store list (not public `/stores/[slug]`) |
+| `/stores/manage/[id]` | Admin store detail (verify / suspend) |
+| `/products/new` | **Seller** product create form |
+| `/products/edit/[id]` | **Seller** product edit form |
 
 ### Shared — `(shared)/`
 
 | URL | Purpose |
 |-----|---------|
 | `/dashboard` | Role dashboard: admin analytics / seller / buyer |
-| `/products` | Catalog browse **or** admin/seller product management |
-| `/products/manage/[id]` | Seller product detail / manage |
+| `/products` | Catalog browse **or** seller product management |
+| `/products/manage/[id]` | Seller product detail / manage (variants, publish, archive) |
 | `/orders` | Orders list by role |
 | `/orders/[id]` | Order detail by role |
+| `/payments` | Payments list (admin / seller) |
+| `/payments/[id]` | Payment detail (admin refunds; seller COD confirm/reject) |
 | `/reviews` | Admin/seller reviews (buyers redirected to dashboard) |
 | `/store` | Seller storefront settings |
 | `/stores/[slug]` | Public store page (ISR `revalidate = 60`) |
 
-Also under `app/`: per-group `loading.tsx` / `error.tsx` / `not-found.tsx` where present.
+Also under `app/`: per-group `loading.tsx` / `error.tsx` / `not-found.tsx` where present; extra errors under `(shared)/products`, `products/manage`, and `stores`.
 
 ---
 
@@ -160,14 +172,15 @@ Helpers: `lib/auth-route-guards.ts`, `lib/server-auth.ts`, `lib/auth-cookies.ts`
 |------|----------|
 | Legacy redirect | `/admin` → `/dashboard`; `/admin/*` → strip `/admin` prefix |
 | Public-only | `/`, `/login`, `/register`, `/forgot-password`, `/reset-password` — authenticated users → return path or `/dashboard` |
-| Public catalog | `/products` (except manage/edit/new), `/stores/*`, `/products/[slug]` — no auth required |
+| Public catalog | `/products` (except manage/edit/new), `/stores/[slug]`, `/products/[slug]` — no auth required |
 | Protected shop | Require valid session JWT; else `/login?next=…` |
 | Blocked users | Clear cookies → `/login?blocked=1` |
-| Admin-only | `/users`, `/categories` → `SUPER_ADMIN` |
-| Seller or admin | `/products/new|edit|manage`, `/store` |
+| Admin-only | `/users`, `/categories`, `/seller-profiles`, `/stores` (exact), `/stores/manage/*` → `SUPER_ADMIN` |
+| Seller product paths | `/products/new`, `/products/edit/*`, `/products/manage/*` → `SELLER` |
+| Seller store settings | `/store` → `SELLER` |
 | Return path | Sets `shop_return_path` on protected navigations |
 
-**Protected prefixes include:** dashboard, profile, orders, cart, checkout, wishlist, users, categories, notifications, reviews, become-seller, product management, `/store`.
+**Protected prefixes include:** dashboard, profile, orders, payments, cart, checkout, wishlist, users, categories, notifications, reviews, become-seller, seller-profiles, product management, admin stores, seller `/store`.
 
 ---
 
@@ -193,6 +206,8 @@ Helpers: `lib/auth-route-guards.ts`, `lib/server-auth.ts`, `lib/auth-cookies.ts`
 
 Also: `BlockedSessionGuard`, `shop_return_path` cookie, `/api/v1/auth/session` for session reads.
 
+Chrome resolution (`shared/navigation/app-nav.ts`): super admin → admin portal; seller → seller portal (+ buyer cart/wishlist extras if also buyer); else buyer.
+
 ---
 
 ## Rendering modes
@@ -214,7 +229,7 @@ No `generateStaticParams` — generated on first request, then cached.
 
 | Route | Why |
 |-------|-----|
-| `/products`, `/dashboard`, `/orders`, `/orders/[id]`, `/reviews`, `/store` | Session cookie + role branching |
+| `/products`, `/dashboard`, `/orders`, `/orders/[id]`, `/payments`, `/payments/[id]`, `/reviews`, `/store` | Session cookie + role branching |
 | `/profile` | Layout `force-dynamic` |
 | Dynamic `[id]` admin pages | Path params / Query |
 
@@ -239,6 +254,8 @@ Pattern: validate session where needed → `getBackendUrl()` + `forwardAuthoriza
 
 Guards: `requireUser` / `requireAdmin` / `requireSeller` (`lib/require-auth.ts`).
 
+**~91 Route Handlers** under auth / admin / customer / seller. There is **no** `/api/v1/admin/products/*`.
+
 ### Auth — `/api/v1/auth/`
 
 | Route | Methods | Purpose |
@@ -257,10 +274,15 @@ Guards: `requireUser` / `requireAdmin` / `requireSeller` (`lib/require-auth.ts`)
 |-------|---------|---------|
 | `analytics` | GET | Admin dashboard metrics |
 | `categories`, `categories/[id]`, `categories/[id]/restore` | GET, POST, PATCH, DELETE | Category CRUD + restore |
-| `products`, `products/[id]`, `products/[id]/restore` | GET, POST, PATCH, DELETE | Product CRUD + restore |
 | `orders`, `orders/[id]`, `orders/[id]/status`, `orders/[id]/cancel` | GET, PATCH, POST | Orders |
+| `payments`, `payments/[id]`, `payments/[id]/refunds` | GET, POST | Payments + admin refund record |
 | `users`, `users/[id]`, `users/[id]/detail`, `users/[id]/block` | GET, PATCH | Users |
-| `reviews` | GET | All reviews |
+| `reviews`, `reviews/[id]` | GET, DELETE | Platform reviews + moderate delete |
+| `seller-profiles`, `seller-profiles/[id]` | GET | Seller applications |
+| `seller-profiles/[id]/approve`, `reject`, `suspend` | PATCH | Application decisions |
+| `stores`, `stores/[id]` | GET | Store list / detail |
+| `stores/[id]/verify`, `unverify`, `suspend`, `unsuspend` | PATCH | Store moderation |
+| `files/secure/[fileId]` | GET | Proxy private Nest file stream (e.g. seller docs) |
 
 ### Customer — `/api/v1/customer/`
 
@@ -270,12 +292,12 @@ Guards: `requireUser` / `requireAdmin` / `requireSeller` (`lib/require-auth.ts`)
 | `categories` | GET | Catalog categories |
 | `products`, `products/[slug]` | GET | Product list + PDP |
 | `stores/[slug]` | GET | Public store |
-| `cart`, `cart/sync`, `cart/items/[variantId]` | GET, POST, PATCH, DELETE | Cart CRUD + sync |
+| `cart`, `cart/sync`, `cart/items/[variantId]` | GET, POST, PATCH, DELETE | Cart CRUD + sync (+ clear via DELETE `cart`) |
 | `wishlist`, `wishlist/sync`, `wishlist/toggle/[productId]` | GET, POST | Wishlist |
 | `addresses`, `addresses/[id]`, `addresses/[id]/default` | GET, POST, PATCH, DELETE | Address book |
 | `profile/me`, `profile/me/password`, `profile/me/avatar` | GET, PATCH, POST | Profile |
 | `orders`, `orders/[id]`, `orders/[id]/cancel` | GET, POST | Order history |
-| `orders/checkout`, `checkout/complete`, `checkout/cancel` | POST | Checkout flow |
+| `orders/checkout`, `orders/checkout/complete`, `orders/checkout/cancel` | POST | Checkout flow |
 | `notifications`, `notifications/unread-count`, `notifications/read-all`, `notifications/[id]/read` | GET, PATCH | Notifications |
 | `reviews`, `reviews/[id]`, `reviews/product/[productId]`, `reviews/product/[productId]/summary`, `reviews/store/[storeId]/reputation` | GET, POST, PATCH, DELETE | Reviews |
 | `seller-profile`, `seller-profile/me`, `seller-profile/me/documents` | GET, POST, PATCH | Become-seller |
@@ -290,6 +312,8 @@ Guards: `requireUser` / `requireAdmin` / `requireSeller` (`lib/require-auth.ts`)
 | `products/[id]/publish`, `archive`, `restore` | PATCH | Lifecycle |
 | `product-variants`, `product-variants/[id]` | GET, POST, PATCH, DELETE | Variants |
 | `orders`, `orders/[id]`, `orders/[id]/status` | GET, PATCH | Store orders |
+| `payments`, `payments/[id]` | GET | Store payments |
+| `payments/[id]/cod/confirm`, `payments/[id]/cod/reject` | POST | COD actions |
 | `reviews` | GET | Reviews on seller products |
 | `store/me`, `store/me/files`, `store/me/files/[type]` | GET, PATCH, POST, DELETE | Store + logo/banner |
 
@@ -304,7 +328,7 @@ Guards: `requireUser` / `requireAdmin` / `requireSeller` (`lib/require-auth.ts`)
 | Components | `login-form`, `register-form`, `forgot-password-form`, `reset-password-form` |
 | Services | `auth.service.ts` → `/api/v1/auth/*` |
 | Schemas / types | Zod forms; `User`, `UserRole` |
-| Utils | `roles.ts` — `isBuyer`, `isSeller`, `isSuperAdmin` |
+| Hooks / utils | `use-roles`; `roles.ts` — `isBuyer`, `isSeller`, `isSuperAdmin` |
 
 ### `modules/admin/`
 
@@ -313,9 +337,11 @@ Guards: `requireUser` / `requireAdmin` / `requireSeller` (`lib/require-auth.ts`)
 | `categories/` | list, form | `categories.service.ts` | CRUD + restore |
 | `dashboard/` | `admin-analytics` (Recharts) | `analytics.service.ts` | KPIs |
 | `orders/` | list, detail | `orders.service.ts` | Status, cancel |
-| `products/` | list, create, update | `products.service.ts` | Images, variants |
+| `payments/` | list, detail, badges, refund dialog | `payments.service.ts` | Admin refunds |
 | `users/` | list, detail | `users.service.ts` | Block |
-| `reviews/` | `admin-reviews-list` | `reviews.service.ts` | Platform reviews |
+| `reviews/` | `admin-reviews-list` | `reviews.service.ts` | Platform reviews + delete |
+| `seller-profiles/` | list, detail, approve/reject/suspend dialogs | seller-profiles service | Become-seller moderation |
+| `stores/` | list, detail, suspend/confirm dialogs | `stores.service.ts` | Verify / suspend |
 | `shared/` | table / filter skeletons | — | Loading UI |
 
 ### `modules/customer/`
@@ -344,6 +370,7 @@ Guards: `requireUser` / `requireAdmin` / `requireSeller` (`lib/require-auth.ts`)
 | `dashboard/` | Seller dashboard |
 | `products/` | List, create, edit, detail, variants, status badge |
 | `orders/` | Seller orders list + detail |
+| `payments/` | Payments list/detail + COD confirm/reject dialogs |
 | `store/` | Store page, edit form, image upload |
 | `reviews/` | Seller reviews list |
 
@@ -393,9 +420,9 @@ Hydration: `shared/hooks/use-cart-hydrate.ts` and `use-wishlist-hydrate.ts` sync
 | `nest-product-mapper.ts` | Product |
 | `nest-seller-product-mapper.ts` | Seller product |
 | `nest-seller-variant-mapper.ts` | Variants |
-| `nest-catalog-mapper.ts` | Catalog lists |
 | `nest-cart-mapper.ts` | Cart |
 | `nest-order-mapper.ts` | Orders |
+| `nest-payment-mapper.ts` | Payments |
 | `nest-user-mapper.ts` | Users |
 | `nest-store-mapper.ts` | Stores |
 | `nest-seller-profile-mapper.ts` | Seller profiles |
@@ -431,7 +458,11 @@ Hydration: `shared/hooks/use-cart-hydrate.ts` and `use-wishlist-hydrate.ts` sync
 
 ### Nav
 
-`shared/navigation/app-nav.ts` — chrome menus by role (`admin` / `seller` / `buyer`).
+`shared/navigation/app-nav.ts` — chrome menus by role:
+
+- **Admin:** dashboard, users, seller applications, categories, stores, orders, payments, reviews, notifications
+- **Seller:** dashboard, store, products, orders, payments, reviews, notifications, profile (+ cart/wishlist if also buyer)
+- **Buyer:** dashboard, products, cart, wishlist, orders, notifications, addresses, become-seller, profile
 
 ### Providers / feedback / marketplace
 
@@ -456,7 +487,7 @@ Hydration: `shared/hooks/use-cart-hydrate.ts` and `use-wishlist-hydrate.ts` sync
 | Auth (browser) | `auth-store` + `/api/v1/auth/*` + HTTP-only cookies |
 | Auth (server) | `getAccessTokenPayload()` / `requireAuth()` from cookies |
 | Cart / wishlist | Zustand + customer BFF + sync on login |
-| Catalog / orders / reviews | TanStack Query via module services → BFF → Nest |
+| Catalog / orders / payments / reviews | TanStack Query via module services → BFF → Nest |
 | Checkout | `checkout-store` + Stripe Elements + checkout Route Handlers |
 | Query keys | `constants/query-keys.ts` (stale ~60s, retry 1, no refetchOnFocus by default) |
 
@@ -493,17 +524,23 @@ Key variables (see local `.env` / deployment config):
 | `NEXT_PUBLIC_UPLOADS_PROTOCOL` | `http` / `https` |
 | `NEXT_PUBLIC_UPLOADS_PORT` | Default `3001` when host is localhost |
 
+`next.config.ts` allows remote images from Picsum and Nest `/uploads/**`.
+
 ---
 
 ## Scripts
 
 ```bash
-npm run dev      # development server (port 3000)
-npm run build    # production build
-npm run start    # production server
-npm run lint     # ESLint
-npm run format   # Prettier
+npm run dev         # development server (port 3000)
+npm run build       # production build
+npm run start       # production server
+npm run lint        # ESLint
+npm run format      # Prettier
+npm run test        # Vitest (run once)
+npm run test:watch  # Vitest watch
 ```
+
+Current unit coverage is thin (e.g. `modules/customer/checkout/services/checkout.service.test.ts`).
 
 ---
 
@@ -521,7 +558,14 @@ npm run format   # Prettier
 1. Middleware requires auth.
 2. `become-seller-view` loads `/api/v1/customer/seller-profile/me`.
 3. Buyer submits application + documents → Nest `seller-profile` endpoints.
-4. Admin approves on the **server** (`PATCH /seller-profile/:id/approve`); client then refreshes session so `SELLER` role unlocks seller chrome.
+4. Admin reviews at `/seller-profiles` → BFF `PATCH .../approve|reject|suspend`.
+5. On approve, Nest creates store + `SELLER` role + notification; client refreshes session so seller chrome unlocks.
+
+### Admin store moderation (`/stores` → `/stores/manage/:id`)
+
+1. Middleware requires `SUPER_ADMIN` (exact `/stores` / `/stores/manage/*`, not public slug pages).
+2. List/detail via `/api/v1/admin/stores*`.
+3. Verify / unverify / suspend / unsuspend via dedicated PATCH handlers.
 
 ### Checkout
 
@@ -529,7 +573,13 @@ npm run format   # Prettier
 2. Wizard collects shipping → `createCheckout` → Stripe payment (or COD) → `completeCheckout`.
 3. BFF forwards to Nest `orders/checkout*`; Nest handles stock, orders, email, notifications.
 
+### Payments (`/payments`)
+
+1. Shared page branches on role.
+2. Admin: list/detail + refund dialog → `/api/v1/admin/payments*`.
+3. Seller: list/detail + COD confirm/reject → `/api/v1/seller/payments*`.
+
 ### Role-shared products (`/products`)
 
 1. Server page reads session cookie.
-2. Renders admin list, seller list, or customer catalog from the matching module.
+2. Renders seller list or customer catalog from the matching module (admins are not product editors).

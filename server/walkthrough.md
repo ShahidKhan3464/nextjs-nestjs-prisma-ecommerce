@@ -1,8 +1,12 @@
 # Multi-Vendor E-Commerce — Server Walkthrough
 
+> AI agents: follow [`AGENTS.md`](./AGENTS.md) for backend rules and [`../AGENTS.md`](../AGENTS.md) for global rules. Workflows/ADRs: [`../docs/ai-development.md`](../docs/ai-development.md).
+
 NestJS API under `server/` (default port **3001**). PostgreSQL via **Prisma 7**. Paths below are relative to `server/` unless noted.
 
-There is **no global URL prefix**. Controllers mount at root (`/auth`, `/products`, …). The Next.js BFF remaps these under `/api/v1/{role}/…`. Response envelopes use `API_VERSION` as `{ data, version }` only.
+There is **no global URL prefix**. Controllers mount at root (`/auth`, `/products`, …). The Next.js BFF remaps these under `/api/v1/{role}/…`. Nest success envelopes use `API_VERSION` as `{ data, version }` only (the BFF unwraps this; client `ApiResponse` is `{ data, meta? }` without `version`).
+
+Auth is **custom JWT** (`@nestjs/jwt` + bcrypt) — not Clerk. Roles: `BUYER` | `SELLER` | `SUPER_ADMIN`.
 
 ---
 
@@ -65,7 +69,7 @@ All live under `src/modules/` (plus `src/health/`):
 | **Auth** | `auth` | Register, login, forgot/reset password, refresh, logout |
 | **Users** | `users` | Profile, password, avatar; admin list/detail/block |
 | **Sellers** | `sellers` | Become-seller application, docs, admin approve/reject/suspend |
-| **Stores** | `stores` | Seller store CRUD/files; admin list/suspend/verify |
+| **Stores** | `stores` | Seller store CRUD/files; admin list + suspend/verify |
 | **Categories** | `categories` | Public catalog; admin CRUD + soft-delete/restore |
 | **Products** | `products` | Catalog, slug detail, seller catalog, publish/archive/soft-delete |
 | **Product variants** | `product-variants` | SKU / size / color / stock / price |
@@ -87,7 +91,7 @@ All live under `src/modules/` (plus `src/health/`):
 | Path | Role |
 |------|------|
 | `integrations/mail/` | SMTP + EJS templates (`MailService`) |
-| `integrations/stripe/` | Shared Stripe SDK client (`StripeService`) |
+| `integrations/stripe/` | Shared Stripe SDK client (`StripeService`) — intents, cancel, refund helpers, webhook construct |
 | `integrations/storage/` | Local disk storage + `STORAGE_PROVIDER` + multer helpers |
 
 Domain modules own business rules; integrations stay thin adapters.
@@ -129,6 +133,7 @@ Domain modules own business rules; integrations stay thin adapters.
 | `RolesGuard` | `@Roles` via `hasAnyRole` |
 | `ThrottlerGuard` | Global 100/min; auth endpoints stricter; Stripe webhook skipped |
 | `@ActiveUser()` | Current user id / roles from request |
+| `@Match()` | Password-confirm validator helper |
 
 ---
 
@@ -193,14 +198,12 @@ Auth: **Bearer required** unless noted public. Roles via `@Roles(...)`.
 | GET | `/stores/slug/:slug` | Public | Public store by slug |
 | GET | `/stores` | SUPER_ADMIN | List stores |
 | GET | `/stores/:id` | SUPER_ADMIN | Store by id |
-| PATCH | `/stores/:id` | SUPER_ADMIN | Update |
-| DELETE | `/stores/:id` | SUPER_ADMIN | Soft-delete |
 | PATCH | `/stores/:id/suspend` | SUPER_ADMIN | Suspend |
 | PATCH | `/stores/:id/unsuspend` | SUPER_ADMIN | Unsuspend |
 | PATCH | `/stores/:id/verify` | SUPER_ADMIN | Verify |
 | PATCH | `/stores/:id/unverify` | SUPER_ADMIN | Unverify |
-| POST | `/stores/:id/files` | SUPER_ADMIN | Upload store file |
-| DELETE | `/stores/:id/files/:type` | SUPER_ADMIN | Remove store file |
+
+Admin store moderation is **verify / suspend only** (no generic admin PATCH/DELETE on `:id`).
 
 ### Categories — `@Controller('categories')`
 
@@ -215,18 +218,20 @@ Auth: **Bearer required** unless noted public. Roles via `@Roles(...)`.
 
 ### Products — `@Controller('products')`
 
+Seller-owned catalog mutations (no `SUPER_ADMIN` on create/update/lifecycle).
+
 | Method | Path | Auth / roles | Purpose |
 |--------|------|--------------|---------|
 | GET | `/products/me` | SELLER | Seller’s products |
 | GET | `/products` | Public | Catalog |
 | GET | `/products/detail/:slug` | Public | By slug |
 | GET | `/products/:id` | Public | By id |
-| POST | `/products` | SELLER, SUPER_ADMIN | Create (+ images) |
-| PATCH | `/products/:id` | SELLER, SUPER_ADMIN | Update |
-| PATCH | `/products/:id/publish` | SELLER, SUPER_ADMIN | Publish (ACTIVE) |
-| PATCH | `/products/:id/archive` | SELLER, SUPER_ADMIN | Archive |
-| DELETE | `/products/:id` | SELLER, SUPER_ADMIN | Soft-delete |
-| PATCH | `/products/:id/restore` | SELLER, SUPER_ADMIN | Restore |
+| POST | `/products` | SELLER | Create (+ images) |
+| PATCH | `/products/:id` | SELLER | Update |
+| PATCH | `/products/:id/publish` | SELLER | Publish (ACTIVE) |
+| PATCH | `/products/:id/archive` | SELLER | Archive |
+| DELETE | `/products/:id` | SELLER | Soft-delete |
+| PATCH | `/products/:id/restore` | SELLER | Restore |
 
 ### Product variants — `@Controller('product-variants')`
 
@@ -236,9 +241,9 @@ Auth: **Bearer required** unless noted public. Roles via `@Roles(...)`.
 | GET | `/product-variants` | Public | Catalog list |
 | GET | `/product-variants/product/:productId` | Public | Variants for product |
 | GET | `/product-variants/:id` | Public | By id |
-| POST | `/product-variants` | SELLER, SUPER_ADMIN | Create |
-| PATCH | `/product-variants/:id` | SELLER, SUPER_ADMIN | Update |
-| DELETE | `/product-variants/:id` | SELLER, SUPER_ADMIN | Delete |
+| POST | `/product-variants` | SELLER | Create |
+| PATCH | `/product-variants/:id` | SELLER | Update |
+| DELETE | `/product-variants/:id` | SELLER | Delete |
 
 ### Cart — `@Controller('cart')` (auth)
 
@@ -284,6 +289,8 @@ Auth: **Bearer required** unless noted public. Roles via `@Roles(...)`.
 | POST | `/orders/:id/cancel` | Auth | Cancel order |
 | PATCH | `/orders/:id/status` | SELLER, SUPER_ADMIN | Update status |
 
+Also: abandoned checkout expiry runs on an interval inside `ExpireAbandonedCheckoutsProvider`.
+
 ### Payments — `@Controller('payments')`
 
 | Method | Path | Auth / roles | Purpose |
@@ -317,14 +324,14 @@ Auth: **Bearer required** unless noted public. Roles via `@Roles(...)`.
 |--------|------|--------------|---------|
 | GET | `/files/secure/:fileId` | Auth | Stream private file |
 | GET | `/files/products/:productId` | Public | List product files |
-| POST | `/files/products/:productId` | SELLER, SUPER_ADMIN | Upload product file |
-| DELETE | `/files/products/:productId/associations/:associationId` | SELLER, SUPER_ADMIN | Delete association |
+| POST | `/files/products/:productId` | SELLER | Upload product file |
+| DELETE | `/files/products/:productId/associations/:associationId` | SELLER | Delete association |
 | GET | `/files/stores/me` | SELLER | My store files |
 | GET | `/files/stores/:storeId` | Public | Store files |
 | POST | `/files/stores/me` | SELLER | Upload my store file |
-| POST | `/files/stores/:storeId` | SELLER, SUPER_ADMIN | Upload store file |
+| POST | `/files/stores/:storeId` | SELLER | Upload store file |
 | DELETE | `/files/stores/me/associations/:associationId` | SELLER | Delete my store file |
-| DELETE | `/files/stores/:storeId/associations/:associationId` | SELLER, SUPER_ADMIN | Delete store file |
+| DELETE | `/files/stores/:storeId/associations/:associationId` | SELLER | Delete store file |
 | GET | `/files/users/me` | Auth | My user files |
 | GET | `/files/users/:userId` | SUPER_ADMIN | User files |
 | POST | `/files/users/me` | Auth | Upload my file |
@@ -357,11 +364,16 @@ Auth: **Bearer required** unless noted public. Roles via `@Roles(...)`.
 | GET | `/dashboard/seller` | SELLER | Seller analytics |
 | GET | `/dashboard/customer` | Auth | Customer overview |
 
+### Static (not controllers)
+
+- `GET /uploads/*` — public static assets
+- Private subdirs under `/uploads/{subdir}` return **404** for `sellers` and `customer-documents`; use `/files/secure/:id`
+
 ---
 
 ## Database (Prisma)
 
-Schema: `prisma/schema.prisma`. Soft deletes via `deletedAt` on users, sellers, stores, categories, products.
+Schema: `prisma/schema.prisma`. Soft deletes via `deletedAt` on `User`, `SellerProfile`, `Store`, `Category`, `Product` (not on `ProductVariant`).
 
 ### Models
 
@@ -385,6 +397,12 @@ Schema: `prisma/schema.prisma`. Soft deletes via `deletedAt` on users, sellers, 
 | Order status | `PENDING`, `SHIPPED`, `DELIVERED`, `CANCELLED` |
 | Payment | providers `STRIPE` / `COD` / `OTHER`; status lifecycle |
 | Notifications | order / seller / product / system types |
+
+### Migrations present
+
+- `20260717000000_baseline`
+- `20260804170000_buyer_addresses_and_notification_types`
+- `20260805220000_production_readiness_indexes`
 
 ---
 
@@ -423,17 +441,24 @@ Example: `SellerService` → `CreateSellerProfileProvider`, `ApproveSellerProfil
 
 **`main.ts` extras:** `rawBody: true` (Stripe), `trust proxy`, helmet, compression, CORS, static `/uploads/` with private subdirs blocked, shutdown hooks.
 
+### Module-local pipes / interceptors
+
+- Files: upload interceptors + `RequireUploadedFilePipe`
+- Products: `ParseProductImagesPipe`
+- Nest `FileInterceptor` / `FilesInterceptor` with multer disk options
+
 ---
 
 ## Notable features
 
 - **Multi-vendor:** buyer → seller application → admin approve → store + `SELLER` role + notification.
 - **Checkout:** Stripe PaymentIntents + webhook; COD with seller/admin confirm/reject.
-- **Inventory:** variants with stock; order flow adjusts stock.
+- **Inventory:** variants with stock; order flow adjusts stock (row locks on checkout).
 - **Files:** public static uploads vs private secure download; seller documents private.
 - **Notifications:** order / seller lifecycle events.
 - **Dashboards:** admin (revenue, pending sellers, low stock…), seller, customer.
-- **Soft deletes** + product publish / archive lifecycle.
+- **Soft deletes** + product publish / archive lifecycle (seller-owned).
+- **Store moderation:** admin verify / suspend (no generic admin store edit endpoint).
 - **Throttling** + stricter auth limits; Stripe webhook unthrottled.
 - **Seeders:** admin seed active (`ALLOW_ADMIN_SEED`); demo seed providers present but mostly commented out.
 
@@ -473,11 +498,19 @@ Config namespaces: `app`, `jwt`, `mail`, `stripe`, `storage`, `database`.
 ### Scripts
 
 ```bash
-npm run start:dev   # watch mode
-npm run start:prod  # production
-npm run build
-npm run test        # Jest unit (scaffolding; few/no specs yet)
+npm run start:dev              # watch mode
+npm run start:debug            # debug + watch
+npm run start:prod             # production (node dist/main)
+npm run build                  # prisma generate && nest build
+npm run lint
+npm run format
+npm run test                   # Jest unit
+npm run test:watch
+npm run test:cov
 npm run test:e2e
+npm run prisma:generate
+npm run prisma:migrate:dev
+npm run prisma:migrate:deploy
 ```
 
 ---
@@ -488,3 +521,4 @@ npm run test:e2e
 2. Read the controller for routes + roles.
 3. Follow the service into `providers/` for business rules.
 4. Check `dto/` for request/response shapes and `prisma/schema.prisma` for persistence.
+5. On the client, find the matching BFF under `client/src/app/api/v1/{admin|customer|seller}/…`.
