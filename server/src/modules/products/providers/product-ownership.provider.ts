@@ -1,13 +1,11 @@
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UserRole } from 'src/common/enums/user-role.enum';
 import { StoreStatus } from 'src/modules/stores/constants/store.constants';
-import { isSuperAdmin } from 'src/common/utils/authorization.util';
 import { SellerProfileStatus } from 'src/modules/sellers/constants/seller.constants';
 import {
   Injectable,
   NotFoundException,
   ForbiddenException,
-  BadRequestException,
 } from '@nestjs/common';
 
 const STORE_OWNERSHIP_INCLUDE = {
@@ -48,41 +46,15 @@ export class ProductOwnershipProvider {
     return store;
   }
 
-  public async findStoreByIdOrThrow(storeId: number) {
-    const store = await this.prisma.store.findFirst({
-      where: { id: storeId, deletedAt: null },
-      include: STORE_OWNERSHIP_INCLUDE,
-    });
-
-    if (!store) {
-      throw new NotFoundException('Store not found');
-    }
-
-    return store;
-  }
-
   /**
    * Resolves the store a product must be created under.
-   * Sellers: always use their owned store (ignore client storeId).
-   * SUPER_ADMIN: must provide storeId.
+   * Always uses the authenticated seller's owned store (ignores client storeId).
    */
   public async resolveStoreForCreate(
     userId: number,
-    roles: UserRole[],
-    storeIdFromClient?: number,
+    _roles: UserRole[],
+    _storeIdFromClient?: number,
   ) {
-    if (isSuperAdmin(roles)) {
-      if (storeIdFromClient === undefined || storeIdFromClient === null) {
-        throw new BadRequestException(
-          'storeId is required when creating a product as SUPER_ADMIN',
-        );
-      }
-
-      const store = await this.findStoreByIdOrThrow(storeIdFromClient);
-      this.assertStoreAllowsProductWrite(store);
-      return store;
-    }
-
     const store = await this.findOwnedStoreOrThrow(userId);
 
     if (store.sellerProfile.status !== SellerProfileStatus.APPROVED) {
@@ -113,22 +85,18 @@ export class ProductOwnershipProvider {
   }
 
   /**
-   * Ensures the actor may manage the product: owning seller (APPROVED) or SUPER_ADMIN.
-   * Also blocks mutations when the store is SUSPENDED (except SUPER_ADMIN soft-delete restore contexts).
+   * Ensures the actor may manage the product: owning approved seller only.
+   * Blocks mutations when the store is SUSPENDED unless allowSuspendedStore.
    */
   public async assertCanManage(
     productId: number,
     userId: number,
-    roles: UserRole[],
+    _roles: UserRole[],
     options?: { includeDeleted?: boolean; allowSuspendedStore?: boolean },
   ) {
     const product = await this.findProductOrThrow(productId, {
       includeDeleted: options?.includeDeleted,
     });
-
-    if (isSuperAdmin(roles)) {
-      return product;
-    }
 
     if (product.store.sellerProfile.userId !== userId) {
       throw new ForbiddenException('You do not own this product');

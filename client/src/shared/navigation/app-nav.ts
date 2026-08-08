@@ -13,6 +13,7 @@ import {
   Store,
   Users,
   MapPin,
+  Wallet,
   Package,
   UserRound,
   BadgeCheck,
@@ -57,24 +58,31 @@ const ADMIN_NAV: AppNavItem[] = [
     label: "Seller applications",
   },
   {
-    icon: Store,
+    icon: Package,
     id: "categories",
     label: "Categories",
     roles: ["SUPER_ADMIN"],
     href: ROUTES.categories,
   },
   {
-    icon: Package,
-    id: "products",
-    label: "Products",
-    href: ROUTES.products,
+    icon: Store,
+    id: "stores",
+    label: "Stores",
     roles: ["SUPER_ADMIN"],
+    href: ROUTES.adminStores,
   },
   {
     id: "orders",
     label: "Orders",
     icon: ShoppingCart,
     href: ROUTES.orders,
+    roles: ["SUPER_ADMIN"],
+  },
+  {
+    icon: Wallet,
+    id: "payments",
+    label: "Payments",
+    href: ROUTES.payments,
     roles: ["SUPER_ADMIN"],
   },
   {
@@ -121,6 +129,13 @@ const SELLER_NAV: AppNavItem[] = [
     roles: ["SELLER"],
     icon: ShoppingCart,
     href: ROUTES.orders,
+  },
+  {
+    icon: Wallet,
+    id: "payments",
+    label: "Payments",
+    roles: ["SELLER"],
+    href: ROUTES.payments,
   },
   {
     icon: Star,
@@ -284,6 +299,13 @@ export function getNavForRoles(roles: UserRole[]): AppNavItem[] {
 export function isNavItemActive(pathname: string, href: string): boolean {
   if (href === ROUTES.dashboard) {
     return pathname === ROUTES.dashboard || pathname === `${ROUTES.dashboard}/`;
+  }
+  // Admin store list must not match public `/stores/:slug`.
+  if (href === ROUTES.adminStores) {
+    return (
+      pathname === ROUTES.adminStores ||
+      pathname.startsWith(`${ROUTES.adminStores}/manage`)
+    );
   }
   return pathname === href || pathname.startsWith(`${href}/`);
 }

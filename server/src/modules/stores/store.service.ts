@@ -52,28 +52,11 @@ export class StoreService {
     return this.updateStoreProvider.updateMe(userId, roles, dto);
   }
 
-  public updateStore(
-    storeId: number,
-    userId: number,
-    roles: UserRole[],
-    dto: UpdateStoreDto,
-  ): Promise<StoreMapped> {
-    return this.updateStoreProvider.updateById(storeId, userId, roles, dto);
-  }
-
   public softDeleteMyStore(
     userId: number,
     roles: UserRole[],
   ): Promise<StoreMapped> {
     return this.softDeleteStoreProvider.softDeleteMe(userId, roles);
-  }
-
-  public softDeleteStore(
-    storeId: number,
-    userId: number,
-    roles: UserRole[],
-  ): Promise<StoreMapped> {
-    return this.softDeleteStoreProvider.softDeleteById(storeId, userId, roles);
   }
 
   public suspendStore(
@@ -109,36 +92,11 @@ export class StoreService {
     );
   }
 
-  public uploadStoreFile(
-    storeId: number,
-    userId: number,
-    roles: UserRole[],
-    type: StoreFileType,
-    file: Express.Multer.File,
-  ): Promise<StoreMapped> {
-    return this.uploadStoreFileProvider.upload(
-      storeId,
-      userId,
-      roles,
-      type,
-      file,
-    );
-  }
-
   public removeMyStoreFile(
     userId: number,
     roles: UserRole[],
     type: StoreFileType,
   ): Promise<StoreMapped> {
     return this.removeStoreFileProvider.removeForOwner(userId, roles, type);
-  }
-
-  public removeStoreFile(
-    storeId: number,
-    userId: number,
-    roles: UserRole[],
-    type: StoreFileType,
-  ): Promise<StoreMapped> {
-    return this.removeStoreFileProvider.remove(storeId, userId, roles, type);
   }
 }

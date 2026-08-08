@@ -66,7 +66,7 @@ export class FilesController {
   }
 
   @Post('products/:productId')
-  @Roles(UserRole.SELLER, UserRole.SUPER_ADMIN)
+  @Roles(UserRole.SELLER)
   @ApiConsumes('multipart/form-data')
   @ApiBody({ type: UploadProductFileDto })
   @ApiCreatedResponse({ type: FileAssociationResponseDto })
@@ -88,7 +88,7 @@ export class FilesController {
   }
 
   @Delete('products/:productId/associations/:associationId')
-  @Roles(UserRole.SELLER, UserRole.SUPER_ADMIN)
+  @Roles(UserRole.SELLER)
   @ApiOkResponse({ type: DeleteFileResponseDto })
   deleteProductFile(
     @Param('productId', ParseIntPipe) productId: number,
@@ -136,7 +136,7 @@ export class FilesController {
   }
 
   @Post('stores/:storeId')
-  @Roles(UserRole.SELLER, UserRole.SUPER_ADMIN)
+  @Roles(UserRole.SELLER)
   @ApiConsumes('multipart/form-data')
   @ApiBody({ type: UploadStoreFileDto })
   @ApiCreatedResponse({ type: FileAssociationResponseDto })
@@ -169,7 +169,7 @@ export class FilesController {
   }
 
   @Delete('stores/:storeId/associations/:associationId')
-  @Roles(UserRole.SELLER, UserRole.SUPER_ADMIN)
+  @Roles(UserRole.SELLER)
   @ApiOkResponse({ type: DeleteFileResponseDto })
   deleteStoreFile(
     @Param('storeId', ParseIntPipe) storeId: number,

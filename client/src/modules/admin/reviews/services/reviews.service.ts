@@ -19,3 +19,10 @@ export async function fetchAdminReviews(
   );
   return res.data.data;
 }
+
+export async function deleteAdminReview(id: string) {
+  const res = await api.delete<ApiResponse<{ deleted: boolean }>>(
+    `/api/v1/admin/reviews/${encodeURIComponent(id)}`
+  );
+  return res.data.data;
+}

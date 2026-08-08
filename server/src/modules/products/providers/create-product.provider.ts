@@ -35,7 +35,6 @@ export class CreateProductProvider {
     const store = await this.productOwnershipProvider.resolveStoreForCreate(
       userId,
       roles,
-      dto.storeId,
     );
 
     const status = dto.status ?? ProductStatus.DRAFT;

@@ -1,9 +1,8 @@
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UserRole } from 'src/common/enums/user-role.enum';
 import { StoreStatus } from 'src/modules/stores/constants/store.constants';
-import { isSuperAdmin } from 'src/common/utils/authorization.util';
-import { SellerProfileStatus } from 'src/modules/sellers/constants/seller.constants';
 import { VARIANT_OWNERSHIP_INCLUDE } from '../constants/product-variant.constants';
+import { SellerProfileStatus } from 'src/modules/sellers/constants/seller.constants';
 import {
   Injectable,
   NotFoundException,
@@ -90,8 +89,7 @@ export class VariantOwnershipProvider {
   }
 
   /**
-   * Ensures the actor may manage variants on the product:
-   * owning approved seller, or SUPER_ADMIN.
+   * Ensures the actor may manage variants on the product: owning approved seller.
    */
   public async assertCanManageProduct(
     productId: number,
@@ -125,12 +123,8 @@ export class VariantOwnershipProvider {
       };
     },
     userId: number,
-    roles: UserRole[],
+    _roles: UserRole[],
   ): void {
-    if (isSuperAdmin(roles)) {
-      return;
-    }
-
     if (product.store.sellerProfile.userId !== userId) {
       throw new ForbiddenException('You do not own this product');
     }

@@ -57,7 +57,7 @@ export class ProductsController {
     return this.productsService.findMinePaginated(userId, query);
   }
 
-  /** Catalog / admin list. Sellers manage their catalog via `GET /products/me`. */
+  /** Public catalog. Sellers manage their catalog via `GET /products/me`. */
   @Get()
   @Auth(AuthType.NONE)
   @ApiOkResponse({ type: PaginatedProductResponseDto })
@@ -80,7 +80,7 @@ export class ProductsController {
   }
 
   @Post()
-  @Roles(UserRole.SELLER, UserRole.SUPER_ADMIN)
+  @Roles(UserRole.SELLER)
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(FilesInterceptor('images', 12, imagesMulter))
   @ApiCreatedResponse({ type: ProductResponseDto })
@@ -95,7 +95,7 @@ export class ProductsController {
   }
 
   @Patch(':id')
-  @Roles(UserRole.SELLER, UserRole.SUPER_ADMIN)
+  @Roles(UserRole.SELLER)
   @ApiConsumes('multipart/form-data', 'application/json')
   @UseInterceptors(FilesInterceptor('images', 12, imagesMulter))
   @ApiOkResponse({ type: ProductResponseDto })
@@ -110,7 +110,7 @@ export class ProductsController {
   }
 
   @Patch(':id/publish')
-  @Roles(UserRole.SELLER, UserRole.SUPER_ADMIN)
+  @Roles(UserRole.SELLER)
   @ApiOkResponse({ type: ProductResponseDto })
   publish(
     @Param('id', ParseIntPipe) id: number,
@@ -121,7 +121,7 @@ export class ProductsController {
   }
 
   @Patch(':id/archive')
-  @Roles(UserRole.SELLER, UserRole.SUPER_ADMIN)
+  @Roles(UserRole.SELLER)
   @ApiOkResponse({ type: ProductResponseDto })
   archive(
     @Param('id', ParseIntPipe) id: number,
@@ -132,7 +132,7 @@ export class ProductsController {
   }
 
   @Delete(':id')
-  @Roles(UserRole.SELLER, UserRole.SUPER_ADMIN)
+  @Roles(UserRole.SELLER)
   remove(
     @Param('id', ParseIntPipe) id: number,
     @ActiveUser() userId: number,
@@ -142,7 +142,7 @@ export class ProductsController {
   }
 
   @Patch(':id/restore')
-  @Roles(UserRole.SELLER, UserRole.SUPER_ADMIN)
+  @Roles(UserRole.SELLER)
   @ApiOkResponse({ type: ProductResponseDto })
   restore(
     @Param('id', ParseIntPipe) id: number,

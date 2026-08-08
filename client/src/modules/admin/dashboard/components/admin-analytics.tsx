@@ -92,7 +92,7 @@ export function AdminAnalytics() {
           Dashboard
         </h1>
         <p className="text-muted-foreground text-sm">
-          Store performance, inventory alerts, and recent activity.
+          Marketplace overview, seller applications, and recent activity.
         </p>
       </header>
 
@@ -293,43 +293,6 @@ export function AdminAnalytics() {
                     </TableCell>
                     <TableCell className="text-right tabular-nums">
                       ${order.total.toFixed(2)}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Low stock</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {data.lowStock.length === 0 ? (
-            <EmptyState
-              title="Inventory looks healthy"
-              description="No variants are below the low-stock threshold."
-            />
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>SKU</TableHead>
-                  <TableHead className="text-center">Product</TableHead>
-                  <TableHead className="text-right">Stock</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {data.lowStock.map((row) => (
-                  <TableRow key={row.sku}>
-                    <TableCell className="font-mono text-xs">
-                      {row.sku}
-                    </TableCell>
-                    <TableCell className="text-center">{row.product}</TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      {row.stock}
                     </TableCell>
                   </TableRow>
                 ))}

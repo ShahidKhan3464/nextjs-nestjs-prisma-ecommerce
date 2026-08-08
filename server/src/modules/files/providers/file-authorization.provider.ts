@@ -15,7 +15,7 @@ export class FileAuthorizationProvider {
   public async assertCanManageProduct(
     productId: number,
     userId: number,
-    roles: UserRole[],
+    _roles: UserRole[],
   ) {
     const product = await this.prisma.product.findFirst({
       where: { id: productId, deletedAt: null },
@@ -32,10 +32,6 @@ export class FileAuthorizationProvider {
 
     if (!product) {
       throw new NotFoundException('Product not found');
-    }
-
-    if (isSuperAdmin(roles)) {
-      return product;
     }
 
     const profile = product.store.sellerProfile;
@@ -55,7 +51,7 @@ export class FileAuthorizationProvider {
   public async assertCanManageStore(
     storeId: number,
     userId: number,
-    roles: UserRole[],
+    _roles: UserRole[],
   ) {
     const store = await this.prisma.store.findFirst({
       where: { id: storeId, deletedAt: null },
@@ -68,10 +64,6 @@ export class FileAuthorizationProvider {
 
     if (!store) {
       throw new NotFoundException('Store not found');
-    }
-
-    if (isSuperAdmin(roles)) {
-      return store;
     }
 
     if (

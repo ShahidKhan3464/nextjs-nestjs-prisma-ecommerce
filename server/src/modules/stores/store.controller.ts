@@ -123,29 +123,6 @@ export class StoreController {
     return this.storeService.getById(id);
   }
 
-  @Patch(':id')
-  @Roles(UserRole.SUPER_ADMIN)
-  @ApiOkResponse({ type: StoreResponseDto })
-  update(
-    @Param('id', ParseIntPipe) id: number,
-    @ActiveUser() userId: number,
-    @ActiveUser('roles') roles: UserRole[],
-    @Body() dto: UpdateStoreDto,
-  ) {
-    return this.storeService.updateStore(id, userId, roles, dto);
-  }
-
-  @Delete(':id')
-  @Roles(UserRole.SUPER_ADMIN)
-  @ApiOkResponse({ type: StoreResponseDto })
-  softDelete(
-    @Param('id', ParseIntPipe) id: number,
-    @ActiveUser() userId: number,
-    @ActiveUser('roles') roles: UserRole[],
-  ) {
-    return this.storeService.softDeleteStore(id, userId, roles);
-  }
-
   @Patch(':id/suspend')
   @Roles(UserRole.SUPER_ADMIN)
   @ApiOkResponse({ type: StoreResponseDto })
@@ -172,33 +149,5 @@ export class StoreController {
   @ApiOkResponse({ type: StoreResponseDto })
   unverify(@Param('id', ParseIntPipe) id: number) {
     return this.storeService.unverifyStore(id);
-  }
-
-  @Post(':id/files')
-  @Roles(UserRole.SUPER_ADMIN)
-  @ApiConsumes('multipart/form-data')
-  @ApiBody({ type: UploadStoreFileDto })
-  @ApiOkResponse({ type: StoreResponseDto })
-  @UseInterceptors(FileInterceptor('file', storeImageMulter))
-  uploadFile(
-    @Param('id', ParseIntPipe) id: number,
-    @ActiveUser() userId: number,
-    @ActiveUser('roles') roles: UserRole[],
-    @Body() dto: UploadStoreFileDto,
-    @UploadedFile() file: Express.Multer.File,
-  ) {
-    return this.storeService.uploadStoreFile(id, userId, roles, dto.type, file);
-  }
-
-  @Delete(':id/files/:type')
-  @Roles(UserRole.SUPER_ADMIN)
-  @ApiOkResponse({ type: StoreResponseDto })
-  removeFile(
-    @Param('id', ParseIntPipe) id: number,
-    @ActiveUser() userId: number,
-    @ActiveUser('roles') roles: UserRole[],
-    @Param('type', new ParseEnumPipe(StoreFileType)) type: StoreFileType,
-  ) {
-    return this.storeService.removeStoreFile(id, userId, roles, type);
   }
 }

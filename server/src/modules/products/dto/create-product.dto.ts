@@ -27,21 +27,6 @@ export class CreateProductDto {
   @Min(1)
   categoryId: number;
 
-  @ApiPropertyOptional({
-    description:
-      'Required for SUPER_ADMIN. Ignored for sellers — store is resolved from the authenticated seller.',
-  })
-  @IsOptional()
-  @Transform(({ value }) =>
-    value === '' || value === undefined || value === null
-      ? undefined
-      : Number(value),
-  )
-  @Type(() => Number)
-  @IsNumber()
-  @Min(1)
-  storeId?: number;
-
   @ApiProperty()
   @IsString()
   @IsNotEmpty()

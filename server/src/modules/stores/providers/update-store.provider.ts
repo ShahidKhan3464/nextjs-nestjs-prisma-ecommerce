@@ -26,15 +26,6 @@ export class UpdateStoreProvider {
     return this.applyUpdate(owned.id, userId, roles, dto);
   }
 
-  public async updateById(
-    storeId: number,
-    userId: number,
-    roles: UserRole[],
-    dto: UpdateStoreDto,
-  ): Promise<StoreMapped> {
-    return this.applyUpdate(storeId, userId, roles, dto);
-  }
-
   private async applyUpdate(
     storeId: number,
     userId: number,

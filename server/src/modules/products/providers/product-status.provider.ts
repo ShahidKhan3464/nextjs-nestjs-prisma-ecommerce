@@ -2,7 +2,6 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { UserRole } from 'src/common/enums/user-role.enum';
 import { mapProductToResponse } from '../utils/map-product.util';
 import { Injectable, BadRequestException } from '@nestjs/common';
-import { isSuperAdmin } from 'src/common/utils/authorization.util';
 import { ProductWithRelations } from 'src/common/types/domain.types';
 import { ProductOwnershipProvider } from './product-ownership.provider';
 import { ProductStatus, PRODUCT_INCLUDE } from '../constants/product.constants';
@@ -66,11 +65,7 @@ export class ProductStatusProvider {
     );
 
     if (product.deletedAt) {
-      if (!isSuperAdmin(roles)) {
-        this.productOwnershipProvider.assertStoreAllowsProductWrite(
-          product.store,
-        );
-      }
+      this.productOwnershipProvider.assertStoreAllowsProductWrite(product.store);
 
       const restored = await this.prisma.product.update({
         where: { id: productId },
@@ -87,11 +82,7 @@ export class ProductStatusProvider {
       );
     }
 
-    if (!isSuperAdmin(roles)) {
-      this.productOwnershipProvider.assertStoreAllowsProductWrite(
-        product.store,
-      );
-    }
+    this.productOwnershipProvider.assertStoreAllowsProductWrite(product.store);
 
     assertProductStatusTransition(
       product.status as ProductStatus,

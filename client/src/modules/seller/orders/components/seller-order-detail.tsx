@@ -8,11 +8,12 @@ import { cn } from "@/lib/utils";
 import { ROUTES } from "@/constants/routes";
 import { Button } from "@/components/ui/button";
 import { queryKeys } from "@/constants/query-keys";
+import { formatOrderDate } from "@/lib/format-date";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getApiErrorMessage } from "@/lib/api-error";
-import { formatOrderDate } from "@/lib/format-date";
 import { Separator } from "@/components/ui/separator";
 import { buttonVariants } from "@/components/ui/button";
+import { SellerOrderCodActions } from "@/modules/seller/payments";
 import { EmptyState } from "@/shared/components/feedback/empty-state";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -132,6 +133,8 @@ export function SellerOrderDetail({ orderId }: Props) {
           Cancellation reason: {order.cancellationReason}
         </p>
       ) : null}
+
+      <SellerOrderCodActions orderId={order.id} />
 
       <section className="grid gap-6 sm:grid-cols-2">
         <div className="space-y-2 text-sm">

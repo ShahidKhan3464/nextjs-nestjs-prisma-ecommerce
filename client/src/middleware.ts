@@ -5,10 +5,10 @@ import { verifyToken } from "@/lib/server-auth";
 import { isSeller, isSuperAdmin } from "@/modules/auth/utils/roles";
 import {
   isAdminOnlyPath,
+  isSellerStorePath,
+  isSellerProductPath,
   isProtectedShopPath,
   safeProtectedRedirectPath,
-  isSellerOrAdminProductPath,
-  isSellerOrAdminStorePath,
 } from "@/lib/auth-route-guards";
 import {
   AUTH_SESSION_COOKIE,
@@ -92,19 +92,11 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL(ROUTES.dashboard, request.url));
   }
 
-  if (
-    isSellerOrAdminProductPath(pathname) &&
-    !isSuperAdmin(payload.roles) &&
-    !isSeller(payload.roles)
-  ) {
+  if (isSellerProductPath(pathname) && !isSeller(payload.roles)) {
     return NextResponse.redirect(new URL(ROUTES.dashboard, request.url));
   }
 
-  if (
-    isSellerOrAdminStorePath(pathname) &&
-    !isSuperAdmin(payload.roles) &&
-    !isSeller(payload.roles)
-  ) {
+  if (isSellerStorePath(pathname) && !isSeller(payload.roles)) {
     return NextResponse.redirect(new URL(ROUTES.dashboard, request.url));
   }
 

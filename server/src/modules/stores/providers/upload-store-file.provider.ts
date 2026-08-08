@@ -32,7 +32,7 @@ export class UploadStoreFileProvider {
     return this.upload(owned.id, userId, roles, type, file);
   }
 
-  public async upload(
+  private async upload(
     storeId: number,
     userId: number,
     roles: UserRole[],

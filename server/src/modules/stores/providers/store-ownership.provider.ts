@@ -3,7 +3,6 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { UserRole } from 'src/common/enums/user-role.enum';
 import { STORE_INCLUDE } from '../constants/store.constants';
 import { mapStoreToResponse } from '../utils/map-store.util';
-import { hasAnyRole } from 'src/common/utils/authorization.util';
 import { SellerProfileStatus } from 'src/modules/sellers/constants/seller.constants';
 import {
   Injectable,
@@ -47,19 +46,15 @@ export class StoreOwnershipProvider {
   }
 
   /**
-   * Ensures the actor may manage the store: owner (SELLER) or SUPER_ADMIN.
+   * Ensures the actor may manage the store content: owning approved seller only.
    * Returns the raw store row with includes.
    */
   public async assertCanManage(
     storeId: number,
     userId: number,
-    roles: UserRole[],
+    _roles: UserRole[],
   ) {
     const store = await this.findStoreByIdOrThrow(storeId);
-
-    if (hasAnyRole(roles, [UserRole.SUPER_ADMIN])) {
-      return store;
-    }
 
     if (store.sellerProfile.userId !== userId) {
       throw new ForbiddenException('You do not own this store');

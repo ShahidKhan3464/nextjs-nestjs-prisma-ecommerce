@@ -26,7 +26,7 @@ export class RemoveStoreFileProvider {
     return this.remove(owned.id, userId, roles, type);
   }
 
-  public async remove(
+  private async remove(
     storeId: number,
     userId: number,
     roles: UserRole[],

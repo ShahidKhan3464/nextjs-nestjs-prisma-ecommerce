@@ -73,7 +73,7 @@ export class ProductVariantsController {
   }
 
   @Post()
-  @Roles(UserRole.SELLER, UserRole.SUPER_ADMIN)
+  @Roles(UserRole.SELLER)
   @ApiCreatedResponse({ type: ProductVariantResponseDto })
   create(
     @ActiveUser() userId: number,
@@ -84,7 +84,7 @@ export class ProductVariantsController {
   }
 
   @Patch(':id')
-  @Roles(UserRole.SELLER, UserRole.SUPER_ADMIN)
+  @Roles(UserRole.SELLER)
   @ApiOkResponse({ type: ProductVariantResponseDto })
   update(
     @Param('id', ParseIntPipe) id: number,
@@ -96,7 +96,7 @@ export class ProductVariantsController {
   }
 
   @Delete(':id')
-  @Roles(UserRole.SELLER, UserRole.SUPER_ADMIN)
+  @Roles(UserRole.SELLER)
   remove(
     @Param('id', ParseIntPipe) id: number,
     @ActiveUser() userId: number,

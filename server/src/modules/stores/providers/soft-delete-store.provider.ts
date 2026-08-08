@@ -22,14 +22,6 @@ export class SoftDeleteStoreProvider {
     return this.applySoftDelete(owned.id, userId, roles);
   }
 
-  public async softDeleteById(
-    storeId: number,
-    userId: number,
-    roles: UserRole[],
-  ): Promise<StoreMapped> {
-    return this.applySoftDelete(storeId, userId, roles);
-  }
-
   private async applySoftDelete(
     storeId: number,
     userId: number,

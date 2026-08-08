@@ -48,9 +48,6 @@ export function useAppSectionMeta(): { title: string; hint?: string } {
       return { title: "Product", hint: "Details & variants" };
     }
     if (pathname === "/products") {
-      if (chrome === "admin") {
-        return { title: "Products", hint: "Inventory" };
-      }
       if (chrome === "seller") {
         return { title: "Products", hint: "Your listings" };
       }
@@ -117,6 +114,29 @@ export function useAppSectionMeta(): { title: string; hint?: string } {
     }
     if (pathname.startsWith("/seller-profiles/")) {
       return { title: "Seller application", hint: "Application detail" };
+    }
+    if (pathname === "/payments") {
+      return {
+        title: "Payments",
+        hint:
+          chrome === "admin"
+            ? "Refunds & inspection"
+            : chrome === "seller"
+              ? "Store payments & COD"
+              : "Payments",
+      };
+    }
+    if (pathname.startsWith("/payments/")) {
+      return {
+        title: "Payment",
+        hint: chrome === "admin" ? "Refund & details" : "Payment details",
+      };
+    }
+    if (pathname === "/stores") {
+      return { title: "Stores", hint: "Verify & suspend" };
+    }
+    if (pathname.startsWith("/stores/manage/")) {
+      return { title: "Store", hint: "Moderation" };
     }
 
     return { title: "Store" };

@@ -70,6 +70,12 @@ export const queryKeys = {
         ["seller", "orders", "list", filters ?? {}] as const,
       detail: (id: string) => ["seller", "orders", "detail", id] as const,
     },
+    payments: {
+      all: ["seller", "payments"] as const,
+      list: (filters?: Record<string, unknown>) =>
+        ["seller", "payments", "list", filters ?? {}] as const,
+      detail: (id: string) => ["seller", "payments", "detail", id] as const,
+    },
   },
   orders: {
     all: ["orders"] as const,
@@ -81,8 +87,6 @@ export const queryKeys = {
     users: ["admin", "users"] as const,
     orders: (filters?: Record<string, unknown>) =>
       ["admin", "orders", filters ?? {}] as const,
-    products: ["admin", "products"] as const,
-    product: (id: string) => ["admin", "products", "detail", id] as const,
     analytics: ["admin", "analytics"] as const,
     categories: ["admin", "categories"] as const,
     order: (id: string) => ["admin", "orders", id] as const,
@@ -91,5 +95,17 @@ export const queryKeys = {
     sellerProfiles: ["admin", "seller-profiles"] as const,
     sellerProfile: (id: string) =>
       ["admin", "seller-profiles", "detail", id] as const,
+    payments: {
+      all: ["admin", "payments"] as const,
+      list: (filters?: Record<string, unknown>) =>
+        ["admin", "payments", "list", filters ?? {}] as const,
+      detail: (id: string) => ["admin", "payments", "detail", id] as const,
+    },
+    stores: {
+      all: ["admin", "stores"] as const,
+      list: (filters?: Record<string, unknown>) =>
+        ["admin", "stores", "list", filters ?? {}] as const,
+      detail: (id: string) => ["admin", "stores", "detail", id] as const,
+    },
   },
 } as const;
