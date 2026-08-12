@@ -375,9 +375,9 @@ export function SellerProductsList() {
                 <SelectValue placeholder="Lifecycle" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="all">All</SelectItem>
                 <SelectItem value="active">In catalog</SelectItem>
                 <SelectItem value="removed">Removed</SelectItem>
-                <SelectItem value="all">All</SelectItem>
               </SelectContent>
             </Select>
           </div>

@@ -50,7 +50,7 @@ export function SellerProductCreateForm() {
 
   const { data: categories = [], isPending: categoriesLoading } = useQuery({
     queryKey: queryKeys.seller.categories,
-    queryFn: () => fetchSellerCategories({ limit: 200 }),
+    queryFn: () => fetchSellerCategories({ limit: 100 }),
   });
 
   const categoryOptions = sortCategoriesByName(categories);
