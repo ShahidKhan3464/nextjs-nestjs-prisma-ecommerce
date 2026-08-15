@@ -68,7 +68,7 @@ export function CheckoutSuccessView() {
   const storeCount = new Set(orders.map((o) => o.storeId ?? o.store?.id)).size;
 
   return (
-    <div className="mx-auto max-w-3xl space-y-8 px-4 py-10 lg:px-6">
+    <div className="mx-auto max-w-3xl space-y-8 px-4 py-5 lg:px-6">
       <div className="flex flex-col items-center text-center">
         <motion.div
           initial={{ scale: 0.6, opacity: 0 }}

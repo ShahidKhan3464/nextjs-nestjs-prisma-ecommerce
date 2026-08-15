@@ -4,7 +4,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export function CheckoutPageSkeleton() {
   return (
-    <div className="mx-auto grid max-w-6xl gap-10 px-4 py-10 lg:grid-cols-[1fr_340px] lg:px-6">
+    <div className="grid gap-10 py-5 lg:grid-cols-[1fr_450px]">
       <div className="space-y-6">
         <Skeleton className="h-10 w-full rounded-lg" />
         <div className="space-y-4">

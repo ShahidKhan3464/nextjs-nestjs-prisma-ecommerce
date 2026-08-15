@@ -333,7 +333,7 @@ export function CheckoutWizard() {
   );
 
   return (
-    <div className="mx-auto grid max-w-6xl gap-10 px-4 py-10 lg:grid-cols-[1fr_340px] lg:px-6">
+    <div className="grid gap-10 py-5 lg:grid-cols-[1fr_450px]">
       <Tabs value={step} className="space-y-6" onValueChange={handleStepChange}>
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="shipping" className="cursor-pointer">
