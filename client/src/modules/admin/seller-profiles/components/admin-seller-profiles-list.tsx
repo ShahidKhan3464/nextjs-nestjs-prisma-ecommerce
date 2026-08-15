@@ -17,7 +17,7 @@ import { EmptyState } from "@/shared/components/feedback/empty-state";
 import { useDebouncedValue } from "@/shared/hooks/use-debounced-value";
 import type { SellerProfileStatus, SellerProfileStatusFilter } from "../types";
 import { fetchAdminSellerProfiles } from "../services/seller-profiles.service";
-import { SellerStatusBadge } from "@/modules/customer/seller-registration/components/seller-status-badge";
+import { SellerStatusBadge } from "@/modules/buyer/seller-registration/components/seller-status-badge";
 import {
   Table,
   TableRow,

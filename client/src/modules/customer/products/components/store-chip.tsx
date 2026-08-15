@@ -1,9 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
-import { ROUTES } from "@/constants/routes";
 import type { ProductStore } from "../types";
 import { VerifiedBadge } from "@/shared/components/marketplace";
 
@@ -20,19 +18,11 @@ export function StoreChip({
   showVerified = true,
   compact = false,
 }: Props) {
-  const href = ROUTES.publicStore(store.slug);
   const initial = store.name.charAt(0).toUpperCase() || "?";
 
   return (
     <div className={cn("flex min-w-0 items-center gap-2", className)}>
-      <Link
-        href={href}
-        className={cn(
-          "flex min-w-0 items-center gap-2 rounded-md transition-colors hover:text-primary",
-          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        )}
-        onClick={(e) => e.stopPropagation()}
-      >
+      <div className="flex min-w-0 items-center gap-2">
         <span
           className={cn(
             "relative shrink-0 overflow-hidden rounded-md border bg-muted",
@@ -58,10 +48,15 @@ export function StoreChip({
             </span>
           )}
         </span>
-        <span className={cn("min-w-0 truncate font-medium", compact ? "text-xs" : "text-sm")}>
+        <span
+          className={cn(
+            "min-w-0 truncate font-medium",
+            compact ? "text-xs" : "text-sm"
+          )}
+        >
           {store.name}
         </span>
-      </Link>
+      </div>
       {showVerified && store.verified ? (
         <VerifiedBadge compact={compact} />
       ) : null}

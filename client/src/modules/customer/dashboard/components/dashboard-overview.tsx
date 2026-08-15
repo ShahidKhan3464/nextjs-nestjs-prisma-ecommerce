@@ -10,15 +10,15 @@ import { queryKeys } from "@/constants/query-keys";
 import { formatOrderDate } from "@/lib/format-date";
 import { Skeleton } from "@/components/ui/skeleton";
 import { buttonVariants } from "@/components/ui/button";
+import { fetchBuyerDashboard } from "../services/dashboard.service";
 import { EmptyState } from "@/shared/components/feedback/empty-state";
-import { fetchCustomerDashboard } from "../services/dashboard.service";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   OrderStatusBadge,
   PaymentStatusBadge,
   normalizeOrderStatus,
   orderStatusChartColor,
-} from "@/modules/customer/orders/components/order-status-badges";
+} from "@/modules/buyer/orders/components/order-status-badges";
 import {
   Area,
   Bar,
@@ -41,8 +41,7 @@ import {
 } from "@/components/ui/table";
 import {
   RecentlyViewedRail,
-  RecommendedProductsRail,
-} from "@/modules/customer/discovery";
+} from "@/modules/buyer/discovery";
 
 function formatStatusLabel(status: string) {
   return status.charAt(0) + status.slice(1).toLowerCase();
@@ -60,8 +59,8 @@ function formatMonthLabel(month: string) {
 export function DashboardOverview() {
   const user = useAuthStore((s) => s.user);
   const { data, isPending } = useQuery({
-    queryKey: queryKeys.dashboard.customer,
-    queryFn: fetchCustomerDashboard,
+    queryKey: queryKeys.dashboard.buyer,
+    queryFn: fetchBuyerDashboard,
     staleTime: 30_000,
   });
 
@@ -294,14 +293,8 @@ export function DashboardOverview() {
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
+          <CardHeader>
             <CardTitle>Recent notifications</CardTitle>
-            <Link
-              href={ROUTES.notifications}
-              className={cn(buttonVariants({ variant: "ghost", size: "sm" }))}
-            >
-              View all
-            </Link>
           </CardHeader>
           <CardContent>
             {isPending ? (
@@ -382,7 +375,6 @@ export function DashboardOverview() {
 
       <div className="space-y-10">
         <RecentlyViewedRail />
-        <RecommendedProductsRail />
       </div>
     </div>
   );

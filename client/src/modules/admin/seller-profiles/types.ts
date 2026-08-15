@@ -1,7 +1,7 @@
 import type {
   SellerProfile,
   SellerProfileStatus,
-} from "@/modules/customer/seller-registration/types";
+} from "@/modules/buyer/seller-registration/types";
 
 export type {
   SellerProfile,
@@ -9,7 +9,7 @@ export type {
   SellerDocumentType,
   SellerStoreSummary,
   SellerProfileStatus,
-} from "@/modules/customer/seller-registration/types";
+} from "@/modules/buyer/seller-registration/types";
 
 export type ApproveSellerProfileInput = {
   address: string;

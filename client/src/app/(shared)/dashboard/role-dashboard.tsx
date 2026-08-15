@@ -1,9 +1,9 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import type { UserRole } from "@/modules/auth";
 import { Skeleton } from "@/components/ui/skeleton";
 import { isSeller, isSuperAdmin } from "@/modules/auth/utils/roles";
-import type { UserRole } from "@/modules/auth";
 
 function DashboardSkeleton() {
   return (
@@ -33,7 +33,7 @@ const SellerDashboard = dynamic(
 
 const DashboardOverview = dynamic(
   () =>
-    import("@/modules/customer/dashboard").then((m) => m.DashboardOverview),
+    import("@/modules/buyer/dashboard").then((m) => m.DashboardOverview),
   { loading: () => <DashboardSkeleton />, ssr: false }
 );
 

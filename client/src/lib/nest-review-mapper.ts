@@ -5,7 +5,7 @@ import type {
   StoreReputation,
   RatingDistribution,
   ReviewProductSummary,
-} from "@/modules/customer/reviews/types";
+} from "@/modules/buyer/reviews/types";
 
 export type NestReviewBuyer = {
   id: string | number;

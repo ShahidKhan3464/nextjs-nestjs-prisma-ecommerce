@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import Image from "next/image";
 import { toast } from "sonner";
 import * as React from "react";
@@ -8,7 +7,6 @@ import { cn } from "@/lib/utils";
 import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
 import { StoreChip } from "./store-chip";
-import { ROUTES } from "@/constants/routes";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cartAddItem } from "@/lib/cart-actions";
@@ -18,10 +16,8 @@ import { useRecentlyViewedStore } from "@/store/recently-viewed-store";
 import { useWishlistHydrate } from "@/shared/hooks/use-wishlist-hydrate";
 import { RatingStars } from "@/shared/components/marketplace/rating-stars";
 import {
-  RecentlyViewedRail,
   RelatedProductsRail,
-  RecommendedProductsRail,
-} from "@/modules/customer/discovery";
+} from "@/modules/buyer/discovery";
 import {
   formatVariantLabel,
   findVariantForSize,
@@ -33,7 +29,7 @@ import {
 
 const ProductReviewsSection = dynamic(
   () =>
-    import("@/modules/customer/reviews").then((m) => m.ProductReviewsSection),
+    import("@/modules/buyer/reviews").then((m) => m.ProductReviewsSection),
   {
     ssr: false,
     loading: () => (
@@ -299,12 +295,6 @@ export function ProductDetailView({ product }: Props) {
                     {product.store.seller.businessName}
                   </p>
                 ) : null}
-                <Link
-                  href={ROUTES.publicStore(product.store.slug)}
-                  className="text-primary text-xs font-medium hover:underline"
-                >
-                  Visit store
-                </Link>
               </div>
             ) : null}
             {product.description?.trim() ? (
@@ -429,8 +419,6 @@ export function ProductDetailView({ product }: Props) {
           categoryId={product.categoryId}
           categoryName={product.category}
         />
-        <RecommendedProductsRail excludeProductId={product.id} />
-        <RecentlyViewedRail excludeProductId={product.id} />
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-import type { Order } from "@/modules/customer/orders/types";
+import type { Order } from "@/modules/buyer/orders/types";
 
 type DashboardStatusCount = {
   count: number;
@@ -22,7 +22,7 @@ export type DashboardPurchasedProduct = {
   purchasedAt: string;
 };
 
-export type CustomerDashboardData = {
+export type BuyerDashboardData = {
   totalOrders: number;
   totalSpending: number;
   wishlistCount: number;

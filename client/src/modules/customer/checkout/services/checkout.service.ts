@@ -1,6 +1,6 @@
 import { api } from "@/services/api/client";
 import type { ApiResponse } from "@/types/api";
-import type { Order } from "@/modules/customer/orders/types";
+import type { Order } from "@/modules/buyer/orders/types";
 import type {
   CheckoutSession,
   CreateCheckoutInput,

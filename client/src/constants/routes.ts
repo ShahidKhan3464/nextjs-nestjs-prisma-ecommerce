@@ -19,7 +19,6 @@ export const ROUTES = {
   becomeSeller: "/become-seller",
   categoryNew: "/categories/new",
   addresses: "/profile/addresses",
-  notifications: "/notifications",
   resetPassword: "/reset-password",
   forgotPassword: "/forgot-password",
   sellerProfiles: "/seller-profiles",

@@ -12,7 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useEffect, useMemo, useState } from "react";
 import { getApiErrorMessage } from "@/lib/api-error";
 import { Pagination } from "@/components/ui/pagination";
-import type { Review } from "@/modules/customer/reviews/types";
+import type { Review } from "@/modules/buyer/reviews/types";
 import { EmptyState } from "@/shared/components/feedback/empty-state";
 import { RatingStars } from "@/shared/components/marketplace/rating-stars";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";

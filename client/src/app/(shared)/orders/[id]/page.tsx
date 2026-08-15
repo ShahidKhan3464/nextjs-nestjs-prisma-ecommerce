@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { siteConfig } from "@/config/site";
 import { AdminOrderDetail } from "@/modules/admin/orders";
 import { SellerOrderDetail } from "@/modules/seller/orders";
-import { OrderDetailView } from "@/modules/customer/orders";
+import { OrderDetailView } from "@/modules/buyer/orders";
 import { getAccessTokenPayload } from "@/lib/session-cookie";
 import { isSeller, isSuperAdmin } from "@/modules/auth/utils/roles";
 

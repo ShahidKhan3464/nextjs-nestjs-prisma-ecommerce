@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import { getAccessTokenPayload } from "@/lib/session-cookie";
 import { RoleDashboard } from "./role-dashboard";
+import { getAccessTokenPayload } from "@/lib/session-cookie";
 
 export const metadata: Metadata = {
   title: "Dashboard",

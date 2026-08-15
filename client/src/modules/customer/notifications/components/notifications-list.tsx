@@ -56,7 +56,7 @@ function flattenPages(
   return data?.pages.flatMap((p) => p.notifications) ?? [];
 }
 
-export function NotificationsList() {
+export function NotificationsList({ compact = false }: { compact?: boolean }) {
   const qc = useQueryClient();
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
   const [typeFilter, setTypeFilter] = useState<string>("all");
@@ -192,7 +192,17 @@ export function NotificationsList() {
   const total = data?.pages[0]?.total ?? 0;
   const hasFilters = typeFilter !== "all" || readFilter !== "all";
 
-  if (isPending) return <NotificationsSkeleton />;
+  if (isPending) {
+    return compact ? (
+      <div className="space-y-2">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <Skeleton key={i} className="h-16 w-full rounded-xl" />
+        ))}
+      </div>
+    ) : (
+      <NotificationsSkeleton />
+    );
+  }
 
   if (isError) {
     return (

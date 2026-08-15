@@ -1,4 +1,4 @@
-export type CustomerCategoryOption = {
+export type BuyerCategoryOption = {
   id: number;
   name: string;
   description: string | null;

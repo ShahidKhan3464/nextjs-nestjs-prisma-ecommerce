@@ -1,4 +1,4 @@
-import type { UserAddress } from "@/modules/customer/addresses/types";
+import type { UserAddress } from "@/modules/buyer/addresses/types";
 
 export type NestAddressPayload = {
   id: string | number;

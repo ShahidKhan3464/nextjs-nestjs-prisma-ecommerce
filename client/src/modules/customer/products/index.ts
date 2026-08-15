@@ -15,7 +15,7 @@ export type {
   ProductBadgeKind,
   ProductListParams,
   ProductStoreSeller,
-  CustomerCategoryOption,
+  BuyerCategoryOption,
 } from "./types";
 export {
   isProductSort,

@@ -8,7 +8,6 @@ import {
 } from "@/modules/auth/utils/roles";
 import {
   Heart,
-  Bell,
   Star,
   Store,
   Users,
@@ -92,13 +91,6 @@ const ADMIN_NAV: AppNavItem[] = [
     href: ROUTES.reviews,
     roles: ["SUPER_ADMIN"],
   },
-  {
-    icon: Bell,
-    id: "notifications",
-    label: "Notifications",
-    roles: ["SUPER_ADMIN"],
-    href: ROUTES.notifications,
-  },
 ];
 
 const SELLER_NAV: AppNavItem[] = [
@@ -111,9 +103,9 @@ const SELLER_NAV: AppNavItem[] = [
   },
   {
     id: "store",
-    roles: ["SELLER"],
-    label: "Store",
     icon: Store,
+    label: "Store",
+    roles: ["SELLER"],
     href: ROUTES.store,
   },
   {
@@ -143,13 +135,6 @@ const SELLER_NAV: AppNavItem[] = [
     label: "Reviews",
     roles: ["SELLER"],
     href: ROUTES.reviews,
-  },
-  {
-    icon: Bell,
-    roles: ["SELLER"],
-    id: "notifications",
-    label: "Notifications",
-    href: ROUTES.notifications,
   },
   {
     id: "profile",
@@ -195,13 +180,6 @@ const BUYER_NAV: AppNavItem[] = [
     label: "Orders",
     roles: ["BUYER"],
     href: ROUTES.orders,
-  },
-  {
-    icon: Bell,
-    roles: ["BUYER"],
-    id: "notifications",
-    label: "Notifications",
-    href: ROUTES.notifications,
   },
   {
     icon: MapPin,

@@ -4,7 +4,8 @@ import { useMemo } from "react";
 import { ProductRail } from "./product-rail";
 import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/constants/query-keys";
-import { fetchProducts } from "@/modules/customer/products/services/products.service";
+import { formatFilterLabel } from "@/lib/format-filter-label";
+import { fetchProducts } from "@/modules/buyer/products/services/products.service";
 
 type Props = {
   limit?: number;
@@ -56,7 +57,7 @@ export function RelatedProductsRail({
       title="Related products"
       description={
         categoryName
-          ? `More from ${categoryName}.`
+          ? `More from ${formatFilterLabel(categoryName)}.`
           : "Similar items you might like."
       }
     />

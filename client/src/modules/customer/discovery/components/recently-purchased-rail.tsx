@@ -7,7 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuthStore } from "@/store/auth-store";
 import { queryKeys } from "@/constants/query-keys";
 import { Skeleton } from "@/components/ui/skeleton";
-import { fetchCustomerDashboard } from "@/modules/customer/dashboard/services/dashboard.service";
+import { fetchBuyerDashboard } from "@/modules/buyer/dashboard/services/dashboard.service";
 
 type Props = {
   limit?: number;
@@ -18,8 +18,8 @@ export function RecentlyPurchasedRail({ limit = 8, className }: Props) {
   const user = useAuthStore((s) => s.user);
 
   const { data, isPending } = useQuery({
-    queryKey: queryKeys.dashboard.customer,
-    queryFn: fetchCustomerDashboard,
+    queryKey: queryKeys.dashboard.buyer,
+    queryFn: fetchBuyerDashboard,
     enabled: Boolean(user),
     staleTime: 60_000,
   });

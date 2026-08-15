@@ -1,13 +1,13 @@
 import type { ApiResponse } from "@/types";
+import { requireUser } from "@/lib/require-auth";
 import { getBackendUrl } from "@/lib/backend-url";
 import { jsonMessage, jsonOk } from "@/lib/api-response";
-import type { CartItem } from "@/modules/customer/cart/types";
+import type { CartItem } from "@/modules/buyer/cart/types";
 import { nestErrorMessage, forwardAuthorization } from "@/lib/nest-http";
 import {
   type NestCartItemPayload,
   normalizeNestCartItemPayload,
 } from "@/lib/nest-cart-mapper";
-import { requireUser } from "@/lib/require-auth";
 
 function mapCartList(raw: unknown): CartItem[] {
   const list = Array.isArray(raw) ? raw : [];

@@ -1,5 +1,5 @@
 import type { GroupedCart, StoreCartGroup } from "./types";
-import type { CartItem } from "@/modules/customer/cart/types";
+import type { CartItem } from "@/modules/buyer/cart/types";
 
 export type { StoreCartGroup, GroupedCart } from "./types";
 

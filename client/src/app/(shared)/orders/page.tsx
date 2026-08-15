@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { siteConfig } from "@/config/site";
-import { OrdersList } from "@/modules/customer/orders";
+import { OrdersList } from "@/modules/buyer/orders";
 import { AdminOrdersList } from "@/modules/admin/orders";
 import { SellerOrdersList } from "@/modules/seller/orders";
 import { getAccessTokenPayload } from "@/lib/session-cookie";

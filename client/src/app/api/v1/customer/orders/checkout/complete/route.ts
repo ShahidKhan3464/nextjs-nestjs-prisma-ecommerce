@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { requireUser } from "@/lib/require-auth";
 import { getBackendUrl } from "@/lib/backend-url";
 import type { ApiResponse, Order } from "@/types";
 import { jsonMessage, jsonOk } from "@/lib/api-response";
@@ -7,7 +8,6 @@ import {
   type NestOrderPayload,
   normalizeNestOrderPayload,
 } from "@/lib/nest-order-mapper";
-import { requireUser } from "@/lib/require-auth";
 
 const completeSchema = z.object({
   paymentIntentId: z.string().min(1),

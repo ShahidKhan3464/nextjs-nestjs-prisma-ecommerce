@@ -13,6 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { getApiErrorMessage } from "@/lib/api-error";
 import { Separator } from "@/components/ui/separator";
 import { ProductStatusBadge } from "./product-status-badge";
+import { formatFilterLabel } from "@/lib/format-filter-label";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { SellerProductVariants } from "./seller-product-variants";
 import { EmptyState } from "@/shared/components/feedback/empty-state";
@@ -244,7 +245,7 @@ export function SellerProductDetail({ productId }: { productId: string }) {
             <ProductStatusBadge product={product} />
           </div>
           <p className="text-muted-foreground text-sm">
-            {product.category || "Uncategorized"}
+            {formatFilterLabel(product.category) || "Uncategorized"}
             {product.slug ? ` · ${product.slug}` : null}
           </p>
         </div>

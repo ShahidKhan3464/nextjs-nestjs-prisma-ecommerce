@@ -24,19 +24,19 @@ import { useCheckoutStore } from "@/store/checkout-store";
 import { CheckoutPageSkeleton } from "./checkout-skeletons";
 import { CheckoutStoreGroup } from "./checkout-store-group";
 import { CheckoutAddressCard } from "./checkout-address-card";
+import { groupCartItemsByStore } from "@/modules/buyer/shared";
 import { abandonCheckout } from "../services/checkout.service";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { shippingSchema, type ShippingValues } from "../schemas";
 import { useCartHydrate } from "@/shared/hooks/use-cart-hydrate";
 import { PaymentContinueButton } from "./payment-continue-button";
-import { groupCartItemsByStore } from "@/modules/customer/shared";
 import { EmptyState } from "@/shared/components/feedback/empty-state";
 import { persistCheckoutSuccess } from "../utils/checkout-session-storage";
 import { useCreateCheckoutSession } from "../hooks/use-checkout-mutations";
 import { LazyStripeCheckoutProvider } from "./lazy-stripe-checkout-provider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useInvalidateAfterCheckout } from "../hooks/use-invalidate-after-checkout";
-import { fetchAddresses } from "@/modules/customer/addresses/services/addresses.service";
+import { fetchAddresses } from "@/modules/buyer/addresses/services/addresses.service";
 import {
   Form,
   FormItem,

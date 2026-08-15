@@ -1,4 +1,4 @@
-import type { Order } from "@/modules/customer/orders/types";
+import type { Order } from "@/modules/buyer/orders/types";
 
 type DashboardStatusCount = {
   count: number;

@@ -7,8 +7,9 @@ import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/constants/query-keys";
 import { useDebouncedCallback } from "use-debounce";
+import { formatFilterLabel } from "@/lib/format-filter-label";
 import { PRODUCT_SORT_OPTIONS, type ProductSort } from "../types";
-import { fetchCustomerCategories } from "../services/categories.service";
+import { fetchBuyerCategories } from "../services/categories.service";
 import { useProductSearchParams } from "../hooks/use-product-search-params";
 import {
   Select,
@@ -32,7 +33,7 @@ export function ProductFilters({ disabled = false }: { disabled?: boolean }) {
   const [qLocal, setQLocal] = React.useState(values.q);
   const { data: categories = [], isPending: categoriesLoading } = useQuery({
     queryKey: queryKeys.products.categories,
-    queryFn: fetchCustomerCategories,
+    queryFn: fetchBuyerCategories,
     staleTime: 60_000,
   });
 
@@ -81,8 +82,10 @@ export function ProductFilters({ disabled = false }: { disabled?: boolean }) {
                 placeholder={categoriesLoading ? "Loading…" : "All categories"}
               >
                 {values.category && categories.length > 0
-                  ? categories.find((c) => String(c.id) === values.category)
-                      ?.name
+                  ? formatFilterLabel(
+                      categories.find((c) => String(c.id) === values.category)
+                        ?.name
+                    )
                   : undefined}
               </SelectValue>
             </SelectTrigger>
@@ -91,7 +94,7 @@ export function ProductFilters({ disabled = false }: { disabled?: boolean }) {
               {categories.length > 0 ? (
                 categories.map((c) => (
                   <SelectItem key={c.id} value={String(c.id)}>
-                    {c.name}
+                    {formatFilterLabel(c.name)}
                   </SelectItem>
                 ))
               ) : !categoriesLoading ? (

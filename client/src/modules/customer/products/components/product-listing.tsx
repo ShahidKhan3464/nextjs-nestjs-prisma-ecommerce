@@ -6,51 +6,56 @@ import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/constants/query-keys";
 import { Skeleton } from "@/components/ui/skeleton";
+import type { PaginatedResponse } from "@/types/api";
 import { Pagination } from "@/components/ui/pagination";
 import type { Product, ProductListParams } from "../types";
 import { fetchProducts } from "../services/products.service";
+import { toProductListParams } from "../utils/product-list-params";
 import { EmptyState } from "@/shared/components/feedback/empty-state";
 import { useWishlistHydrate } from "@/shared/hooks/use-wishlist-hydrate";
 import { useProductSearchParams } from "../hooks/use-product-search-params";
 
-function toParams(
-  values: ReturnType<typeof useProductSearchParams>["values"]
-): ProductListParams {
-  return {
-    q: values.q || undefined,
-    categoryId: values.category ? Number(values.category) : undefined,
-    minPrice: values.minPrice ? Number(values.minPrice) : undefined,
-    maxPrice: values.maxPrice ? Number(values.maxPrice) : undefined,
-    minRating: values.minRating ? Number(values.minRating) : undefined,
-    inStock: values.inStock === "true" ? true : undefined,
-    storeId: values.storeId ? Number(values.storeId) : undefined,
-    sellerId: values.sellerId ? Number(values.sellerId) : undefined,
-    sort: values.sort || undefined,
-    page: values.page,
-    limit: 12,
-  };
-}
-
 type Props = {
   /** When set, scopes the listing to a store (also reflected in URL when present). */
   storeId?: number;
+  /** When provided by a parent, avoids a duplicate products query. */
+  listData?: PaginatedResponse<Product> | undefined;
+  listPending?: boolean;
+  listParams?: ProductListParams;
 };
 
-export function ProductListing({ storeId }: Props) {
+export function ProductListing({
+  storeId,
+  listData,
+  listPending,
+  listParams,
+}: Props) {
   useWishlistHydrate();
   const { values, setParams } = useProductSearchParams();
-  const params = toParams({
-    ...values,
-    storeId: storeId != null ? String(storeId) : values.storeId,
-  });
+  const params =
+    listParams ??
+    toProductListParams(
+      {
+        ...values,
+        storeId: storeId != null ? String(storeId) : values.storeId,
+      },
+      storeId != null ? { storeId } : undefined
+    );
 
-  const { data, isPending, isError, refetch } = useQuery({
+  const ownedQuery = useQuery({
     queryKey: queryKeys.products.list(
       params as unknown as Record<string, unknown>
     ),
     queryFn: () => fetchProducts(params),
     placeholderData: (prev) => prev,
+    enabled: listData === undefined && listPending === undefined,
   });
+
+  const data = listData !== undefined ? listData : ownedQuery.data;
+  const isPending =
+    listPending !== undefined ? listPending : ownedQuery.isPending;
+  const isError = listData !== undefined ? false : ownedQuery.isError;
+  const refetch = ownedQuery.refetch;
 
   if (isPending && !data) {
     return (

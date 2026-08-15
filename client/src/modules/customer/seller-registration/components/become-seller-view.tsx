@@ -25,10 +25,6 @@ import {
 function BecomeSellerSkeleton() {
   return (
     <div className="space-y-6">
-      <div className="space-y-2">
-        <Skeleton className="h-8 w-56" />
-        <Skeleton className="h-4 w-full max-w-lg" />
-      </div>
       <Skeleton className="h-64 w-full rounded-xl" />
     </div>
   );
@@ -40,13 +36,9 @@ function BecomeSellerIntro() {
       <div className="bg-muted text-foreground mb-3 flex size-10 items-center justify-center rounded-full">
         <Store className="size-5" />
       </div>
-      <h1 className="font-heading text-3xl font-semibold tracking-tight">
-        Become a seller
-      </h1>
       <p className="text-muted-foreground max-w-2xl text-sm">
-        Apply with your business details and verification documents. Once
-        approved, you&apos;ll unlock the seller portal to manage listings and
-        orders.
+        Once approved, you&apos;ll unlock the seller portal to manage listings
+        and orders.
       </p>
     </div>
   );

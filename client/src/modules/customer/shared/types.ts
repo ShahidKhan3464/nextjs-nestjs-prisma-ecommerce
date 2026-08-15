@@ -1,4 +1,4 @@
-import type { CartItem, CartItemStore } from "@/modules/customer/cart/types";
+import type { CartItem, CartItemStore } from "@/modules/buyer/cart/types";
 
 export type StoreCartGroup = {
   storeKey: string;

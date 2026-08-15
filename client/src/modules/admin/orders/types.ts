@@ -2,4 +2,4 @@ export type {
   Order,
   OrderListParams,
   CancelOrderInput,
-} from "@/modules/customer/orders/types";
+} from "@/modules/buyer/orders/types";

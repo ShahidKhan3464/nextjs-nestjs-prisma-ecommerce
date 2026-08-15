@@ -4,8 +4,8 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { buttonVariants } from "@/components/ui/button";
-import type { Product } from "@/modules/customer/products/types";
-import { ProductCard } from "@/modules/customer/products/components/product-card";
+import type { Product } from "@/modules/buyer/products/types";
+import { ProductCard } from "@/modules/buyer/products/components/product-card";
 
 type Props = {
   title: string;

@@ -1,5 +1,5 @@
-import type { Order } from "@/modules/customer/orders/types";
-import type { Address } from "@/modules/customer/orders/types";
+import type { Order } from "@/modules/buyer/orders/types";
+import type { Address } from "@/modules/buyer/orders/types";
 
 export type { Address, Order };
 

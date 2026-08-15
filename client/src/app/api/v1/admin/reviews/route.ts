@@ -2,6 +2,7 @@ import type { ApiResponse } from "@/types";
 import { getBackendUrl } from "@/lib/backend-url";
 import { requireAdmin } from "@/lib/require-auth";
 import { jsonOk, jsonMessage } from "@/lib/api-response";
+import type { Review } from "@/modules/buyer/reviews/types";
 import {
   nestErrorMessage,
   forwardAuthorization,
@@ -11,7 +12,6 @@ import {
   type NestReviewPayload,
   normalizeNestReviewPayload,
 } from "@/lib/nest-review-mapper";
-import type { Review } from "@/modules/customer/reviews/types";
 
 type NestPagedReviews = {
   data?: NestReviewPayload[];

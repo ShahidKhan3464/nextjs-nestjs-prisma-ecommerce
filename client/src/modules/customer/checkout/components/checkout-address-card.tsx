@@ -4,7 +4,7 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import type { Address } from "../types";
 import { ROUTES } from "@/constants/routes";
-import type { UserAddress } from "@/modules/customer/addresses/types";
+import type { UserAddress } from "@/modules/buyer/addresses/types";
 
 type Props = {
   address: Partial<Address> | UserAddress | null;

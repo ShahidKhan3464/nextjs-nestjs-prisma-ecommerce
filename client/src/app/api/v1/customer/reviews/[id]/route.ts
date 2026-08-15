@@ -1,7 +1,7 @@
 import type { ApiResponse } from "@/types";
 import { getBackendUrl } from "@/lib/backend-url";
 import { jsonMessage, jsonOk } from "@/lib/api-response";
-import type { Review } from "@/modules/customer/reviews/types";
+import type { Review } from "@/modules/buyer/reviews/types";
 import {
   nestErrorMessage,
   forwardAuthorization,

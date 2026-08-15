@@ -35,7 +35,7 @@ import {
 import {
   OrderStatusBadge,
   PaymentStatusBadge,
-} from "@/modules/customer/orders/components/order-status-badges";
+} from "@/modules/buyer/orders/components/order-status-badges";
 
 type Props = { orderId: string };
 
@@ -97,7 +97,6 @@ export function AdminOrderDetail({ orderId }: Props) {
   if (isPending) {
     return (
       <div className="space-y-6">
-        <Skeleton className="h-14 w-72" />
         <Skeleton className="h-64 w-full rounded-xl" />
       </div>
     );

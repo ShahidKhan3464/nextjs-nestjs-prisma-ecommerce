@@ -18,7 +18,7 @@ import {
   PaymentStatusBadge,
   normalizeOrderStatus,
   orderStatusChartColor,
-} from "@/modules/customer/orders/components/order-status-badges";
+} from "@/modules/buyer/orders/components/order-status-badges";
 import {
   Area,
   Bar,

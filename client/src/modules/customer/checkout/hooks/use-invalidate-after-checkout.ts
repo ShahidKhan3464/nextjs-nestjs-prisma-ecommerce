@@ -1,7 +1,7 @@
 import { useCartStore } from "@/store/cart-store";
 import { queryKeys } from "@/constants/query-keys";
 import { useQueryClient } from "@tanstack/react-query";
-import { fetchCart } from "@/modules/customer/cart/services/cart.service";
+import { fetchCart } from "@/modules/buyer/cart/services/cart.service";
 import { isAuthenticatedForCartWishlist } from "@/lib/cart-wishlist-session";
 
 /**
@@ -18,7 +18,7 @@ export function useInvalidateAfterCheckout() {
       qc.invalidateQueries({ queryKey: queryKeys.notifications.all }),
       qc.invalidateQueries({ queryKey: queryKeys.notifications.unreadCount }),
       qc.invalidateQueries({ queryKey: queryKeys.cart.all }),
-      qc.invalidateQueries({ queryKey: queryKeys.dashboard.customer }),
+      qc.invalidateQueries({ queryKey: queryKeys.dashboard.buyer }),
       (async () => {
         if (!isAuthenticatedForCartWishlist()) {
           useCartStore.getState().clear();

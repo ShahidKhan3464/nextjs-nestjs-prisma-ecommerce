@@ -13,7 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { getApiErrorMessage } from "@/lib/api-error";
 import { Separator } from "@/components/ui/separator";
-import { StoreGroupHeader } from "@/modules/customer/shared";
+import { StoreGroupHeader } from "@/modules/buyer/shared";
 import { VerifiedBadge } from "@/shared/components/marketplace";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -65,7 +65,6 @@ export function OrderDetailView({ orderId }: Props) {
   if (isPending) {
     return (
       <div className="space-y-6">
-        <Skeleton className="h-14 w-72" />
         <Skeleton className="h-64 w-full rounded-xl" />
       </div>
     );

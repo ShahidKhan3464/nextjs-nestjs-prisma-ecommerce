@@ -1,4 +1,5 @@
 import type { ApiResponse } from "@/types";
+import { requireUser } from "@/lib/require-auth";
 import { getBackendUrl } from "@/lib/backend-url";
 import { jsonMessage, jsonOk } from "@/lib/api-response";
 import { resolveUploadUrl } from "@/lib/resolve-upload-url";
@@ -11,8 +12,7 @@ import type {
   WishlistAvailability,
   WishlistItem,
   WishlistStore,
-} from "@/modules/customer/wishlist/types";
-import { requireUser } from "@/lib/require-auth";
+} from "@/modules/buyer/wishlist/types";
 
 type NestWishlistStore = {
   id: string | number;

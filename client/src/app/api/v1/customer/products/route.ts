@@ -1,7 +1,7 @@
 import type { PaginatedResponse } from "@/types";
 import { getBackendUrl } from "@/lib/backend-url";
 import { jsonMessage, jsonOk } from "@/lib/api-response";
-import type { Product } from "@/modules/customer/products/types";
+import type { Product } from "@/modules/buyer/products/types";
 import { nestErrorMessage, forwardAuthorization } from "@/lib/nest-http";
 import {
   type NestProductPayload,

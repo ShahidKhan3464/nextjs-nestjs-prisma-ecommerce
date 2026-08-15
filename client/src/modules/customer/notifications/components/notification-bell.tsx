@@ -1,15 +1,14 @@
 "use client";
 
-import Link from "next/link";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Bell } from "lucide-react";
 import { useEffect, useRef } from "react";
-import { ROUTES } from "@/constants/routes";
 import { useQuery } from "@tanstack/react-query";
 import { useAuthStore } from "@/store/auth-store";
 import { queryKeys } from "@/constants/query-keys";
 import { buttonVariants } from "@/components/ui/button";
+import { NotificationsPopover } from "./notifications-popover";
 import { fetchUnreadNotificationCount } from "../services/notifications.service";
 
 type Props = {
@@ -39,13 +38,14 @@ export function NotificationBell({ className }: Props) {
     previousCount.current = count;
   }, [count]);
 
+  if (!user) return null;
+
   return (
-    <Link
-      href={ROUTES.notifications}
-      aria-label={
+    <NotificationsPopover
+      triggerLabel={
         count > 0 ? `Notifications, ${count} unread` : "Notifications"
       }
-      className={cn(
+      triggerClassName={cn(
         buttonVariants({ variant: "ghost", size: "icon" }),
         "relative",
         className
@@ -57,6 +57,6 @@ export function NotificationBell({ className }: Props) {
           {count > 99 ? "99+" : count}
         </span>
       ) : null}
-    </Link>
+    </NotificationsPopover>
   );
 }

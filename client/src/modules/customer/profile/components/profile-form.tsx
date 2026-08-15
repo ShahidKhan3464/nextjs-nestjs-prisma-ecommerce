@@ -153,8 +153,14 @@ export function ProfileForm() {
       toast.error(getApiErrorMessage(error, "Could not update profile"));
     },
     onSuccess: (next) => {
-      qc.setQueryData(queryKeys.profile.me, next);
-      setUser(next);
+      const previous =
+        qc.getQueryData<User>(queryKeys.profile.me) ?? authUser ?? null;
+      const merged: User = {
+        ...next,
+        avatarUrl: next.avatarUrl ?? previous?.avatarUrl,
+      };
+      qc.setQueryData(queryKeys.profile.me, merged);
+      setUser(merged);
       toast.success("Profile updated");
     },
   });

@@ -5,7 +5,7 @@ import type {
   SellerDocumentType,
   SellerStoreSummary,
   SellerProfileStatus,
-} from "@/modules/customer/seller-registration/types";
+} from "@/modules/buyer/seller-registration/types";
 
 function toIso(value: unknown): string {
   if (typeof value === "string") return value;

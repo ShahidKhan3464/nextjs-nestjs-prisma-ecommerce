@@ -4,33 +4,21 @@ import { ROUTES } from "@/constants/routes";
 import { buttonVariants } from "@/components/ui/button";
 
 type Props = {
-  storeSlug?: string | null;
-  storeName?: string | null;
   className?: string;
   label?: string;
 };
 
-export function ContinueShoppingCta({
-  storeSlug,
-  storeName,
-  className,
-  label,
-}: Props) {
-  const href = storeSlug ? ROUTES.publicStore(storeSlug) : ROUTES.products;
-  const text =
-    label ??
-    (storeName ? `Continue shopping at ${storeName}` : "Continue shopping");
-
+export function ContinueShoppingCta({ className, label }: Props) {
   return (
     <Link
-      href={href}
+      href={ROUTES.products}
       className={cn(
         buttonVariants({ variant: "outline" }),
         "inline-flex justify-center",
         className
       )}
     >
-      {text}
+      {label ?? "Continue shopping"}
     </Link>
   );
 }

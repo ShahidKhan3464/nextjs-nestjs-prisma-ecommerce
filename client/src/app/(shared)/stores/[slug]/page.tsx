@@ -4,11 +4,11 @@ import { notFound } from "next/navigation";
 import { siteConfig } from "@/config/site";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getStoreFile } from "@/modules/seller/store/types";
-import { ProductFiltersSkeleton } from "@/modules/customer/products/components/product-filters-skeleton";
+import { ProductFiltersSkeleton } from "@/modules/buyer/products/components/product-filters-skeleton";
 import {
   PublicStoreView,
   fetchStoreBySlug,
-} from "@/modules/customer/stores";
+} from "@/modules/buyer/stores";
 
 type Props = { params: Promise<{ slug: string }> };
 

@@ -3,7 +3,7 @@ import { api } from "@/services/api/client";
 import type {
   ReviewListParams,
   ReviewListResult,
-} from "@/modules/customer/reviews/types";
+} from "@/modules/buyer/reviews/types";
 
 export async function fetchSellerReviews(
   params: ReviewListParams = {}

@@ -33,8 +33,6 @@ export function CheckoutSuccessSkeleton() {
     <div className="mx-auto max-w-3xl space-y-6 px-4 py-12">
       <div className="flex flex-col items-center gap-3">
         <Skeleton className="size-16 rounded-full" />
-        <Skeleton className="h-8 w-56" />
-        <Skeleton className="h-4 w-72" />
       </div>
       <Skeleton className="h-64 w-full rounded-xl" />
       <Skeleton className="h-64 w-full rounded-xl" />

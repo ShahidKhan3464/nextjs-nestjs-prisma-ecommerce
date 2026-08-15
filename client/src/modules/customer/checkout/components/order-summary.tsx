@@ -5,11 +5,11 @@ import type { Order } from "../types";
 import { PriceBreakdown } from "./price-breakdown";
 import { formatMoney } from "../utils/format-money";
 import { Separator } from "@/components/ui/separator";
-import { StoreGroupHeader } from "@/modules/customer/shared";
+import { StoreGroupHeader } from "@/modules/buyer/shared";
 import {
   OrderStatusBadge,
   PaymentStatusBadge,
-} from "@/modules/customer/orders/components/order-status-badges";
+} from "@/modules/buyer/orders/components/order-status-badges";
 
 type Props = {
   order: Order;

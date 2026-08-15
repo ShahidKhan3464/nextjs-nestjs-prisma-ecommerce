@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { siteConfig } from "@/config/site";
-import { AddressesManager } from "@/modules/customer/addresses";
+import { AddressesManager } from "@/modules/buyer/addresses";
 
 export const dynamic = "force-dynamic";
 

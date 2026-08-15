@@ -2,34 +2,21 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { cn } from "@/lib/utils";
 import { useMemo } from "react";
+import { cn } from "@/lib/utils";
 import { ROUTES } from "@/constants/routes";
 import { useCartStore } from "@/store/cart-store";
 import { Minus, Plus, Trash2 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { ContinueShoppingCta } from "@/modules/buyer/discovery";
 import { useCartHydrate } from "@/shared/hooks/use-cart-hydrate";
 import { cartRemoveItem, cartUpdateQty } from "@/lib/cart-actions";
-import { ContinueShoppingCta } from "@/modules/customer/discovery";
 import { EmptyState } from "@/shared/components/feedback/empty-state";
 import {
   StoreGroupHeader,
   groupCartItemsByStore,
-} from "@/modules/customer/shared";
-
-function CartPageHeader() {
-  return (
-    <header className="space-y-0.5">
-      <h1 className="font-heading text-3xl font-semibold tracking-tight">
-        Cart
-      </h1>
-      <p className="text-muted-foreground text-sm">
-        Review items from each store before checkout.
-      </p>
-    </header>
-  );
-}
+} from "@/modules/buyer/shared";
 
 export function CartPageView() {
   useCartHydrate();
@@ -42,24 +29,20 @@ export function CartPageView() {
 
   if (items.length === 0) {
     return (
-      <div className="space-y-4">
-        <CartPageHeader />
-        <EmptyState
-          title="Your cart is empty"
-          description="Browse the catalog and add items you love."
-          action={
-            <Link href={ROUTES.products} className={cn(buttonVariants())}>
-              Browse products
-            </Link>
-          }
-        />
-      </div>
+      <EmptyState
+        title="Your cart is empty"
+        description="Browse the catalog and add items you love."
+        action={
+          <Link href={ROUTES.products} className={cn(buttonVariants())}>
+            Browse products
+          </Link>
+        }
+      />
     );
   }
 
   return (
     <div className="space-y-8">
-      <CartPageHeader />
       <div className="grid gap-8 lg:grid-cols-[1fr_320px]">
         <div className="space-y-6">
           {groups.map((group) => (

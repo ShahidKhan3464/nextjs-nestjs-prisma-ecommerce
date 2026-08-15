@@ -4,7 +4,7 @@ import type { CheckoutPreview } from "../types";
 import { PriceBreakdown } from "./price-breakdown";
 import { Separator } from "@/components/ui/separator";
 import { CheckoutStoreGroup } from "./checkout-store-group";
-import type { StoreCartGroup } from "@/modules/customer/shared";
+import type { StoreCartGroup } from "@/modules/buyer/shared";
 
 type Props = {
   title?: string;

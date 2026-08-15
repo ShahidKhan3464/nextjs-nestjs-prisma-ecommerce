@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { ProductBadges } from "./product-badges";
 import { wishlistToggle } from "@/lib/wishlist-actions";
 import { useWishlistStore } from "@/store/wishlist-store";
+import { formatFilterLabel } from "@/lib/format-filter-label";
 import { RatingStars } from "@/shared/components/marketplace/rating-stars";
 
 type Props = {
@@ -37,8 +38,8 @@ export function ProductCard({ product, className }: Props) {
     >
       <Link
         href={ROUTES.product(product.slug)}
-        className="border-border relative block h-48 w-full shrink-0 overflow-hidden border-b bg-muted/40 sm:h-52"
         aria-label={`View ${product.name}`}
+        className="border-border relative block h-48 w-full shrink-0 overflow-hidden border-b bg-muted/40 sm:h-52"
       >
         <Image
           fill
@@ -81,7 +82,9 @@ export function ProductCard({ product, className }: Props) {
           >
             {product.name}
           </Link>
-          <p className="text-muted-foreground text-xs">{product.category}</p>
+          <p className="text-muted-foreground text-xs">
+            {formatFilterLabel(product.category)}
+          </p>
           {product.averageRating != null && product.averageRating > 0 ? (
             <span className="inline-flex items-center gap-1.5">
               <RatingStars

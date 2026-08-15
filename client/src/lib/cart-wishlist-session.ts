@@ -1,8 +1,8 @@
 import { useAuthStore } from "@/store/auth-store";
 import { useCartStore } from "@/store/cart-store";
 import { useWishlistStore } from "@/store/wishlist-store";
-import { fetchCart } from "@/modules/customer/cart/services/cart.service";
-import { fetchWishlist } from "@/modules/customer/wishlist/services/wishlist.service";
+import { fetchCart } from "@/modules/buyer/cart/services/cart.service";
+import { fetchWishlist } from "@/modules/buyer/wishlist/services/wishlist.service";
 
 export function isAuthenticatedForCartWishlist(): boolean {
   return Boolean(useAuthStore.getState().user);

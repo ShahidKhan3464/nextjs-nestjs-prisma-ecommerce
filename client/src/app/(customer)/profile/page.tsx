@@ -1,4 +1,4 @@
-import { ProfileForm } from "@/modules/customer/profile";
+import { ProfileForm } from "@/modules/buyer/profile";
 
 export default function ProfilePage() {
   return (

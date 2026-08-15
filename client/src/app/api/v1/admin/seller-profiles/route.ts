@@ -3,7 +3,7 @@ import { requireAdmin } from "@/lib/require-auth";
 import { getBackendUrl } from "@/lib/backend-url";
 import { jsonMessage, jsonOk } from "@/lib/api-response";
 import { mapNestSellerProfile } from "@/lib/nest-seller-profile-mapper";
-import type { SellerProfile } from "@/modules/customer/seller-registration/types";
+import type { SellerProfile } from "@/modules/buyer/seller-registration/types";
 import {
   nestErrorMessage,
   forwardAuthorization,

@@ -1,10 +1,10 @@
 import { z } from "zod";
 import type { ApiResponse } from "@/types";
+import { requireUser } from "@/lib/require-auth";
 import { getBackendUrl } from "@/lib/backend-url";
 import { jsonMessage, jsonOk } from "@/lib/api-response";
-import type { CheckoutSession } from "@/modules/customer/checkout/types";
+import type { CheckoutSession } from "@/modules/buyer/checkout/types";
 import { nestErrorMessage, forwardAuthorization } from "@/lib/nest-http";
-import { requireUser } from "@/lib/require-auth";
 
 const checkoutSchema = z.object({
   shippingAddress: z.object({

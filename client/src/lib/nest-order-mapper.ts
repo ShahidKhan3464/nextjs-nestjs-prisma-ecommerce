@@ -4,7 +4,7 @@ import type {
   Order,
   OrderLineItem,
   OrderStore,
-} from "@/modules/customer/orders/types";
+} from "@/modules/buyer/orders/types";
 
 export type NestOrderBuyerPayload = {
   email: string;

@@ -10,8 +10,10 @@ import {
   isSuperAdmin,
 } from "../utils/roles";
 
+const EMPTY_ROLES: UserRole[] = [];
+
 export function useUserRoles(): UserRole[] {
-  return useAuthStore((s) => s.user?.roles ?? []);
+  return useAuthStore((s) => s.user?.roles ?? EMPTY_ROLES);
 }
 
 export function useHasRole(role: UserRole): boolean {

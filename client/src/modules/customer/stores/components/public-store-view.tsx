@@ -11,9 +11,9 @@ import { fetchStoreBySlug } from "../services/stores.service";
 import { VerifiedBadge } from "@/shared/components/marketplace";
 import { EmptyState } from "@/shared/components/feedback/empty-state";
 import { RatingStars } from "@/shared/components/marketplace/rating-stars";
-import { ProductFilters } from "@/modules/customer/products/components/product-filters";
-import { ProductListing } from "@/modules/customer/products/components/product-listing";
-import { ProductFiltersSkeleton } from "@/modules/customer/products/components/product-filters-skeleton";
+import { ProductFilters } from "@/modules/buyer/products/components/product-filters";
+import { ProductListing } from "@/modules/buyer/products/components/product-listing";
+import { ProductFiltersSkeleton } from "@/modules/buyer/products/components/product-filters-skeleton";
 import {
   getStoreFile,
   isStoreVerified,

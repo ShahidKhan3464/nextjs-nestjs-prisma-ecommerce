@@ -1,12 +1,10 @@
 import { api } from "@/services/api/client";
 import type { ApiResponse } from "@/types/api";
-import type { CustomerCategoryOption } from "../types";
+import type { BuyerCategoryOption } from "../types";
 
-export async function fetchCustomerCategories(): Promise<
-  CustomerCategoryOption[]
-> {
+export async function fetchBuyerCategories(): Promise<BuyerCategoryOption[]> {
   const res = await api.get<
-    ApiResponse<{ categories: CustomerCategoryOption[] }>
+    ApiResponse<{ categories: BuyerCategoryOption[] }>
   >("/api/v1/customer/categories");
   return res.data.data.categories;
 }

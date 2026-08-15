@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { formatFilterLabel } from "@/lib/format-filter-label";
 import { getProductBadges, type Product, type ProductBadgeKind } from "../types";
 
 const BADGE_LABEL: Record<ProductBadgeKind, string> = {
@@ -36,7 +37,7 @@ export function ProductBadges({
     <div className={cn("flex flex-wrap items-center gap-1.5", className)}>
       {includeCategory && product.category ? (
         <Badge variant="secondary" className="font-normal">
-          {product.category}
+          {formatFilterLabel(product.category)}
         </Badge>
       ) : null}
       {kinds.map((kind) => (

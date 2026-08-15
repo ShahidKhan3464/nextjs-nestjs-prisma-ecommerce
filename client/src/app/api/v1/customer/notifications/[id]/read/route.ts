@@ -1,4 +1,5 @@
 import type { ApiResponse } from "@/types";
+import { requireUser } from "@/lib/require-auth";
 import { getBackendUrl } from "@/lib/backend-url";
 import { jsonMessage, jsonOk } from "@/lib/api-response";
 import {
@@ -9,8 +10,7 @@ import {
 import type {
   Notification,
   NotificationType,
-} from "@/modules/customer/notifications/types";
-import { requireUser } from "@/lib/require-auth";
+} from "@/modules/buyer/notifications/types";
 
 type NestNotification = {
   id: string | number;

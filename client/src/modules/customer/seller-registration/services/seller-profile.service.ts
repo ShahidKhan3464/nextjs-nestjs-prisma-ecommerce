@@ -2,7 +2,7 @@ import { isAxiosError } from "axios";
 import { api } from "@/services/api/client";
 import type { ApiResponse } from "@/types/api";
 import { useAuthStore } from "@/store/auth-store";
-import { fetchProfile } from "@/modules/customer/profile/services/profile.service";
+import { fetchProfile } from "@/modules/buyer/profile/services/profile.service";
 import type {
   SellerProfile,
   SellerDocumentType,

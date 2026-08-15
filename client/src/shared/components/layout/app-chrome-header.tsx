@@ -8,10 +8,11 @@ import { useRouter } from "next/navigation";
 import { ROUTES } from "@/constants/routes";
 import { logoutRequest } from "@/modules/auth";
 import { useAuthStore } from "@/store/auth-store";
+import { useQueryClient } from "@tanstack/react-query";
 import { buttonVariants } from "@/components/ui/button";
 import { LayoutDashboard, LogOut, User } from "lucide-react";
 import { resolveShopChrome } from "@/shared/navigation/app-nav";
-import { NotificationBell } from "@/modules/customer/notifications";
+import { NotificationBell } from "@/modules/buyer/notifications";
 import { resetCartWishlistSession } from "@/lib/cart-wishlist-session";
 import {
   DropdownMenu,
@@ -42,6 +43,7 @@ function roleLabel(chrome: ReturnType<typeof resolveShopChrome>): string {
 
 export function AppChromeHeader({ sectionTitle, sectionHint }: Props) {
   const router = useRouter();
+  const qc = useQueryClient();
   const user = useAuthStore((s) => s.user);
   const [mounted, setMounted] = React.useState(false);
   const clearSession = useAuthStore((s) => s.clearSession);
@@ -58,8 +60,9 @@ export function AppChromeHeader({ sectionTitle, sectionHint }: Props) {
     }
     clearSession();
     resetCartWishlistSession();
-    router.refresh();
+    qc.clear();
     router.push(ROUTES.home);
+    router.refresh();
   }
 
   const chrome = user ? resolveShopChrome(user.roles) : null;

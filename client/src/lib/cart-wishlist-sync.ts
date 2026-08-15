@@ -3,11 +3,11 @@ import { useWishlistStore } from "@/store/wishlist-store";
 import {
   syncCart,
   fetchCart,
-} from "@/modules/customer/cart/services/cart.service";
+} from "@/modules/buyer/cart/services/cart.service";
 import {
   syncWishlist,
   fetchWishlist,
-} from "@/modules/customer/wishlist/services/wishlist.service";
+} from "@/modules/buyer/wishlist/services/wishlist.service";
 import {
   isAuthenticatedForCartWishlist,
   markCartWishlistSessionHydrated,

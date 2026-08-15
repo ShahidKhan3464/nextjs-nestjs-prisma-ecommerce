@@ -5,7 +5,7 @@ import { getBackendUrl } from "@/lib/backend-url";
 import { jsonMessage, jsonOk } from "@/lib/api-response";
 import { mapNestSellerProfile } from "@/lib/nest-seller-profile-mapper";
 import { nestErrorMessage, forwardAuthorization } from "@/lib/nest-http";
-import { SELLER_DOCUMENT_TYPES } from "@/modules/customer/seller-registration/types";
+import { SELLER_DOCUMENT_TYPES } from "@/modules/buyer/seller-registration/types";
 
 const typeSchema = z.enum(SELLER_DOCUMENT_TYPES);
 

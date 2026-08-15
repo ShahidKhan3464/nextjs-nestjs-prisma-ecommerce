@@ -1,7 +1,7 @@
 import type {
   Order,
   OrderListParams,
-} from "@/modules/customer/orders/types";
+} from "@/modules/buyer/orders/types";
 
 export type OrderBuyer = {
   id: string;

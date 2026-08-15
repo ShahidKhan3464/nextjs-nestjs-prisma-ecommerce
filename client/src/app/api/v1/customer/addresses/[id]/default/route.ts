@@ -1,7 +1,8 @@
 import type { ApiResponse } from "@/types";
+import { requireUser } from "@/lib/require-auth";
 import { getBackendUrl } from "@/lib/backend-url";
 import { jsonMessage, jsonOk } from "@/lib/api-response";
-import type { UserAddress } from "@/modules/customer/addresses/types";
+import type { UserAddress } from "@/modules/buyer/addresses/types";
 import {
   nestErrorMessage,
   forwardAuthorization,
@@ -11,7 +12,6 @@ import {
   type NestAddressPayload,
   normalizeNestAddressPayload,
 } from "@/lib/nest-address-mapper";
-import { requireUser } from "@/lib/require-auth";
 
 type Ctx = { params: Promise<{ id: string }> };
 

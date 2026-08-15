@@ -61,7 +61,7 @@ export class UsersService {
   public async updateProfile(
     userId: number,
     dto: UpdateProfileDto,
-  ): Promise<UserResponse> {
+  ): Promise<UserMeResponse> {
     return this.updateProfileProvider.update(userId, dto);
   }
 

@@ -78,14 +78,6 @@ export function CheckoutSuccessView() {
         >
           <CheckCircle2 className="size-9" />
         </motion.div>
-        <motion.h1
-          initial={{ y: 12, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.1 }}
-          className="font-heading text-3xl font-semibold tracking-tight"
-        >
-          Order confirmed
-        </motion.h1>
         <motion.p
           initial={{ y: 12, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}

@@ -1,7 +1,7 @@
 import { toast } from "sonner";
 import { useCartStore } from "@/store/cart-store";
 import { getApiErrorMessage } from "@/lib/api-error";
-import type { CartItem } from "@/modules/customer/cart/types";
+import type { CartItem } from "@/modules/buyer/cart/types";
 import {
   refetchCart,
   isAuthenticatedForCartWishlist,
@@ -11,7 +11,7 @@ import {
   updateCartItem,
   removeCartItem,
   clearCartRemote,
-} from "@/modules/customer/cart/services/cart.service";
+} from "@/modules/buyer/cart/services/cart.service";
 
 function replaceCartLine(serverItem: CartItem): void {
   const items = useCartStore.getState().items;

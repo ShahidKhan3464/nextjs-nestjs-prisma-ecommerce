@@ -1,19 +1,19 @@
 import { create } from "zustand";
-import type { Address } from "@/modules/customer/checkout/types";
-import type { PaymentProviderId } from "@/modules/customer/checkout/types";
-import { DEFAULT_PAYMENT_PROVIDER } from "@/modules/customer/checkout/constants";
+import type { Address } from "@/modules/buyer/checkout/types";
+import type { PaymentProviderId } from "@/modules/buyer/checkout/types";
+import { DEFAULT_PAYMENT_PROVIDER } from "@/modules/buyer/checkout/constants";
 import type {
   CheckoutPreview,
   CheckoutStep,
   PaymentFailure,
   PaymentUiStatus,
-} from "@/modules/customer/checkout/types";
+} from "@/modules/buyer/checkout/types";
 
 import {
   clearPersistedCheckoutSession,
   loadPersistedCheckoutSession,
   persistCheckoutSession,
-} from "@/modules/customer/checkout/utils/checkout-session-storage";
+} from "@/modules/buyer/checkout/utils/checkout-session-storage";
 
 interface CheckoutState {
   hydrated: boolean;

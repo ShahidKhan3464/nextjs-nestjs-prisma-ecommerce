@@ -5,7 +5,7 @@ import { formatMoney } from "../utils/format-money";
 import {
   StoreGroupHeader,
   type StoreCartGroup,
-} from "@/modules/customer/shared";
+} from "@/modules/buyer/shared";
 
 type Props = {
   group: StoreCartGroup;

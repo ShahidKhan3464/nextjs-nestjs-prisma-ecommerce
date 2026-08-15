@@ -18,7 +18,7 @@ import { useDebouncedValue } from "@/shared/hooks/use-debounced-value";
 import {
   OrderStatusBadge,
   PaymentStatusBadge,
-} from "@/modules/customer/orders/components/order-status-badges";
+} from "@/modules/buyer/orders/components/order-status-badges";
 import {
   Select,
   SelectItem,

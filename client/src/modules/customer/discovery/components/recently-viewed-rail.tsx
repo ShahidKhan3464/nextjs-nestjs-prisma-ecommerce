@@ -4,9 +4,9 @@ import { useMemo } from "react";
 import { ProductRail } from "./product-rail";
 import { useQueries } from "@tanstack/react-query";
 import { queryKeys } from "@/constants/query-keys";
-import type { Product } from "@/modules/customer/products/types";
+import type { Product } from "@/modules/buyer/products/types";
 import { useRecentlyViewedStore } from "@/store/recently-viewed-store";
-import { fetchProductBySlug } from "@/modules/customer/products/services/products.service";
+import { fetchProductBySlug } from "@/modules/buyer/products/services/products.service";
 
 type Props = {
   excludeProductId?: string;

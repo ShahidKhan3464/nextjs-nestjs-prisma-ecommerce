@@ -13,6 +13,7 @@ import { getApiErrorMessage } from "@/lib/api-error";
 import { Pagination } from "@/components/ui/pagination";
 import { ProductStatusBadge } from "./product-status-badge";
 import { AdminTableSkeleton } from "@/modules/admin/shared";
+import { formatFilterLabel } from "@/lib/format-filter-label";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { EmptyState } from "@/shared/components/feedback/empty-state";
 import { useDebouncedValue } from "@/shared/hooks/use-debounced-value";
@@ -340,7 +341,7 @@ export function SellerProductsList() {
                 <SelectItem value="all">All categories</SelectItem>
                 {categories.map((c) => (
                   <SelectItem key={c.id} value={String(c.id)}>
-                    {c.name}
+                    {formatFilterLabel(c.name)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -444,7 +445,7 @@ export function SellerProductsList() {
                         </Link>
                       </TableCell>
                       <TableCell className="text-muted-foreground hidden text-sm md:table-cell">
-                        {p.category || "—"}
+                        {formatFilterLabel(p.category) || "—"}
                       </TableCell>
                       <TableCell>
                         <ProductStatusBadge product={p} />

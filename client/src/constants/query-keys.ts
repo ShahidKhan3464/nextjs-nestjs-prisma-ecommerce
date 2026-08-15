@@ -43,7 +43,7 @@ export const queryKeys = {
       [...queryKeys.reviews.all, "admin", filters ?? {}] as const,
   },
   dashboard: {
-    customer: ["dashboard", "customer"] as const,
+    buyer: ["dashboard", "buyer"] as const,
     seller: ["dashboard", "seller"] as const,
   },
   sellerProfile: {
