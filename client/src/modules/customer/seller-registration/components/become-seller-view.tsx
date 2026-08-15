@@ -32,8 +32,8 @@ function BecomeSellerSkeleton() {
 
 function BecomeSellerIntro() {
   return (
-    <div className="space-y-2">
-      <div className="bg-muted text-foreground mb-3 flex size-10 items-center justify-center rounded-full">
+    <div className="flex items-center gap-2 space-y-2">
+      <div className="bg-muted text-foreground flex size-10 items-center justify-center rounded-full gap-2 mb-0">
         <Store className="size-5" />
       </div>
       <p className="text-muted-foreground max-w-2xl text-sm">
@@ -97,7 +97,7 @@ export function BecomeSellerView() {
 
   if (!data) {
     return (
-      <div className="mx-auto max-w-3xl space-y-6">
+      <div className="space-y-6">
         <BecomeSellerIntro />
         <Card>
           <CardHeader>
@@ -112,7 +112,7 @@ export function BecomeSellerView() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl space-y-2">
+    <div className="space-y-2">
       {data.status === "PENDING" ? <SellerPendingPanel profile={data} /> : null}
       {data.status === "APPROVED" ? (
         <SellerApprovedPanel profile={data} />

@@ -29,7 +29,10 @@ export async function GET(req: Request) {
     params.set("lifeCycle", "active");
   }
   if (!params.has("limit")) {
-    params.set("limit", "200");
+    params.set("limit", "100");
+  }
+  if (!params.has("page")) {
+    params.set("page", "1");
   }
 
   const qs = params.toString();

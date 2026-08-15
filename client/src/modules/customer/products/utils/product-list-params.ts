@@ -25,6 +25,6 @@ export function toProductListParams(
     sellerId: values.sellerId ? Number(values.sellerId) : undefined,
     sort: values.sort || undefined,
     page: values.page,
-    limit: PRODUCT_LIST_PAGE_SIZE,
+    limit: values.limit,
   };
 }

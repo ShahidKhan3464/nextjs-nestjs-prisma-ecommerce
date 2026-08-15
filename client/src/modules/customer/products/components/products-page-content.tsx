@@ -5,7 +5,6 @@ import { queryKeys } from "@/constants/query-keys";
 import { ProductFilters } from "./product-filters";
 import { ProductListing } from "./product-listing";
 import { fetchProducts } from "../services/products.service";
-import { RecentlyViewedRail } from "@/modules/buyer/discovery";
 import { toProductListParams } from "../utils/product-list-params";
 import { ProductFiltersSkeleton } from "./product-filters-skeleton";
 import { useProductSearchParams } from "../hooks/use-product-search-params";
@@ -48,9 +47,6 @@ export function ProductsPageContent() {
         listParams={params}
         listPending={isPending}
       />
-      <div className="space-y-10 pt-6">
-        <RecentlyViewedRail />
-      </div>
     </div>
   );
 }

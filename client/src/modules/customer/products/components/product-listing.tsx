@@ -107,10 +107,10 @@ export function ProductListing({
 
       <Pagination
         page={pagination.page}
-        perPage={pagination.limit}
-        onPerPageChange={() => {}}
+        perPage={values.limit}
         totalPages={pagination.totalPages}
         onPageChange={(p) => setParams({ page: p })}
+        onPerPageChange={(n) => setParams({ limit: n, page: 1 })}
       />
     </div>
   );

@@ -12,12 +12,8 @@ import { Button } from "@/components/ui/button";
 import { cartAddItem } from "@/lib/cart-actions";
 import { ProductBadges } from "./product-badges";
 import type { Product, ProductVariant } from "../types";
-import { useRecentlyViewedStore } from "@/store/recently-viewed-store";
 import { useWishlistHydrate } from "@/shared/hooks/use-wishlist-hydrate";
 import { RatingStars } from "@/shared/components/marketplace/rating-stars";
-import {
-  RelatedProductsRail,
-} from "@/modules/buyer/discovery";
 import {
   formatVariantLabel,
   findVariantForSize,
@@ -100,7 +96,6 @@ function OptionPills({
 
 export function ProductDetailView({ product }: Props) {
   useWishlistHydrate();
-  const recordView = useRecentlyViewedStore((s) => s.recordView);
 
   const sizes = React.useMemo(
     () => uniqueVariantOptionValues(product.variants, "size"),
@@ -124,10 +119,6 @@ export function ProductDetailView({ product }: Props) {
   const [selectedColor, setSelectedColor] = React.useState(
     defaultVariant?.options?.color?.trim() ?? colors[0]
   );
-
-  React.useEffect(() => {
-    recordView(product.slug ?? product.id);
-  }, [product.slug, product.id, recordView]);
 
   function applyVariant(match: ProductVariant) {
     setVariantId(match.id);
@@ -412,14 +403,6 @@ export function ProductDetailView({ product }: Props) {
         reviewCount={product.reviewCount}
         averageRating={product.averageRating}
       />
-
-      <div className="mx-auto max-w-6xl space-y-10 px-4 pb-12 lg:px-6">
-        <RelatedProductsRail
-          excludeProductId={product.id}
-          categoryId={product.categoryId}
-          categoryName={product.category}
-        />
-      </div>
     </div>
   );
 }

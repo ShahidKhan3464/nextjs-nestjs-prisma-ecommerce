@@ -6,6 +6,7 @@ const FILTER_SLOTS = [
   "w-full min-w-[140px] sm:w-auto",
   "w-full min-w-[140px] sm:w-auto",
   "w-full min-w-[160px] sm:w-auto",
+  "w-full min-w-[160px] sm:w-auto",
   "flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-end",
 ] as const;
 

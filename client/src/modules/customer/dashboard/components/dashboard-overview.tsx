@@ -39,9 +39,6 @@ import {
   TableHead,
   TableHeader,
 } from "@/components/ui/table";
-import {
-  RecentlyViewedRail,
-} from "@/modules/buyer/discovery";
 
 function formatStatusLabel(status: string) {
   return status.charAt(0) + status.slice(1).toLowerCase();
@@ -371,10 +368,6 @@ export function DashboardOverview() {
             )}
           </CardContent>
         </Card>
-      </div>
-
-      <div className="space-y-10">
-        <RecentlyViewedRail />
       </div>
     </div>
   );

@@ -335,7 +335,14 @@ export function SellerProductsList() {
               }}
             >
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Category" />
+                <SelectValue placeholder="Category">
+                  {categoryFilter !== "all"
+                    ? formatFilterLabel(
+                        categories.find((c) => String(c.id) === categoryFilter)
+                          ?.name
+                      )
+                    : undefined}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All categories</SelectItem>

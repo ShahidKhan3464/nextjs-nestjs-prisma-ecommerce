@@ -29,7 +29,7 @@ const SORT_LABELS: Record<ProductSort, string> = {
 };
 
 export function ProductFilters({ disabled = false }: { disabled?: boolean }) {
-  const { values, setParams } = useProductSearchParams();
+  const { values, setParams, resetFilters } = useProductSearchParams();
   const [qLocal, setQLocal] = React.useState(values.q);
   const { data: categories = [], isPending: categoriesLoading } = useQuery({
     queryKey: queryKeys.products.categories,
@@ -64,7 +64,7 @@ export function ProductFilters({ disabled = false }: { disabled?: boolean }) {
           />
         </div>
 
-        <div className="w-full min-w-35 space-y-2 sm:w-auto">
+        <div className="w-full min-w-50 space-y-2 sm:w-auto">
           <Label>Category</Label>
           <Select
             disabled={disabled || categoriesLoading}
@@ -195,7 +195,7 @@ export function ProductFilters({ disabled = false }: { disabled?: boolean }) {
           </Select>
         </div>
 
-        <div className="w-full min-w-40 space-y-2 sm:w-auto">
+        <div className="w-full min-w-35 space-y-2 sm:w-auto">
           <Label>Sort</Label>
           <Select
             disabled={disabled}
@@ -229,19 +229,11 @@ export function ProductFilters({ disabled = false }: { disabled?: boolean }) {
             variant="outline"
             disabled={disabled}
             className="w-full sm:w-auto"
-            onClick={() =>
-              setParams({
-                q: "",
-                category: "",
-                minPrice: "",
-                maxPrice: "",
-                minRating: "",
-                inStock: "",
-                sellerId: "",
-                sort: "",
-                page: 1,
-              })
-            }
+            onClick={() => {
+              debouncedQ.cancel();
+              setQLocal("");
+              resetFilters();
+            }}
           >
             Reset filters
           </Button>

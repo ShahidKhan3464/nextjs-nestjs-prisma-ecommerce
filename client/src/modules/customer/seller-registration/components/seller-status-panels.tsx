@@ -118,8 +118,8 @@ export function SellerApprovedPanel({ profile }: { profile: SellerProfile }) {
 
   return (
     <StatusShell
-      icon={<CheckCircle2 className="size-5" />}
       title="You're approved to sell"
+      icon={<CheckCircle2 className="size-5" />}
       description="Your seller profile is approved. Open the seller portal to manage your storefront."
     >
       <div className="flex flex-wrap items-center gap-2">
@@ -179,7 +179,7 @@ export function SellerApprovedPanel({ profile }: { profile: SellerProfile }) {
 export function SellerRejectedPanel({ profile }: { profile: SellerProfile }) {
   return (
     <StatusShell
-    title="Application not approved"
+      title="Application not approved"
       icon={<CircleAlert className="size-5" />}
       description="Your seller application was rejected. Review the reason below and contact support if you need help reapplying."
     >

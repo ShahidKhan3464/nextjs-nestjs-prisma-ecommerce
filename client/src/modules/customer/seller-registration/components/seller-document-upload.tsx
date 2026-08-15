@@ -123,7 +123,13 @@ export function SellerDocumentUpload({ documents, disabled }: Props) {
                   >
                     <FormControl>
                       <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select type" />
+                        <SelectValue placeholder="Select type">
+                          {field.value === "TAX_DOCUMENT"
+                            ? "Tax document"
+                            : field.value === "BUSINESS_LICENSE"
+                              ? "Business license"
+                              : undefined}
+                        </SelectValue>
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>

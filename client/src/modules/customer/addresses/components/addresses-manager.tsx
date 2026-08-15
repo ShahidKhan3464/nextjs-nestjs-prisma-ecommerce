@@ -35,9 +35,7 @@ import {
 function AddressesSkeleton() {
   return (
     <div className="space-y-4">
-      {Array.from({ length: 2 }).map((_, i) => (
-        <Skeleton key={i} className="h-36 w-full rounded-xl" />
-      ))}
+      <Skeleton className="h-64 w-full rounded-xl" />
     </div>
   );
 }

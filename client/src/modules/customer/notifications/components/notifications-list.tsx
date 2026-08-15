@@ -7,6 +7,7 @@ import { queryKeys } from "@/constants/query-keys";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getApiErrorMessage } from "@/lib/api-error";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { formatFilterLabel } from "@/lib/format-filter-label";
 import { EmptyState } from "@/shared/components/feedback/empty-state";
 import { NotificationCard } from "@/shared/components/marketplace/notification-card";
 import {
@@ -232,13 +233,21 @@ export function NotificationsList({ compact = false }: { compact?: boolean }) {
               }}
             >
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="All types" />
+                <SelectValue placeholder="All types">
+                  {typeFilter !== "all"
+                    ? formatFilterLabel(
+                        NOTIFICATION_TYPE_LABELS[
+                          typeFilter as NotificationType
+                        ]
+                      )
+                    : undefined}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All types</SelectItem>
                 {NOTIFICATION_TYPES.map((type) => (
                   <SelectItem key={type} value={type}>
-                    {NOTIFICATION_TYPE_LABELS[type]}
+                    {formatFilterLabel(NOTIFICATION_TYPE_LABELS[type])}
                   </SelectItem>
                 ))}
               </SelectContent>

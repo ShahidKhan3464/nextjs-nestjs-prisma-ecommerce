@@ -26,7 +26,8 @@ export async function GET() {
   const backend = getBackendUrl();
   const params = new URLSearchParams({
     lifeCycle: "active",
-    limit: "200",
+    limit: "100",
+    page: "1",
   });
 
   const res = await fetch(`${backend}/categories?${params.toString()}`);
