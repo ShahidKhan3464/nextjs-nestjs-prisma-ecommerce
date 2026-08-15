@@ -53,40 +53,46 @@ function splitName(fullName?: string) {
 
 function ProfileFormSkeleton() {
   return (
-    <div className="space-y-6">
-      <section className="space-y-3">
-        <div className="flex items-center gap-6">
-          <Skeleton className="size-24 rounded-full" />
-          <div className="space-y-2">
-            <Skeleton className="h-4 w-24" />
-            <Skeleton className="h-9 w-28" />
+    <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_500px]">
+      <div className="space-y-6">
+        <section className="space-y-3">
+          <div className="flex items-center gap-6">
+            <Skeleton className="size-24 rounded-full" />
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-9 w-28" />
+            </div>
           </div>
-        </div>
-        <div className="space-y-1">
-          <Skeleton className="h-4 w-12" />
-          <Skeleton className="h-4 w-48" />
-        </div>
-      </section>
-      <Separator />
-      <section className="space-y-3">
-        <Skeleton className="h-6 w-36" />
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Skeleton className="h-10 sm:col-span-1" />
-          <Skeleton className="h-10 sm:col-span-1" />
-          <Skeleton className="h-10 sm:col-span-2" />
-          <Skeleton className="h-9 w-28 sm:col-span-2" />
-        </div>
-      </section>
-      <Separator />
-      <section className="space-y-3">
-        <Skeleton className="h-6 w-24" />
-        <div className="max-w-md space-y-4">
+          <div className="space-y-1">
+            <Skeleton className="h-4 w-12" />
+            <Skeleton className="h-4 w-48" />
+          </div>
+        </section>
+        <Separator />
+        <section className="space-y-3">
+          <Skeleton className="h-6 w-36" />
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Skeleton className="h-10 sm:col-span-1" />
+            <Skeleton className="h-10 sm:col-span-1" />
+            <Skeleton className="h-10 sm:col-span-2" />
+            <Skeleton className="h-9 w-28 sm:col-span-2" />
+          </div>
+        </section>
+      </div>
+      <div className="space-y-6">
+        <section className="space-y-3">
+          <Skeleton className="h-6 w-28" />
+          <Skeleton className="h-6 w-16" />
+        </section>
+        <Separator />
+        <section className="space-y-3">
+          <Skeleton className="h-6 w-24" />
           <Skeleton className="h-10" />
           <Skeleton className="h-10" />
           <Skeleton className="h-10" />
           <Skeleton className="h-9 w-32" />
-        </div>
-      </section>
+        </section>
+      </div>
     </div>
   );
 }
@@ -221,230 +227,232 @@ export function ProfileForm() {
   const roles = user?.roles ?? [];
 
   return (
-    <div className="space-y-6">
-      <section className="space-y-3">
-        <div className="flex items-center gap-6">
-          <div className="relative size-24 overflow-hidden rounded-full border bg-muted">
-            {avatarUrl ? (
-              <Image
-                fill
-                alt=""
-                sizes="96px"
-                src={avatarUrl}
-                className="object-cover"
+    <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_500px]">
+      <div className="space-y-6">
+        <section className="space-y-3">
+          <div className="flex items-center gap-6">
+            <div className="relative size-24 overflow-hidden rounded-full border bg-muted">
+              {avatarUrl ? (
+                <Image
+                  fill
+                  alt=""
+                  sizes="96px"
+                  src={avatarUrl}
+                  className="object-cover"
+                />
+              ) : (
+                <div className="text-muted-foreground flex size-full items-center justify-center text-2xl font-semibold">
+                  {(user?.fullName ?? user?.name ?? "?").charAt(0).toUpperCase()}
+                </div>
+              )}
+            </div>
+            <div className="space-y-2">
+              <p className="text-sm font-medium">Profile photo</p>
+              <input
+                type="file"
+                ref={fileInputRef}
+                className="hidden"
+                onChange={handleAvatarChange}
+                accept="image/jpeg,image/png,image/gif,image/webp"
               />
+              <Button
+                type="button"
+                variant="outline"
+                disabled={avatarMutation.isPending}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                {avatarMutation.isPending ? "Uploading…" : "Upload photo"}
+              </Button>
+            </div>
+          </div>
+
+          <div className="space-y-1">
+            <p className="text-sm font-medium">Email</p>
+            <p className="text-muted-foreground text-sm">{user?.email}</p>
+          </div>
+        </section>
+
+        <Separator />
+
+        <section className="space-y-3">
+          <h2 className="font-heading text-lg font-semibold">Personal details</h2>
+          <Form {...profileForm}>
+            <form
+              onSubmit={profileForm.handleSubmit(onProfileSubmit)}
+              className="grid gap-4 sm:grid-cols-2"
+            >
+              <FormField
+                name="firstName"
+                control={profileForm.control}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>First name</FormLabel>
+                    <FormControl>
+                      <Input autoComplete="given-name" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                name="lastName"
+                control={profileForm.control}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Last name</FormLabel>
+                    <FormControl>
+                      <Input autoComplete="family-name" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                name="phoneNumber"
+                control={profileForm.control}
+                render={({ field }) => (
+                  <FormItem className="sm:col-span-2">
+                    <FormLabel>Phone</FormLabel>
+                    <FormControl>
+                      <Input autoComplete="tel" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <Button
+                type="submit"
+                className="sm:col-span-2 sm:w-fit"
+                disabled={profileMutation.isPending}
+              >
+                {profileMutation.isPending ? "Saving…" : "Save profile"}
+              </Button>
+            </form>
+          </Form>
+        </section>
+      </div>
+
+      <aside className="space-y-6 lg:sticky lg:top-28">
+        <section className="space-y-3">
+          <h2 className="font-heading text-lg font-semibold">Account roles</h2>
+          <p className="text-muted-foreground text-sm">
+            Roles are assigned by the platform and shown for reference only.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {roles.length === 0 ? (
+              <Badge variant="outline">No roles</Badge>
             ) : (
-              <div className="text-muted-foreground flex size-full items-center justify-center text-2xl font-semibold">
-                {(user?.fullName ?? user?.name ?? "?").charAt(0).toUpperCase()}
-              </div>
+              roles.map((role) => (
+                <Badge key={role} variant="secondary">
+                  {role}
+                </Badge>
+              ))
             )}
           </div>
-          <div className="space-y-2">
-            <p className="text-sm font-medium">Profile photo</p>
-            <input
-              type="file"
-              ref={fileInputRef}
-              className="hidden"
-              onChange={handleAvatarChange}
-              accept="image/jpeg,image/png,image/gif,image/webp"
-            />
-            <Button
-              type="button"
-              variant="outline"
-              disabled={avatarMutation.isPending}
-              onClick={() => fileInputRef.current?.click()}
-            >
-              {avatarMutation.isPending ? "Uploading…" : "Upload photo"}
-            </Button>
-          </div>
-        </div>
+        </section>
 
-        <div className="space-y-1">
-          <p className="text-sm font-medium">Email</p>
-          <p className="text-muted-foreground text-sm">{user?.email}</p>
-        </div>
-      </section>
+        {isBuyer(roles) && !isSeller(roles) ? (
+          <>
+            <Separator />
+            <section className="space-y-2">
+              <h2 className="font-heading text-lg font-semibold">Sell with us</h2>
+              <p className="text-muted-foreground text-sm">
+                Apply to open a seller account and list products on the marketplace.
+              </p>
+              <Link
+                href={ROUTES.becomeSeller}
+                className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+              >
+                Become a seller
+              </Link>
+            </section>
+          </>
+        ) : null}
 
-      <Separator />
+        <Separator />
 
-      <section className="space-y-3">
-        <h2 className="font-heading text-lg font-semibold">Account roles</h2>
-        <p className="text-muted-foreground text-sm">
-          Roles are assigned by the platform and shown for reference only.
-        </p>
-        <div className="flex flex-wrap gap-2">
-          {roles.length === 0 ? (
-            <Badge variant="outline">No roles</Badge>
-          ) : (
-            roles.map((role) => (
-              <Badge key={role} variant="secondary">
-                {role}
-              </Badge>
-            ))
-          )}
-        </div>
-      </section>
-
-      <Separator />
-
-      <section className="space-y-3">
-        <h2 className="font-heading text-lg font-semibold">Personal details</h2>
-        <Form {...profileForm}>
-          <form
-            onSubmit={profileForm.handleSubmit(onProfileSubmit)}
-            className="grid gap-4 sm:grid-cols-2"
-          >
-            <FormField
-              name="firstName"
-              control={profileForm.control}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>First name</FormLabel>
-                  <FormControl>
-                    <Input autoComplete="given-name" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              name="lastName"
-              control={profileForm.control}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Last name</FormLabel>
-                  <FormControl>
-                    <Input autoComplete="family-name" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              name="phoneNumber"
-              control={profileForm.control}
-              render={({ field }) => (
-                <FormItem className="sm:col-span-2">
-                  <FormLabel>Phone</FormLabel>
-                  <FormControl>
-                    <Input autoComplete="tel" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <Button
-              type="submit"
-              className="sm:col-span-2 sm:w-fit"
-              disabled={profileMutation.isPending}
-            >
-              {profileMutation.isPending ? "Saving…" : "Save profile"}
-            </Button>
-          </form>
-        </Form>
-      </section>
-
-      {isBuyer(roles) && !isSeller(roles) ? (
-        <>
-          <Separator />
-          <section className="space-y-2">
-            <h2 className="font-heading text-lg font-semibold">Sell with us</h2>
-            <p className="text-muted-foreground text-sm">
-              Apply to open a seller account and list products on the marketplace.
-            </p>
+        <section className="space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 className="font-heading text-lg font-semibold">Addresses</h2>
             <Link
-              href={ROUTES.becomeSeller}
+              href={ROUTES.addresses}
               className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
             >
-              Become a seller
+              Manage addresses
             </Link>
-          </section>
-        </>
-      ) : null}
+          </div>
+          <p className="text-muted-foreground text-sm">
+            Save shipping and billing addresses for faster checkout.
+          </p>
+        </section>
 
-      <Separator />
+        <Separator />
 
-      <section className="space-y-3">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="font-heading text-lg font-semibold">Addresses</h2>
-          <Link
-            href={ROUTES.addresses}
-            className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
-          >
-            Manage addresses
-          </Link>
-        </div>
-        <p className="text-muted-foreground text-sm">
-          Save shipping and billing addresses for faster checkout.
-        </p>
-      </section>
-
-      <Separator />
-
-      <section className="space-y-3">
-        <h2 className="font-heading text-lg font-semibold">Password</h2>
-        <Form {...passwordForm}>
-          <form
-            onSubmit={passwordForm.handleSubmit(onPasswordSubmit)}
-            className="max-w-md space-y-4"
-          >
-            <FormField
-              name="currentPassword"
-              control={passwordForm.control}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Current password</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="password"
-                      autoComplete="current-password"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              name="newPassword"
-              control={passwordForm.control}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>New password</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="password"
-                      autoComplete="new-password"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              name="confirmPassword"
-              control={passwordForm.control}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Confirm new password</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="password"
-                      autoComplete="new-password"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <Button type="submit" disabled={passwordMutation.isPending}>
-              {passwordMutation.isPending ? "Updating…" : "Update password"}
-            </Button>
-          </form>
-        </Form>
-      </section>
+        <section className="space-y-3">
+          <h2 className="font-heading text-lg font-semibold">Password</h2>
+          <Form {...passwordForm}>
+            <form
+              onSubmit={passwordForm.handleSubmit(onPasswordSubmit)}
+              className="space-y-4"
+            >
+              <FormField
+                name="currentPassword"
+                control={passwordForm.control}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Current password</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="password"
+                        autoComplete="current-password"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                name="newPassword"
+                control={passwordForm.control}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>New password</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="password"
+                        autoComplete="new-password"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                name="confirmPassword"
+                control={passwordForm.control}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Confirm new password</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="password"
+                        autoComplete="new-password"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <Button type="submit" disabled={passwordMutation.isPending}>
+                {passwordMutation.isPending ? "Updating…" : "Update password"}
+              </Button>
+            </form>
+          </Form>
+        </section>
+      </aside>
     </div>
   );
 }

@@ -55,7 +55,7 @@ export function NotificationsPopover({
         side="bottom"
         sideOffset={8}
         className={cn(
-          "flex h-[min(60vh,720px)]! max-h-[min(60vh,720px)]! w-[min(100vw-2rem,42rem)]! min-w-[min(100vw-2rem,42rem)] flex-col overflow-hidden p-0",
+          "flex h-[min(60vh,720px)]! max-h-[min(60vh,720px)]! w-[min(100vw-2rem,32rem)]! min-w-[min(100vw-2rem,32rem)] flex-col overflow-hidden p-0",
           className
         )}
       >

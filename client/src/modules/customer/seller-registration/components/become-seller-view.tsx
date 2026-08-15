@@ -97,7 +97,7 @@ export function BecomeSellerView() {
 
   if (!data) {
     return (
-      <div className="space-y-6">
+      <div className="max-w-2xl space-y-6">
         <BecomeSellerIntro />
         <Card>
           <CardHeader>
@@ -112,7 +112,7 @@ export function BecomeSellerView() {
   }
 
   return (
-    <div className="space-y-2">
+    <div className="max-w-2xl space-y-2">
       {data.status === "PENDING" ? <SellerPendingPanel profile={data} /> : null}
       {data.status === "APPROVED" ? (
         <SellerApprovedPanel profile={data} />

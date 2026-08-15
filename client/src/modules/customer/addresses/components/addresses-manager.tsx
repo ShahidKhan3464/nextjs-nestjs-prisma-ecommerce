@@ -231,12 +231,138 @@ export function AddressesManager() {
         </Button>
       </div>
 
-      {showForm ? (
-        <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(onSubmit)}
-            className="space-y-4 rounded-xl border p-4"
-          >
+      <div
+        className={cn(
+          "grid items-start gap-8",
+          showForm && addresses.length > 0
+            ? "lg:grid-cols-[minmax(0,1fr)_420px]"
+            : undefined
+        )}
+      >
+        {addresses.length === 0 && !showForm ? (
+          <EmptyState
+            title="No saved addresses"
+            description="Add a shipping or billing address for faster checkout."
+            action={
+              <Button type="button" onClick={startCreate}>
+                Add address
+              </Button>
+            }
+          />
+        ) : addresses.length > 0 ? (
+          <ul className="space-y-3">
+            {addresses.map((address) => (
+              <li
+                key={address.id}
+                className={cn(
+                  "space-y-3 rounded-xl border p-4",
+                  address.id.startsWith("temp-") && "opacity-70"
+                )}
+              >
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="space-y-1 text-sm">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="font-medium">
+                        {address.label || address.fullName}
+                      </p>
+                      {address.isDefaultShipping ? (
+                        <Badge variant="secondary">Default shipping</Badge>
+                      ) : null}
+                      {address.isDefaultBilling ? (
+                        <Badge variant="secondary">Default billing</Badge>
+                      ) : null}
+                    </div>
+                    <p className="text-muted-foreground leading-relaxed">
+                      {address.fullName}
+                      <br />
+                      {address.line1}
+                      {address.line2 ? (
+                        <>
+                          <br />
+                          {address.line2}
+                        </>
+                      ) : null}
+                      <br />
+                      {address.city}, {address.region} {address.postalCode}
+                      <br />
+                      {address.country}
+                      {address.phone ? (
+                        <>
+                          <br />
+                          {address.phone}
+                        </>
+                      ) : null}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      size="sm"
+                      type="button"
+                      variant="outline"
+                      onClick={() => startEdit(address)}
+                    >
+                      <Pencil className="mr-1 size-3.5" /> Edit
+                    </Button>
+                    <Button
+                      size="sm"
+                      type="button"
+                      variant="ghost"
+                      className="text-muted-foreground"
+                      disabled={deleteMutation.isPending}
+                      onClick={() => deleteMutation.mutate(address.id)}
+                    >
+                      <Trash2 className="mr-1 size-3.5" /> Delete
+                    </Button>
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {!address.isDefaultShipping ? (
+                    <Button
+                      size="sm"
+                      type="button"
+                      variant="outline"
+                      disabled={defaultMutation.isPending}
+                      onClick={() =>
+                        defaultMutation.mutate({
+                          id: address.id,
+                          shipping: true,
+                        })
+                      }
+                    >
+                      Set default shipping
+                    </Button>
+                  ) : null}
+                  {!address.isDefaultBilling ? (
+                    <Button
+                      size="sm"
+                      type="button"
+                      variant="outline"
+                      disabled={defaultMutation.isPending}
+                      onClick={() =>
+                        defaultMutation.mutate({
+                          id: address.id,
+                          billing: true,
+                        })
+                      }
+                    >
+                      Set default billing
+                    </Button>
+                  ) : null}
+                </div>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+
+        {showForm ? (
+          <Form {...form}>
+            <form
+              onSubmit={form.handleSubmit(onSubmit)}
+              className={cn(
+                "space-y-4 rounded-xl border p-4 lg:sticky lg:top-28",
+                addresses.length === 0 && "max-w-2xl"
+              )}
+            >
             <h2 className="font-heading text-lg font-semibold">
               {editingId ? "Edit address" : "New address"}
             </h2>
@@ -418,122 +544,8 @@ export function AddressesManager() {
             </div>
           </form>
         </Form>
-      ) : null}
-
-      {addresses.length === 0 && !showForm ? (
-        <EmptyState
-          title="No saved addresses"
-          description="Add a shipping or billing address for faster checkout."
-          action={
-            <Button type="button" onClick={startCreate}>
-              Add address
-            </Button>
-          }
-        />
-      ) : (
-        <ul className="space-y-3">
-          {addresses.map((address) => (
-            <li
-              key={address.id}
-              className={cn(
-                "space-y-3 rounded-xl border p-4",
-                address.id.startsWith("temp-") && "opacity-70"
-              )}
-            >
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div className="space-y-1 text-sm">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <p className="font-medium">
-                      {address.label || address.fullName}
-                    </p>
-                    {address.isDefaultShipping ? (
-                      <Badge variant="secondary">Default shipping</Badge>
-                    ) : null}
-                    {address.isDefaultBilling ? (
-                      <Badge variant="secondary">Default billing</Badge>
-                    ) : null}
-                  </div>
-                  <p className="text-muted-foreground leading-relaxed">
-                    {address.fullName}
-                    <br />
-                    {address.line1}
-                    {address.line2 ? (
-                      <>
-                        <br />
-                        {address.line2}
-                      </>
-                    ) : null}
-                    <br />
-                    {address.city}, {address.region} {address.postalCode}
-                    <br />
-                    {address.country}
-                    {address.phone ? (
-                      <>
-                        <br />
-                        {address.phone}
-                      </>
-                    ) : null}
-                  </p>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    size="sm"
-                    type="button"
-                    variant="outline"
-                    onClick={() => startEdit(address)}
-                  >
-                    <Pencil className="mr-1 size-3.5" /> Edit
-                  </Button>
-                  <Button
-                    size="sm"
-                    type="button"
-                    variant="ghost"
-                    className="text-muted-foreground"
-                    disabled={deleteMutation.isPending}
-                    onClick={() => deleteMutation.mutate(address.id)}
-                  >
-                    <Trash2 className="mr-1 size-3.5" /> Delete
-                  </Button>
-                </div>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {!address.isDefaultShipping ? (
-                  <Button
-                    size="sm"
-                    type="button"
-                    variant="outline"
-                    disabled={defaultMutation.isPending}
-                    onClick={() =>
-                      defaultMutation.mutate({
-                        id: address.id,
-                        shipping: true,
-                      })
-                    }
-                  >
-                    Set default shipping
-                  </Button>
-                ) : null}
-                {!address.isDefaultBilling ? (
-                  <Button
-                    size="sm"
-                    type="button"
-                    variant="outline"
-                    disabled={defaultMutation.isPending}
-                    onClick={() =>
-                      defaultMutation.mutate({
-                        id: address.id,
-                        billing: true,
-                      })
-                    }
-                  >
-                    Set default billing
-                  </Button>
-                ) : null}
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
+        ) : null}
+      </div>
     </div>
   );
 }

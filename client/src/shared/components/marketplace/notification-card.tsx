@@ -66,7 +66,7 @@ export function NotificationCard({
   return (
     <article
       className={cn(
-        "border-border flex gap-3 rounded-xl border p-4 transition-colors",
+        "border-border flex gap-3 rounded-xl border p-2 transition-colors",
         !isRead && "bg-muted/40",
         className
       )}
