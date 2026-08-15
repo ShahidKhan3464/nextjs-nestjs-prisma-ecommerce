@@ -176,26 +176,6 @@ export function ProductFilters({ disabled = false }: { disabled?: boolean }) {
         </div>
 
         <div className="w-full min-w-35 space-y-2 sm:w-auto">
-          <Label>Availability</Label>
-          <Select
-            disabled={disabled}
-            value={values.inStock || "all"}
-            onValueChange={(v) => {
-              if (v == null) return;
-              setParams({ inStock: v === "all" ? "" : v, page: 1 });
-            }}
-          >
-            <SelectTrigger className="w-full" disabled={disabled}>
-              <SelectValue placeholder="Any" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Any</SelectItem>
-              <SelectItem value="true">In stock</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="w-full min-w-35 space-y-2 sm:w-auto">
           <Label>Sort</Label>
           <Select
             disabled={disabled}

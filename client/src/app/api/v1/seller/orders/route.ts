@@ -5,27 +5,10 @@ import { jsonOk, jsonMessage } from "@/lib/api-response";
 import type { SellerOrder } from "@/modules/seller/orders/types";
 import { nestErrorMessage, forwardAuthorization } from "@/lib/nest-http";
 import {
-  type NestOrderPayload,
   normalizeNestSellerOrderPayload,
+  mapNestPagedOrdersEnvelope,
+  type OrderPaginationMeta,
 } from "@/lib/nest-order-mapper";
-
-type NestPagedOrders = {
-  data?: NestOrderPayload[];
-  page?: number;
-  limit?: number;
-  total?: number;
-};
-
-function mapOrders(raw: unknown): SellerOrder[] {
-  if (Array.isArray(raw)) {
-    return (raw as NestOrderPayload[]).map(normalizeNestSellerOrderPayload);
-  }
-  const paged = raw as NestPagedOrders | null;
-  if (paged && Array.isArray(paged.data)) {
-    return paged.data.map(normalizeNestSellerOrderPayload);
-  }
-  return [];
-}
 
 function buildQueryString(searchParams: URLSearchParams): string {
   const allowed = ["status", "paymentStatus", "page", "limit"];
@@ -35,7 +18,7 @@ function buildQueryString(searchParams: URLSearchParams): string {
     if (value) parts.push(`${key}=${encodeURIComponent(value)}`);
   }
   if (!searchParams.get("limit")) {
-    parts.push("limit=100");
+    parts.push("limit=10");
   }
   if (!searchParams.get("page")) {
     parts.push("page=1");
@@ -66,8 +49,19 @@ export async function GET(req: Request) {
   }
 
   const envelope = raw as { data?: unknown };
-  const body: ApiResponse<{ orders: SellerOrder[] }> = {
-    data: { orders: mapOrders(envelope?.data ?? raw) },
+  const mapped = mapNestPagedOrdersEnvelope(
+    envelope?.data ?? raw,
+    normalizeNestSellerOrderPayload
+  );
+
+  const body: ApiResponse<{
+    orders: SellerOrder[];
+    pagination: OrderPaginationMeta;
+  }> = {
+    data: {
+      orders: mapped.orders,
+      pagination: mapped.pagination,
+    },
   };
   return jsonOk(body);
 }

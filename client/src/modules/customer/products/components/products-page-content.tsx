@@ -28,7 +28,6 @@ export function ProductsPageContent() {
     values.maxPrice.length > 0 ||
     values.minPrice.length > 0 ||
     values.minRating.length > 0 ||
-    values.inStock.length > 0 ||
     values.sort.length > 0 ||
     values.storeId.length > 0 ||
     values.sellerId.length > 0;

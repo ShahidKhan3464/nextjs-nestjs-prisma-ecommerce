@@ -84,6 +84,10 @@ export function ProductReviewsSection({
     [page, perPage]
   );
 
+  React.useEffect(() => {
+    setPage(1);
+  }, [perPage]);
+
   const summaryQuery = useQuery({
     queryKey: queryKeys.reviews.summary(productId),
     queryFn: () => fetchProductSummary(productId),

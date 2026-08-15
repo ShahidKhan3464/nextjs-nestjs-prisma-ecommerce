@@ -57,7 +57,7 @@ export function AdminPaymentsList() {
 
   useEffect(() => {
     setPage(1);
-  }, [orderIdInput, statusFilter, providerFilter]);
+  }, [orderIdInput, statusFilter, providerFilter, perPage]);
 
   const { data, isPending, isFetching, isPlaceholderData, isError, refetch } =
     useQuery({

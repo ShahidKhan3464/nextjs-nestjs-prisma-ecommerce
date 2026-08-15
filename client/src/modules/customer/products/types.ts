@@ -24,7 +24,6 @@ export type ProductListParams = {
   minPrice?: number;
   maxPrice?: number;
   minRating?: number;
-  inStock?: boolean;
   sort?: ProductSort;
   categoryId?: number;
 };
@@ -67,16 +66,16 @@ export type Product = {
   name: string;
   slug: string;
   category: string;
-  categoryId?: number;
   images: string[];
   basePrice: number;
+  categoryId?: number;
   description: string;
   isRemoved?: boolean;
-  store?: ProductStore;
-  publishedAt?: string | null;
-  variants: ProductVariant[];
-  averageRating?: number;
   reviewCount?: number;
+  store?: ProductStore;
+  averageRating?: number;
+  variants: ProductVariant[];
+  publishedAt?: string | null;
 };
 
 export function isProductSort(value: string): value is ProductSort {

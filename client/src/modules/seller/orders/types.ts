@@ -15,7 +15,7 @@ export type SellerOrder = Order & {
 
 export type SellerOrderListParams = Pick<
   OrderListParams,
-  "status" | "paymentStatus"
+  "status" | "paymentStatus" | "page" | "limit"
 >;
 
 export type UpdateSellerOrderStatus = "SHIPPED" | "DELIVERED";

@@ -12,15 +12,24 @@ function toQueryParams(params?: SellerOrderListParams) {
   if (params.status) query.status = params.status.toUpperCase();
   if (params.paymentStatus)
     query.paymentStatus = params.paymentStatus.toUpperCase();
+  if (params.page != null) query.page = String(params.page);
+  if (params.limit != null) query.limit = String(params.limit);
   return Object.keys(query).length > 0 ? query : undefined;
 }
 
 export async function fetchSellerOrders(params?: SellerOrderListParams) {
-  const res = await api.get<ApiResponse<{ orders: SellerOrder[] }>>(
-    "/api/v1/seller/orders",
-    { params: toQueryParams(params) }
-  );
-  return res.data.data.orders;
+  const res = await api.get<
+    ApiResponse<{
+      orders: SellerOrder[];
+      pagination: {
+        page: number;
+        limit: number;
+        total: number;
+        totalPages: number;
+      };
+    }>
+  >("/api/v1/seller/orders", { params: toQueryParams(params) });
+  return res.data.data;
 }
 
 export async function fetchSellerOrder(id: string) {

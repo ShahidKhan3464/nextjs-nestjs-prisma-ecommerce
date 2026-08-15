@@ -33,18 +33,31 @@ export function Pagination({
     return [...merged].sort((a, b) => a - b);
   }, [perPage, perPageOptions]);
 
+  const selectItems = useMemo(
+    () =>
+      options.map((option) => ({
+        value: String(option),
+        label: String(option),
+      })),
+    [options]
+  );
+
   return (
     <div className="flex items-center justify-between gap-2 py-4">
       <div className="flex items-center gap-2">
+        <span className="text-muted-foreground hidden text-sm sm:inline">
+          Rows per page
+        </span>
         <Select
+          items={selectItems}
           value={String(perPage)}
-          onValueChange={(v) => {
-            if (v == null) return;
-            onPerPageChange(Number(v));
+          onValueChange={(value) => {
+            if (value == null) return;
+            onPerPageChange(Number(value));
           }}
         >
-          <SelectTrigger className="w-[80px]">
-            <SelectValue />
+          <SelectTrigger className="w-22" aria-label="Rows per page">
+            <SelectValue placeholder={String(perPage)} />
           </SelectTrigger>
           <SelectContent>
             {options.map((option) => (

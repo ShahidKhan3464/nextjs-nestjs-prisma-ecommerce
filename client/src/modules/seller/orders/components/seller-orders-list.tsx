@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { queryKeys } from "@/constants/query-keys";
 import { formatOrderDate } from "@/lib/format-date";
 import { useEffect, useMemo, useState } from "react";
+import type { SellerOrderListParams } from "../types";
 import { Pagination } from "@/components/ui/pagination";
 import { AdminTableSkeleton } from "@/modules/admin/shared";
 import { fetchSellerOrders } from "../services/orders.service";
@@ -58,31 +59,36 @@ export function SellerOrdersList() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [paymentFilter, setPaymentFilter] = useState("all");
   const debouncedSearch = useDebouncedValue(searchInput, 500);
+  const hasSearch = debouncedSearch.trim().length > 0;
 
   useEffect(() => {
     setPage(1);
-  }, [debouncedSearch, statusFilter, paymentFilter]);
+  }, [debouncedSearch, statusFilter, paymentFilter, perPage]);
 
   const listParams = useMemo(() => {
-    const params: {
-      status?: string;
-      paymentStatus?: string;
-    } = {};
+    const params: SellerOrderListParams = {};
     if (statusFilter !== "all") params.status = statusFilter;
     if (paymentFilter !== "all") params.paymentStatus = paymentFilter;
-    return Object.keys(params).length > 0 ? params : undefined;
-  }, [statusFilter, paymentFilter]);
+    if (hasSearch) {
+      params.page = 1;
+      params.limit = 100;
+    } else {
+      params.page = page;
+      params.limit = perPage;
+    }
+    return params;
+  }, [statusFilter, paymentFilter, hasSearch, page, perPage]);
 
   const { data, isPending, isError, refetch, isFetching } = useQuery({
-    queryKey: queryKeys.seller.orders.list(listParams ?? {}),
+    queryKey: queryKeys.seller.orders.list(listParams),
     queryFn: () => fetchSellerOrders(listParams),
   });
 
   const filtered = useMemo(() => {
-    if (!data) return [];
+    const orders = data?.orders ?? [];
+    if (!hasSearch) return orders;
     const q = debouncedSearch.trim().toLowerCase();
-    if (!q) return data;
-    return data.filter((o) => {
+    return orders.filter((o) => {
       const idMatch =
         o.id.toLowerCase().includes(q) ||
         o.orderNumber.toLowerCase().includes(q);
@@ -96,12 +102,21 @@ export function SellerOrdersList() {
       );
       return idMatch || buyerMatch || itemMatch;
     });
-  }, [data, debouncedSearch]);
+  }, [data?.orders, debouncedSearch, hasSearch]);
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
+  const totalPages = hasSearch
+    ? Math.max(1, Math.ceil(filtered.length / perPage))
+    : (data?.pagination.totalPages ?? 1);
   const pageClamped = Math.min(page, totalPages);
-  const sliceStart = (pageClamped - 1) * perPage;
-  const pageRows = filtered.slice(sliceStart, sliceStart + perPage);
+  const pageRows = hasSearch
+    ? filtered.slice((pageClamped - 1) * perPage, pageClamped * perPage)
+    : filtered;
+  const paginationPage = hasSearch
+    ? pageClamped
+    : (data?.pagination.page ?? pageClamped);
+  const paginationPerPage = hasSearch
+    ? perPage
+    : (data?.pagination.limit ?? perPage);
 
   useEffect(() => {
     if (page !== pageClamped) setPage(pageClamped);
@@ -138,8 +153,7 @@ export function SellerOrdersList() {
     );
   }
 
-  const total = data?.length ?? 0;
-  const hasSearch = debouncedSearch.trim().length > 0;
+  const total = data?.pagination.total ?? 0;
   const hasFilters = statusFilter !== "all" || paymentFilter !== "all";
   const isEmptyCatalog = total === 0 && !hasSearch && !hasFilters;
 
@@ -289,12 +303,12 @@ export function SellerOrdersList() {
           </Table>
         </div>
 
-        {filtered.length > 0 ? (
+        {(data?.pagination.total ?? 0) > 0 || filtered.length > 0 ? (
           <Pagination
-            perPage={perPage}
-            page={pageClamped}
+            page={paginationPage}
             onPageChange={setPage}
             totalPages={totalPages}
+            perPage={paginationPerPage}
             onPerPageChange={(n) => {
               setPerPage(n);
               setPage(1);

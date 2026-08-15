@@ -30,7 +30,6 @@ export async function GET(req: Request) {
   const maxPrice = url.searchParams.get("maxPrice");
   const minPrice = url.searchParams.get("minPrice");
   const minRating = url.searchParams.get("minRating");
-  const inStock = url.searchParams.get("inStock");
   const storeId = url.searchParams.get("storeId");
   const sellerId = url.searchParams.get("sellerId");
   const sort = url.searchParams.get("sort");
@@ -42,7 +41,6 @@ export async function GET(req: Request) {
   if (maxPrice) searchParams.set("maxPrice", maxPrice);
   if (minPrice) searchParams.set("minPrice", minPrice);
   if (minRating) searchParams.set("minRating", minRating);
-  if (inStock) searchParams.set("inStock", inStock);
   if (storeId) searchParams.set("storeId", storeId);
   if (sellerId) searchParams.set("sellerId", sellerId);
   if (sort) searchParams.set("sort", sort);

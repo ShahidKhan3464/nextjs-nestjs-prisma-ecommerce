@@ -105,7 +105,6 @@ export function normalizeNestOrderPayload(order: NestOrderPayload): Order {
     deliveredAt: order.deliveredAt,
     cancelledAt: order.cancelledAt,
     subtotal: Number(order.subtotal),
-    storeId: order.storeId != null ? String(order.storeId) : undefined,
     store: normalizeStore(order.store),
     shippingAddress: order.shippingAddress,
     cancellationReason: order.cancellationReason,
@@ -113,6 +112,7 @@ export function normalizeNestOrderPayload(order: NestOrderPayload): Order {
     items: (order.items ?? []).map(normalizeLineItem),
     orderNumber: order.orderNumber ?? String(order.id),
     status: order.status.toLowerCase() as Order["status"],
+    storeId: order.storeId != null ? String(order.storeId) : undefined,
     paymentStatus: (
       order.paymentStatus ?? "paid"
     ).toLowerCase() as Order["paymentStatus"],
@@ -131,6 +131,66 @@ export function normalizeNestSellerOrderPayload(
       email: order.buyer.email,
       id: String(order.buyer.id),
       fullName: order.buyer.fullName,
+    },
+  };
+}
+
+export type NestPagedOrdersPayload = {
+  data?: NestOrderPayload[];
+  page?: number;
+  limit?: number;
+  total?: number;
+};
+
+export type OrderPaginationMeta = {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+};
+
+export function mapNestPagedOrdersEnvelope<T>(
+  raw: unknown,
+  mapOrder: (payload: NestOrderPayload) => T
+): { orders: T[]; pagination: OrderPaginationMeta } {
+  const empty: OrderPaginationMeta = {
+    page: 1,
+    limit: 10,
+    total: 0,
+    totalPages: 1,
+  };
+
+  if (Array.isArray(raw)) {
+    const orders = raw.map(mapOrder);
+    const limit = orders.length || 10;
+    return {
+      orders,
+      pagination: {
+        page: 1,
+        limit,
+        total: orders.length,
+        totalPages: 1,
+      },
+    };
+  }
+
+  const paged = raw as NestPagedOrdersPayload | null;
+  if (!paged || !Array.isArray(paged.data)) {
+    return { orders: [], pagination: empty };
+  }
+
+  const orders = paged.data.map(mapOrder);
+  const page = paged.page ?? 1;
+  const limit = paged.limit ?? (orders.length || 10);
+  const total = paged.total ?? orders.length;
+
+  return {
+    orders,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages: Math.max(1, Math.ceil(total / limit)),
     },
   };
 }

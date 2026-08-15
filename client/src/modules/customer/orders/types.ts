@@ -66,6 +66,18 @@ export type OrderListParams = {
   dateTo?: string;
   dateFrom?: string;
   paymentStatus?: string;
+  page?: number;
+  limit?: number;
+};
+
+export type PaginatedOrdersResult = {
+  orders: Order[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
 };
 
 export type CancelOrderInput = {

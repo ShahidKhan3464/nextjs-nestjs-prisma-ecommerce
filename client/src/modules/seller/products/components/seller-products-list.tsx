@@ -117,7 +117,7 @@ export function SellerProductsList() {
 
   useEffect(() => {
     setPage(1);
-  }, [debouncedSearch, lifeCycle, statusFilter, categoryFilter]);
+  }, [debouncedSearch, lifeCycle, statusFilter, categoryFilter, perPage]);
 
   const listKey = [
     ...queryKeys.seller.products.all,

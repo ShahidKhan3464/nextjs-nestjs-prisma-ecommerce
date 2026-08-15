@@ -62,7 +62,7 @@ export function AdminUsersList() {
 
   useEffect(() => {
     setPage(1);
-  }, [debouncedSearch, statusFilter]);
+  }, [debouncedSearch, statusFilter, perPage]);
 
   const { data, isPending, isFetching, isPlaceholderData } = useQuery({
     queryKey: [

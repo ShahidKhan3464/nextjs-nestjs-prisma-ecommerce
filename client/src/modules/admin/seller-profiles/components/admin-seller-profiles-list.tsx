@@ -45,7 +45,7 @@ export function AdminSellerProfilesList() {
 
   useEffect(() => {
     setPage(1);
-  }, [debouncedSearch, statusFilter]);
+  }, [debouncedSearch, statusFilter, perPage]);
 
   const statusParam =
     statusFilter === "ALL" ? undefined : (statusFilter as SellerProfileStatus);

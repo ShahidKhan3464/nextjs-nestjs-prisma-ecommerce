@@ -55,7 +55,7 @@ export function SellerPaymentsList() {
 
   useEffect(() => {
     setPage(1);
-  }, [statusFilter, providerFilter]);
+  }, [statusFilter, providerFilter, perPage]);
 
   const { data, isPending, isFetching, isPlaceholderData, isError, refetch } =
     useQuery({

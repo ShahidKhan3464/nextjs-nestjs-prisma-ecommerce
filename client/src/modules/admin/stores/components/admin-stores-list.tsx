@@ -44,7 +44,7 @@ export function AdminStoresList() {
 
   useEffect(() => {
     setPage(1);
-  }, [debouncedSearch, statusFilter]);
+  }, [debouncedSearch, statusFilter, perPage]);
 
   const { data, isPending, isFetching, isPlaceholderData, isError, refetch } =
     useQuery({

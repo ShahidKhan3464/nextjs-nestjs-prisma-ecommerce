@@ -20,7 +20,6 @@ export function toProductListParams(
     minPrice: values.minPrice ? Number(values.minPrice) : undefined,
     maxPrice: values.maxPrice ? Number(values.maxPrice) : undefined,
     minRating: values.minRating ? Number(values.minRating) : undefined,
-    inStock: values.inStock === "true" ? true : undefined,
     storeId,
     sellerId: values.sellerId ? Number(values.sellerId) : undefined,
     sort: values.sort || undefined,

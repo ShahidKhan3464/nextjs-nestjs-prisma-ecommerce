@@ -1,30 +1,13 @@
-import { getBackendUrl } from "@/lib/backend-url";
+import type { ApiResponse } from "@/types";
 import { requireAdmin } from "@/lib/require-auth";
-import type { ApiResponse, Order } from "@/types";
+import { getBackendUrl } from "@/lib/backend-url";
 import { jsonOk, jsonMessage } from "@/lib/api-response";
 import { nestErrorMessage, forwardAuthorization } from "@/lib/nest-http";
+import type { PaginatedOrdersResult } from "@/modules/buyer/orders/types";
 import {
-  type NestOrderPayload,
   normalizeNestOrderPayload,
+  mapNestPagedOrdersEnvelope,
 } from "@/lib/nest-order-mapper";
-
-type NestPagedOrders = {
-  data?: NestOrderPayload[];
-  page?: number;
-  limit?: number;
-  total?: number;
-};
-
-function mapOrders(raw: unknown): Order[] {
-  if (Array.isArray(raw)) {
-    return (raw as NestOrderPayload[]).map(normalizeNestOrderPayload);
-  }
-  const paged = raw as NestPagedOrders | null;
-  if (paged && Array.isArray(paged.data)) {
-    return paged.data.map(normalizeNestOrderPayload);
-  }
-  return [];
-}
 
 function buildQueryString(searchParams: URLSearchParams): string {
   const allowed = [
@@ -43,7 +26,7 @@ function buildQueryString(searchParams: URLSearchParams): string {
     if (value) parts.push(`${key}=${encodeURIComponent(value)}`);
   }
   if (!searchParams.get("limit")) {
-    parts.push("limit=100");
+    parts.push("limit=10");
   }
   if (!searchParams.get("page")) {
     parts.push("page=1");
@@ -74,8 +57,16 @@ export async function GET(req: Request) {
   }
 
   const envelope = raw as { data?: unknown };
-  const body: ApiResponse<{ orders: Order[] }> = {
-    data: { orders: mapOrders(envelope?.data ?? raw) },
+  const mapped = mapNestPagedOrdersEnvelope(
+    envelope?.data ?? raw,
+    normalizeNestOrderPayload
+  );
+
+  const body: ApiResponse<PaginatedOrdersResult> = {
+    data: {
+      orders: mapped.orders,
+      pagination: mapped.pagination,
+    },
   };
   return jsonOk(body);
 }

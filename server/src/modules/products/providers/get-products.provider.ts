@@ -89,10 +89,6 @@ export class GetProductsProvider {
       });
     }
 
-    if (query.inStock === true) {
-      variantFilters.push({ stockQuantity: { gt: 0 } });
-    }
-
     if (variantFilters.length === 1) {
       where.variants = { some: variantFilters[0] };
     } else if (variantFilters.length > 1) {

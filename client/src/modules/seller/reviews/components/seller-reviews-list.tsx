@@ -1,13 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
 import { ROUTES } from "@/constants/routes";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/constants/query-keys";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatOrderDate } from "@/lib/format-date";
+import { useEffect, useMemo, useState } from "react";
 import { Pagination } from "@/components/ui/pagination";
 import { fetchSellerReviews } from "../services/reviews.service";
 import { EmptyState } from "@/shared/components/feedback/empty-state";
@@ -34,6 +34,10 @@ function SellerReviewsSkeleton() {
 export function SellerReviewsList() {
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
+
+  useEffect(() => {
+    setPage(1);
+  }, [perPage]);
 
   const listParams = useMemo(
     () => ({ page, limit: perPage }),

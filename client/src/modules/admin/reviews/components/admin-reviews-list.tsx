@@ -65,7 +65,7 @@ export function AdminReviewsList() {
 
   useEffect(() => {
     setPage(1);
-  }, [ratingFilter, storeIdInput]);
+  }, [ratingFilter, storeIdInput, perPage]);
 
   const listParams = useMemo(
     () => ({

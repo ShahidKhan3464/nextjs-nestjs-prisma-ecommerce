@@ -1,6 +1,11 @@
 import { api } from "@/services/api/client";
 import type { ApiResponse } from "@/types/api";
-import type { Order, OrderListParams, CancelOrderInput } from "../types";
+import type {
+  Order,
+  OrderListParams,
+  CancelOrderInput,
+  PaginatedOrdersResult,
+} from "@/modules/buyer/orders/types";
 
 function toQueryParams(params?: OrderListParams) {
   if (!params) return undefined;
@@ -8,15 +13,17 @@ function toQueryParams(params?: OrderListParams) {
   if (params.status) query.status = params.status.toUpperCase();
   if (params.paymentStatus)
     query.paymentStatus = params.paymentStatus.toUpperCase();
+  if (params.page != null) query.page = String(params.page);
+  if (params.limit != null) query.limit = String(params.limit);
   return Object.keys(query).length > 0 ? query : undefined;
 }
 
 export async function fetchAdminOrders(params?: OrderListParams) {
-  const res = await api.get<ApiResponse<{ orders: Order[] }>>(
+  const res = await api.get<ApiResponse<PaginatedOrdersResult>>(
     "/api/v1/admin/orders",
     { params: toQueryParams(params) }
   );
-  return res.data.data.orders;
+  return res.data.data;
 }
 
 export async function fetchAdminOrder(id: string) {
