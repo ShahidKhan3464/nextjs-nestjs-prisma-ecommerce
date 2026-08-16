@@ -27,6 +27,22 @@ import {
 
 type Props = { orderId: string };
 
+function OrderDetailSkeleton() {
+  return (
+    <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_500px]">
+      <div className="space-y-6">
+        <Skeleton className="h-24 w-full max-w-md" />
+        <Skeleton className="h-64 w-full rounded-xl" />
+      </div>
+      <aside className="space-y-6 rounded-xl border bg-muted/40 p-4 lg:sticky lg:top-28">
+        <Skeleton className="h-20 w-full" />
+        <Skeleton className="h-32 w-full" />
+        <Skeleton className="h-28 w-full" />
+      </aside>
+    </div>
+  );
+}
+
 export function SellerOrderDetail({ orderId }: Props) {
   const qc = useQueryClient();
 
@@ -61,12 +77,7 @@ export function SellerOrderDetail({ orderId }: Props) {
   }, [data?.order]);
 
   if (isPending) {
-    return (
-      <div className="space-y-6">
-        <Skeleton className="h-40 w-full rounded-xl" />
-        <Skeleton className="h-64 w-full rounded-xl" />
-      </div>
-    );
+    return <OrderDetailSkeleton />;
   }
 
   if (isError || !data) {
@@ -99,18 +110,67 @@ export function SellerOrderDetail({ orderId }: Props) {
   const itemCount = order.items.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
+    <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_500px]">
+      <div className="space-y-6">
         <div>
           <p className="text-muted-foreground text-sm">Order</p>
-          <h1 className="font-heading text-2xl font-semibold tracking-tight tabular-nums sm:text-3xl">
+          <h1 className="font-heading text-3xl font-semibold tracking-tight tabular-nums">
             {order.orderNumber}
           </h1>
-          <p className="text-muted-foreground mt-1 text-sm">
+          <p className="text-muted-foreground mt-2 text-sm">
             Placed {formatOrderDate(order.createdAt)}
           </p>
         </div>
-        <div className="flex flex-col items-start gap-3 sm:items-end">
+
+        {order.status === "cancelled" && order.cancellationReason ? (
+          <p className="text-muted-foreground rounded-lg border px-4 py-3 text-sm">
+            Cancellation reason: {order.cancellationReason}
+          </p>
+        ) : null}
+
+        <SellerOrderCodActions orderId={order.id} />
+
+        <section className="space-y-3">
+          <h2 className="text-sm font-medium tracking-wide uppercase">
+            Items ({itemCount})
+          </h2>
+          <ul className="divide-y rounded-xl border">
+            {order.items.map((item) => (
+              <li
+                key={`${item.variantId}-${item.priceAtPurchase}`}
+                className="flex gap-4 p-4"
+              >
+                <div className="relative size-16 shrink-0 overflow-hidden rounded-md bg-muted">
+                  {item.image ? (
+                    <Image
+                      fill
+                      alt=""
+                      sizes="64px"
+                      src={item.image}
+                      className="object-cover"
+                    />
+                  ) : null}
+                </div>
+                <div className="min-w-0 flex-1 space-y-1">
+                  <p className="font-medium">{item.productName}</p>
+                  <p className="text-muted-foreground text-sm">
+                    {item.variantLabel} × {item.quantity}
+                  </p>
+                  <p className="text-muted-foreground text-xs">
+                    ${item.priceAtPurchase.toFixed(2)} each
+                  </p>
+                </div>
+                <p className="tabular-nums">
+                  ${(item.priceAtPurchase * item.quantity).toFixed(2)}
+                </p>
+              </li>
+            ))}
+          </ul>
+        </section>
+      </div>
+
+      <aside className="bg-muted/40 border-border space-y-6 rounded-xl border p-4 lg:sticky lg:top-28">
+        <div className="space-y-3">
           <div className="flex flex-wrap gap-2">
             <OrderStatusBadge status={order.status} />
             <PaymentStatusBadge status={order.paymentStatus} />
@@ -125,18 +185,8 @@ export function SellerOrderDetail({ orderId }: Props) {
             </Button>
           ) : null}
         </div>
-      </div>
 
-      {order.status === "cancelled" && order.cancellationReason ? (
-        <p className="text-muted-foreground rounded-lg border px-4 py-3 text-sm">
-          Cancellation reason: {order.cancellationReason}
-        </p>
-      ) : null}
-
-      <SellerOrderCodActions orderId={order.id} />
-
-      <section className="grid gap-6 sm:grid-cols-2">
-        <div className="space-y-2 text-sm">
+        <section className="space-y-2 text-sm">
           <h2 className="font-medium tracking-wide uppercase">Customer</h2>
           {order.buyer ? (
             <div className="text-muted-foreground space-y-1 leading-relaxed">
@@ -148,8 +198,11 @@ export function SellerOrderDetail({ orderId }: Props) {
           ) : (
             <p className="text-muted-foreground">Customer details unavailable.</p>
           )}
-        </div>
-        <div className="space-y-2 text-sm">
+        </section>
+
+        <Separator />
+
+        <section className="space-y-2 text-sm">
           <h2 className="font-medium tracking-wide uppercase">Shipping</h2>
           <p className="text-muted-foreground leading-relaxed">
             {order.shippingAddress.fullName}
@@ -183,78 +236,38 @@ export function SellerOrderDetail({ orderId }: Props) {
               Delivered {formatOrderDate(order.deliveredAt)}
             </p>
           ) : null}
-        </div>
-      </section>
+        </section>
 
-      <Separator />
+        <Separator />
 
-      <section className="space-y-3">
-        <h2 className="text-sm font-medium tracking-wide uppercase">
-          Items ({itemCount})
-        </h2>
-        <ul className="divide-y rounded-xl border">
-          {order.items.map((item) => (
-            <li
-              key={`${item.variantId}-${item.priceAtPurchase}`}
-              className="flex gap-4 p-4"
-            >
-              <div className="relative size-16 shrink-0 overflow-hidden rounded-md bg-muted">
-                {item.image ? (
-                  <Image
-                    fill
-                    alt=""
-                    sizes="64px"
-                    src={item.image}
-                    className="object-cover"
-                  />
-                ) : null}
-              </div>
-              <div className="min-w-0 flex-1 space-y-1">
-                <p className="font-medium">{item.productName}</p>
-                <p className="text-muted-foreground text-sm">
-                  {item.variantLabel} × {item.quantity}
-                </p>
-                <p className="text-muted-foreground text-xs">
-                  ${item.priceAtPurchase.toFixed(2)} each
-                </p>
-              </div>
-              <p className="tabular-nums">
-                ${(item.priceAtPurchase * item.quantity).toFixed(2)}
-              </p>
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      <Separator />
-
-      <section className="space-y-3 text-sm">
-        <h2 className="font-medium tracking-wide uppercase">Revenue summary</h2>
-        <div className="max-w-sm space-y-1">
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Subtotal</span>
-            <span className="tabular-nums">${order.subtotal.toFixed(2)}</span>
+        <section className="space-y-3 text-sm">
+          <h2 className="font-medium tracking-wide uppercase">Revenue summary</h2>
+          <div className="space-y-1">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Subtotal</span>
+              <span className="tabular-nums">${order.subtotal.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Tax</span>
+              <span className="tabular-nums">${order.tax.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between border-t pt-2 text-base font-semibold">
+              <span>Total</span>
+              <span className="tabular-nums">${order.total.toFixed(2)}</span>
+            </div>
           </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Tax</span>
-            <span className="tabular-nums">${order.tax.toFixed(2)}</span>
-          </div>
-          <div className="flex justify-between border-t pt-2 text-base font-semibold">
-            <span>Total</span>
-            <span className="tabular-nums">${order.total.toFixed(2)}</span>
-          </div>
-        </div>
-        <p className="text-muted-foreground text-xs">
-          Payment: {order.paymentMethodSummary}
-        </p>
-      </section>
+          <p className="text-muted-foreground text-xs">
+            Payment: {order.paymentMethodSummary}
+          </p>
+        </section>
 
-      <Link
-        href={ROUTES.orders}
-        className={cn(buttonVariants({ variant: "outline" }))}
-      >
-        All orders
-      </Link>
+        <Link
+          href={ROUTES.orders}
+          className={cn(buttonVariants({ variant: "outline" }), "w-full")}
+        >
+          All orders
+        </Link>
+      </aside>
     </div>
   );
 }

@@ -1,5 +1,5 @@
-export const PRODUCT_STATUSES = ["DRAFT", "ACTIVE", "ARCHIVED"] as const;
-export type ProductStatus = (typeof PRODUCT_STATUSES)[number];
+export const PRODUCT_STATUSES = ["DRAFT", "ACTIVE"] as const;
+export type ProductStatus = (typeof PRODUCT_STATUSES)[number] | "ARCHIVED";
 
 export const PRODUCT_LIFE_CYCLES = ["active", "removed", "all"] as const;
 export type ProductLifeCycle = (typeof PRODUCT_LIFE_CYCLES)[number];
@@ -137,18 +137,10 @@ export function isProductActive(product: SellerProduct): boolean {
   return product.status === "ACTIVE" && !product.isRemoved;
 }
 
-export function isProductArchived(product: SellerProduct): boolean {
-  return product.status === "ARCHIVED" && !product.isRemoved;
-}
-
 export function canPublishProduct(product: SellerProduct): boolean {
   return isProductDraft(product);
 }
 
-export function canArchiveProduct(product: SellerProduct): boolean {
-  return isProductActive(product);
-}
-
 export function canRestoreProduct(product: SellerProduct): boolean {
-  return product.isRemoved || isProductArchived(product);
+  return product.isRemoved;
 }

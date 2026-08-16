@@ -10,7 +10,6 @@ import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/constants/query-keys";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Separator } from "@/components/ui/separator";
 import { RejectCodDialog } from "./reject-cod-dialog";
 import { ConfirmCodDialog } from "./confirm-cod-dialog";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -37,11 +36,28 @@ function MetaCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="bg-muted/40 border-border rounded-lg border p-4">
+    <div className="bg-background border-border rounded-lg border p-4">
       <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
         {label}
       </p>
       <div className="mt-1 text-sm">{children}</div>
+    </div>
+  );
+}
+
+function PaymentDetailSkeleton() {
+  return (
+    <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_500px]">
+      <div className="space-y-6">
+        <Skeleton className="h-24 w-full max-w-md" />
+        <Skeleton className="h-32 w-full rounded-xl" />
+      </div>
+      <aside className="space-y-4 rounded-xl border bg-muted/40 p-4 lg:sticky lg:top-28">
+        <Skeleton className="h-20 w-full" />
+        <Skeleton className="h-20 w-full" />
+        <Skeleton className="h-20 w-full" />
+        <Skeleton className="h-20 w-full" />
+      </aside>
     </div>
   );
 }
@@ -56,13 +72,7 @@ export function SellerPaymentDetail({ paymentId }: Props) {
   });
 
   if (isPending) {
-    return (
-      <div className="mx-auto max-w-4xl space-y-6">
-        <Skeleton className="h-14 w-72" />
-        <Skeleton className="h-40 w-full rounded-xl" />
-        <Skeleton className="h-64 w-full rounded-xl" />
-      </div>
-    );
+    return <PaymentDetailSkeleton />;
   }
 
   if (isError || !data) {
@@ -95,14 +105,14 @@ export function SellerPaymentDetail({ paymentId }: Props) {
   return (
     <div
       className={cn(
-        "mx-auto max-w-4xl space-y-6",
+        "grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_500px]",
         isFetching ? "opacity-90" : undefined
       )}
     >
-      <div className="flex flex-wrap items-start justify-between gap-4">
+      <div className="space-y-6">
         <div className="min-w-0 space-y-2">
           <p className="text-muted-foreground text-sm">Payment</p>
-          <h2 className="font-heading text-2xl font-semibold tracking-tight">
+          <h2 className="font-heading text-3xl font-semibold tracking-tight">
             #{payment.id}
           </h2>
           <div className="flex flex-wrap items-center gap-2 pt-1">
@@ -113,6 +123,37 @@ export function SellerPaymentDetail({ paymentId }: Props) {
             ) : null}
           </div>
         </div>
+
+        {payment.failureReason ? (
+          <div className="border-destructive/30 bg-destructive/5 rounded-lg border p-4 text-sm">
+            <p className="font-medium">Failure reason</p>
+            <p className="text-muted-foreground mt-1 whitespace-pre-wrap">
+              {payment.failureReason}
+            </p>
+          </div>
+        ) : null}
+
+        <section className="space-y-3 text-sm">
+          <h3 className="font-medium tracking-wide uppercase">Order</h3>
+          <p>
+            <Link
+              href={ROUTES.order(payment.orderId)}
+              className="font-medium hover:underline"
+            >
+              {payment.order?.orderNumber ?? `#${payment.orderId}`}
+            </Link>
+          </p>
+        </section>
+
+        <Link
+          href={ROUTES.payments}
+          className={cn(buttonVariants({ variant: "outline" }))}
+        >
+          All payments
+        </Link>
+      </div>
+
+      <aside className="bg-muted/40 border-border space-y-4 rounded-xl border p-4 lg:sticky lg:top-28">
         {canManageCod ? (
           <div className="flex flex-wrap gap-2">
             <Button type="button" onClick={() => setConfirmOpen(true)}>
@@ -127,9 +168,7 @@ export function SellerPaymentDetail({ paymentId }: Props) {
             </Button>
           </div>
         ) : null}
-      </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <MetaCard label="Amount">
           <p className="font-medium tabular-nums">
             {formatPaymentAmount(payment.amount, payment.currency)}
@@ -146,37 +185,7 @@ export function SellerPaymentDetail({ paymentId }: Props) {
         <MetaCard label="Paid at">
           <p className="tabular-nums">{formatDateTime(payment.paidAt)}</p>
         </MetaCard>
-      </div>
-
-      {payment.failureReason ? (
-        <div className="border-destructive/30 bg-destructive/5 rounded-lg border p-4 text-sm">
-          <p className="font-medium">Failure reason</p>
-          <p className="text-muted-foreground mt-1 whitespace-pre-wrap">
-            {payment.failureReason}
-          </p>
-        </div>
-      ) : null}
-
-      <Separator />
-
-      <section className="space-y-3 text-sm">
-        <h3 className="font-medium tracking-wide uppercase">Order</h3>
-        <p>
-          <Link
-            href={ROUTES.order(payment.orderId)}
-            className="font-medium hover:underline"
-          >
-            {payment.order?.orderNumber ?? `#${payment.orderId}`}
-          </Link>
-        </p>
-      </section>
-
-      <Link
-        href={ROUTES.payments}
-        className={cn(buttonVariants({ variant: "outline" }))}
-      >
-        All payments
-      </Link>
+      </aside>
 
       <ConfirmCodDialog
         payment={payment}

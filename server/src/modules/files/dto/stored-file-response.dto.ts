@@ -27,7 +27,10 @@ export class StoredFileResponseDto {
 }
 
 export class FileAssociationResponseDto {
-  @ApiProperty({ description: 'Association row id (ProductFile / StoreFile / UserFile / SellerDocument)' })
+  @ApiProperty({
+    description:
+      'Association row id (ProductFile / StoreFile / UserFile / SellerDocument)',
+  })
   id: number;
 
   @ApiProperty({ example: 'THUMBNAIL' })
@@ -45,7 +48,8 @@ export class DeleteFileResponseDto {
   deletedAssociationId: number;
 
   @ApiProperty({
-    description: 'True when StoredFile had no remaining associations and was removed',
+    description:
+      'True when StoredFile had no remaining associations and was removed',
   })
   deletedStoredFile: boolean;
 

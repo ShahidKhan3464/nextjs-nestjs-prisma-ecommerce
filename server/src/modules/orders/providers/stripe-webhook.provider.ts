@@ -48,7 +48,7 @@ export class StripeWebhookProvider {
     }
 
     if (event.type === 'payment_intent.succeeded') {
-      const paymentIntent = event.data.object as StripePaymentIntent;
+      const paymentIntent = event.data.object;
       try {
         await this.completeCheckoutProvider.completeFromWebhook(
           paymentIntent.id,

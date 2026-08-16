@@ -1,6 +1,9 @@
 import { Reflector } from '@nestjs/core';
 import { AccessTokenGuard } from '../access-token/access-token.guard';
-import { AUTH_TYPES_KEY, AuthType } from 'src/modules/auth/constants/auth.constants';
+import {
+  AUTH_TYPES_KEY,
+  AuthType,
+} from 'src/modules/auth/constants/auth.constants';
 import {
   Injectable,
   CanActivate,

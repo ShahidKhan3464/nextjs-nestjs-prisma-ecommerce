@@ -88,13 +88,6 @@ export async function publishSellerProduct(id: string): Promise<SellerProduct | 
   return res.data.data.product ?? null;
 }
 
-export async function archiveSellerProduct(id: string): Promise<SellerProduct | null> {
-  const res = await api.patch<{ data: { product?: SellerProduct } }>(
-    `/api/v1/seller/products/${id}/archive`
-  );
-  return res.data.data.product ?? null;
-}
-
 export async function restoreSellerProduct(id: string): Promise<SellerProduct | null> {
   const res = await api.patch<{ data: { product?: SellerProduct } }>(
     `/api/v1/seller/products/${id}/restore`

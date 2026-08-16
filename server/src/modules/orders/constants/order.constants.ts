@@ -8,4 +8,3 @@ export const CHECKOUT_ABANDON_TTL_MS = 30 * 60 * 1000;
 
 /** Stripe / payment currency for checkout PaymentIntents and order payments. */
 export const CHECKOUT_CURRENCY = 'usd';
-

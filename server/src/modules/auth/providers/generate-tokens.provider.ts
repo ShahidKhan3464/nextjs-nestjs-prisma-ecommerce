@@ -107,7 +107,7 @@ export class GenerateTokensProvider {
     );
 
     if ('reused' in result) {
-      return { reused: result.reused as boolean };
+      return { reused: result.reused };
     }
 
     return {

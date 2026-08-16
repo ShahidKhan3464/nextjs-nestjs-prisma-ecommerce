@@ -90,12 +90,4 @@ export class ProductsService {
   ): Promise<ProductWithRelations> {
     return await this.productStatusProvider.publish(id, userId, roles);
   }
-
-  public async archive(
-    id: number,
-    userId: number,
-    roles: UserRole[],
-  ): Promise<ProductWithRelations> {
-    return await this.productStatusProvider.archive(id, userId, roles);
-  }
 }

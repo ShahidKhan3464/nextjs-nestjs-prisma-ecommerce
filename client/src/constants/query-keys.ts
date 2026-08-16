@@ -53,7 +53,8 @@ export const queryKeys = {
     me: ["store", "me"] as const,
   },
   seller: {
-    categories: ["seller", "categories"] as const,
+    categories: (params?: { limit?: number }) =>
+      ["seller", "categories", params ?? { limit: 100 }] as const,
     products: {
       all: ["seller", "products"] as const,
       detail: (id: string) => ["seller", "products", "detail", id] as const,

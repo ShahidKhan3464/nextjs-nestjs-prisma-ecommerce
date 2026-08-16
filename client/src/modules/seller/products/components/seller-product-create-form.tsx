@@ -14,6 +14,7 @@ import { getApiErrorMessage } from "@/lib/api-error";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, type Resolver } from "react-hook-form";
 import { XIcon, PlusIcon, Trash2Icon } from "lucide-react";
+import { formatFilterLabel } from "@/lib/format-filter-label";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createSellerProduct } from "../services/products.service";
 import { fetchSellerCategories } from "../services/categories.service";
@@ -49,7 +50,7 @@ export function SellerProductCreateForm() {
     useProductImageFilePreviews();
 
   const { data: categories = [], isPending: categoriesLoading } = useQuery({
-    queryKey: queryKeys.seller.categories,
+    queryKey: queryKeys.seller.categories({ limit: 100 }),
     queryFn: () => fetchSellerCategories({ limit: 100 }),
   });
 
@@ -149,30 +150,40 @@ export function SellerProductCreateForm() {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Category</FormLabel>
-                <FormControl>
-                  <select
-                    ref={field.ref}
-                    name={field.name}
-                    value={field.value}
-                    onBlur={field.onBlur}
-                    disabled={categoriesLoading}
-                    onChange={(e) => field.onChange(e.target.value)}
-                    className="border-input bg-background ring-offset-background focus-visible:ring-ring flex h-10 w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    <option value="">
-                      {categoriesLoading
-                        ? "Loading categories…"
-                        : categoryOptions.length === 0
-                          ? "No categories available"
-                          : "Select category"}
-                    </option>
+                <Select
+                  value={field.value || undefined}
+                  disabled={categoriesLoading || categoryOptions.length === 0}
+                  onValueChange={(value) => field.onChange(value ?? "")}
+                >
+                  <FormControl>
+                    <SelectTrigger className="w-full">
+                      <SelectValue
+                        placeholder={
+                          categoriesLoading
+                            ? "Loading categories…"
+                            : categoryOptions.length === 0
+                              ? "No categories available"
+                              : "Select category"
+                        }
+                      >
+                        {field.value
+                          ? formatFilterLabel(
+                              categoryOptions.find(
+                                (c) => String(c.id) === field.value
+                              )?.name
+                            )
+                          : undefined}
+                      </SelectValue>
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
                     {categoryOptions.map((c) => (
-                      <option key={c.id} value={String(c.id)}>
-                        {c.name}
-                      </option>
+                      <SelectItem key={c.id} value={String(c.id)}>
+                        {formatFilterLabel(c.name)}
+                      </SelectItem>
                     ))}
-                  </select>
-                </FormControl>
+                  </SelectContent>
+                </Select>
                 <FormMessage />
               </FormItem>
             )}
@@ -187,7 +198,13 @@ export function SellerProductCreateForm() {
                 <Select value={field.value} onValueChange={field.onChange}>
                   <FormControl>
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Status" />
+                      <SelectValue placeholder="Status">
+                        {field.value === "ACTIVE"
+                          ? "Publish immediately"
+                          : field.value === "DRAFT"
+                            ? "Save as draft"
+                            : undefined}
+                      </SelectValue>
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>

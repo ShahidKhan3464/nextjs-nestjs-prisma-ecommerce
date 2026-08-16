@@ -42,7 +42,8 @@ export class StoreSellerProfileSummaryDto {
 
   @ApiPropertyOptional({
     example: 42,
-    description: 'Seller user id (owner/admin only; omitted on public storefront)',
+    description:
+      'Seller user id (owner/admin only; omitted on public storefront)',
   })
   userId?: number;
 

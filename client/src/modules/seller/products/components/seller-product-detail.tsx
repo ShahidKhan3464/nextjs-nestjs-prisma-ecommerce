@@ -19,13 +19,11 @@ import { SellerProductVariants } from "./seller-product-variants";
 import { EmptyState } from "@/shared/components/feedback/empty-state";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  canArchiveProduct,
   canPublishProduct,
   canRestoreProduct,
   type SellerProduct,
 } from "../types";
 import {
-  archiveSellerProduct,
   deleteSellerProduct,
   fetchSellerProduct,
   publishSellerProduct,
@@ -109,38 +107,6 @@ export function SellerProductDetail({ productId }: { productId: string }) {
     },
     onSuccess: async (product) => {
       toast.success("Product published");
-      await invalidate(product);
-    },
-  });
-
-  const archive = useMutation({
-    mutationFn: () => archiveSellerProduct(productId),
-    onMutate: async () => {
-      await qc.cancelQueries({
-        queryKey: queryKeys.seller.products.detail(productId),
-      });
-      const previous = qc.getQueryData<SellerProduct>(
-        queryKeys.seller.products.detail(productId)
-      );
-      if (previous) {
-        qc.setQueryData(queryKeys.seller.products.detail(productId), {
-          ...previous,
-          status: "ARCHIVED",
-        });
-      }
-      return { previous };
-    },
-    onError: (err, _v, ctx) => {
-      if (ctx?.previous) {
-        qc.setQueryData(
-          queryKeys.seller.products.detail(productId),
-          ctx.previous
-        );
-      }
-      toast.error(getApiErrorMessage(err, "Could not archive product"));
-    },
-    onSuccess: async (product) => {
-      toast.success("Product archived");
       await invalidate(product);
     },
   });
@@ -266,16 +232,6 @@ export function SellerProductDetail({ productId }: { productId: string }) {
               onClick={() => publish.mutate()}
             >
               Publish
-            </Button>
-          ) : null}
-          {canArchiveProduct(product) ? (
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={archive.isPending}
-              onClick={() => archive.mutate()}
-            >
-              Archive
             </Button>
           ) : null}
           {canRestoreProduct(product) ? (

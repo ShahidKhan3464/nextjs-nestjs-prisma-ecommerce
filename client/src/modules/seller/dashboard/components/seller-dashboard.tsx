@@ -50,32 +50,6 @@ function formatActivityTime(iso: string) {
   return format(new Date(iso), "MMM d, HH:mm");
 }
 
-function SellerDashboardSkeleton() {
-  return (
-    <div className="space-y-4">
-      <div className="space-y-2">
-        <Skeleton className="h-10 w-64" />
-        <Skeleton className="h-4 w-80 max-w-full" />
-      </div>
-      <Skeleton className="h-28 w-full" />
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <Skeleton key={i} className="h-28 w-full" />
-        ))}
-      </div>
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Skeleton className="h-72 w-full" />
-        <Skeleton className="h-72 w-full" />
-      </div>
-      <Skeleton className="h-64 w-full" />
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Skeleton className="h-56 w-full" />
-        <Skeleton className="h-56 w-full" />
-      </div>
-    </div>
-  );
-}
-
 export function SellerDashboard() {
   const { data, isPending, isError, error, refetch, isFetching } = useQuery({
     queryKey: queryKeys.dashboard.seller,
@@ -83,11 +57,7 @@ export function SellerDashboard() {
     staleTime: 30_000,
   });
 
-  if (isPending) {
-    return <SellerDashboardSkeleton />;
-  }
-
-  if (isError || !data) {
+  if (isError && !data) {
     return (
       <EmptyState
         title="Could not load seller dashboard"
@@ -105,12 +75,13 @@ export function SellerDashboard() {
     );
   }
 
-  const ordersByStatus = data.ordersByStatus.map((row) => ({
-    ...row,
-    label: formatStatusLabel(row.status),
-  }));
+  const ordersByStatus =
+    data?.ordersByStatus.map((row) => ({
+      ...row,
+      label: formatStatusLabel(row.status),
+    })) ?? [];
 
-  const store = data.store;
+  const store = data?.store;
 
   return (
     <div className="space-y-4">
@@ -126,16 +97,26 @@ export function SellerDashboard() {
       <Card>
         <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-1">
-            <CardTitle className="font-heading text-xl">{store.name}</CardTitle>
-            <p className="text-muted-foreground text-sm">
-              {store.businessName}
-              {store.city ? ` · ${store.city}` : ""}
-              {store.country ? `, ${store.country}` : ""}
-            </p>
-            {store.description ? (
-              <p className="text-muted-foreground line-clamp-2 max-w-2xl text-sm">
-                {store.description}
-              </p>
+            {isPending ? (
+              <>
+                <Skeleton className="h-7 w-48" />
+                <Skeleton className="h-4 w-64 max-w-full" />
+                <Skeleton className="h-4 w-full max-w-2xl" />
+              </>
+            ) : store ? (
+              <>
+                <CardTitle className="font-heading text-xl">{store.name}</CardTitle>
+                <p className="text-muted-foreground text-sm">
+                  {store.businessName}
+                  {store.city ? ` · ${store.city}` : ""}
+                  {store.country ? `, ${store.country}` : ""}
+                </p>
+                {store.description ? (
+                  <p className="text-muted-foreground line-clamp-2 max-w-2xl text-sm">
+                    {store.description}
+                  </p>
+                ) : null}
+              </>
             ) : null}
             <Link
               href={ROUTES.store}
@@ -148,93 +129,66 @@ export function SellerDashboard() {
             </Link>
           </div>
           <div className="flex flex-col items-start gap-2 sm:items-end">
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="secondary">{formatStatusLabel(store.status)}</Badge>
-              {store.verifiedAt ? (
-                <Badge variant="outline">Verified</Badge>
-              ) : (
-                <Badge variant="outline">Unverified</Badge>
-              )}
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <RatingStars
-                readOnly
-                value={store.averageRating ?? 0}
-                size="md"
-              />
-              <span className="text-muted-foreground text-xs tabular-nums">
-                {(store.averageRating ?? 0).toFixed(1)} (
-                {store.totalReviews ?? 0})
-              </span>
-            </div>
-            <p className="text-muted-foreground text-xs tabular-nums">
-              {store.productsSold ?? 0} products sold
-            </p>
+            {isPending ? (
+              <>
+                <Skeleton className="h-6 w-24" />
+                <Skeleton className="h-5 w-32" />
+                <Skeleton className="h-4 w-28" />
+              </>
+            ) : store ? (
+              <>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge variant="secondary">{formatStatusLabel(store.status)}</Badge>
+                  {store.verifiedAt ? (
+                    <Badge variant="outline">Verified</Badge>
+                  ) : (
+                    <Badge variant="outline">Unverified</Badge>
+                  )}
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <RatingStars
+                    readOnly
+                    value={store.averageRating ?? 0}
+                    size="md"
+                  />
+                  <span className="text-muted-foreground text-xs tabular-nums">
+                    {(store.averageRating ?? 0).toFixed(1)} (
+                    {store.totalReviews ?? 0})
+                  </span>
+                </div>
+                <p className="text-muted-foreground text-xs tabular-nums">
+                  {store.productsSold ?? 0} products sold
+                </p>
+              </>
+            ) : null}
           </div>
         </CardHeader>
       </Card>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm font-medium">Revenue</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-semibold tabular-nums">
-              ${data.totals.revenue.toFixed(2)}
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm font-medium">Orders</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-semibold tabular-nums">
-              {data.totals.orders}
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm font-medium">Pending orders</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-semibold tabular-nums">
-              {data.totals.pendingOrders}
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm font-medium">Products</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-semibold tabular-nums">
-              {data.totals.products}
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm font-medium">Variants</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-semibold tabular-nums">
-              {data.totals.variants}
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm font-medium">Low stock</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-semibold tabular-nums">
-              {data.totals.lowStockCount}
-            </p>
-          </CardContent>
-        </Card>
+        {(
+          [
+            ["Revenue", `$${data?.totals.revenue.toFixed(2) ?? "0.00"}`],
+            ["Orders", data?.totals.orders ?? 0],
+            ["Pending orders", data?.totals.pendingOrders ?? 0],
+            ["Products", data?.totals.products ?? 0],
+            ["Variants", data?.totals.variants ?? 0],
+            ["Low stock", data?.totals.lowStockCount ?? 0],
+          ] as const
+        ).map(([title, value]) => (
+          <Card key={title}>
+            <CardHeader>
+              <CardTitle className="text-sm font-medium">{title}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isPending ? (
+                <Skeleton className="h-8 w-24" />
+              ) : (
+                <p className="text-2xl font-semibold tabular-nums">{value}</p>
+              )}
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
@@ -243,8 +197,11 @@ export function SellerDashboard() {
             <CardTitle>Revenue (7 days)</CardTitle>
           </CardHeader>
           <CardContent className="h-72 pl-0">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={data.revenueByDay}>
+            {isPending ? (
+              <Skeleton className="h-full w-full" />
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={data?.revenueByDay ?? []}>
                 <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
                 <XAxis dataKey="date" tick={{ fontSize: 12 }} />
                 <YAxis tick={{ fontSize: 12 }} />
@@ -267,6 +224,7 @@ export function SellerDashboard() {
                 />
               </AreaChart>
             </ResponsiveContainer>
+            )}
           </CardContent>
         </Card>
 
@@ -275,7 +233,9 @@ export function SellerDashboard() {
             <CardTitle>Orders by status</CardTitle>
           </CardHeader>
           <CardContent className="h-72 pl-0">
-            {ordersByStatus.length === 0 ? (
+            {isPending ? (
+              <Skeleton className="h-full w-full" />
+            ) : ordersByStatus.length === 0 ? (
               <EmptyState
                 title="No orders yet"
                 description="Order status breakdown will appear after your first sale."
@@ -317,7 +277,9 @@ export function SellerDashboard() {
           </Link>
         </CardHeader>
         <CardContent>
-          {data.recentOrders.length === 0 ? (
+          {isPending ? (
+            <Skeleton className="h-40 w-full" />
+          ) : (data?.recentOrders.length ?? 0) === 0 ? (
             <EmptyState
               title="No orders yet"
               description="Orders for your store will appear here once customers check out."
@@ -343,7 +305,7 @@ export function SellerDashboard() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {data.recentOrders.map((order) => (
+                  {data?.recentOrders.map((order) => (
                     <TableRow key={order.id}>
                       <TableCell>
                         <Link
@@ -380,7 +342,9 @@ export function SellerDashboard() {
             <CardTitle>Low stock</CardTitle>
           </CardHeader>
           <CardContent>
-            {data.lowStock.length === 0 ? (
+            {isPending ? (
+              <Skeleton className="h-40 w-full" />
+            ) : (data?.lowStock.length ?? 0) === 0 ? (
               <EmptyState
                 title="Inventory looks healthy"
                 description="No variants are below the low-stock threshold."
@@ -396,7 +360,7 @@ export function SellerDashboard() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {data.lowStock.map((row) => (
+                    {data?.lowStock.map((row) => (
                       <TableRow key={row.sku}>
                         <TableCell className="font-mono text-xs">
                           {row.sku}
@@ -419,14 +383,16 @@ export function SellerDashboard() {
             <CardTitle>Recent activity</CardTitle>
           </CardHeader>
           <CardContent>
-            {data.recentActivity.length === 0 ? (
+            {isPending ? (
+              <Skeleton className="h-40 w-full" />
+            ) : (data?.recentActivity.length ?? 0) === 0 ? (
               <EmptyState
                 title="No recent activity"
                 description="Order and product updates will show up here."
               />
             ) : (
               <ul className="divide-y">
-                {data.recentActivity.map((item) => (
+                {data?.recentActivity.map((item) => (
                   <li
                     key={item.id}
                     className={cn(
@@ -459,14 +425,16 @@ export function SellerDashboard() {
             <CardTitle>Recent reviews</CardTitle>
           </CardHeader>
           <CardContent>
-            {(data.recentReviews?.length ?? 0) === 0 ? (
+            {isPending ? (
+              <Skeleton className="h-40 w-full" />
+            ) : (data?.recentReviews?.length ?? 0) === 0 ? (
               <EmptyState
                 title="No reviews yet"
                 description="Customer reviews for your products will appear here."
               />
             ) : (
               <ul className="divide-y">
-                {data.recentReviews.map((review) => (
+                {data?.recentReviews?.map((review) => (
                   <li key={review.id} className="space-y-1 py-3 first:pt-0 last:pb-0">
                     <div className="flex items-start justify-between gap-3">
                       <Link
@@ -497,7 +465,9 @@ export function SellerDashboard() {
             <CardTitle>Top products</CardTitle>
           </CardHeader>
           <CardContent>
-            {(data.topProducts?.length ?? 0) === 0 ? (
+            {isPending ? (
+              <Skeleton className="h-40 w-full" />
+            ) : (data?.topProducts?.length ?? 0) === 0 ? (
               <EmptyState
                 title="No sales data yet"
                 description="Best-selling products will show up after orders come in."
@@ -514,7 +484,7 @@ export function SellerDashboard() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {data.topProducts.map((product) => (
+                    {data?.topProducts?.map((product) => (
                       <TableRow key={product.productId}>
                         <TableCell>
                           <Link

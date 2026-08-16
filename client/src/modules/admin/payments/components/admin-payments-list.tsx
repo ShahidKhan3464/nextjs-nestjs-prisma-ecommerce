@@ -148,7 +148,13 @@ export function AdminPaymentsList() {
             }
           >
             <SelectTrigger className="w-full!">
-              <SelectValue placeholder="Status" />
+              <SelectValue placeholder="Status">
+                {statusFilter !== "ALL"
+                  ? PAYMENT_STATUS_FILTER_OPTIONS.find(
+                      (opt) => opt.value === statusFilter
+                    )?.label
+                  : undefined}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               {PAYMENT_STATUS_FILTER_OPTIONS.map((opt) => (
@@ -168,7 +174,13 @@ export function AdminPaymentsList() {
             }
           >
             <SelectTrigger className="w-full!">
-              <SelectValue placeholder="Method" />
+              <SelectValue placeholder="Method">
+                {providerFilter !== "ALL"
+                  ? PAYMENT_PROVIDER_FILTER_OPTIONS.find(
+                      (opt) => opt.value === providerFilter
+                    )?.label
+                  : undefined}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               {PAYMENT_PROVIDER_FILTER_OPTIONS.map((opt) => (

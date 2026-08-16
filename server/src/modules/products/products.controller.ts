@@ -120,17 +120,6 @@ export class ProductsController {
     return this.productsService.publish(id, userId, roles);
   }
 
-  @Patch(':id/archive')
-  @Roles(UserRole.SELLER)
-  @ApiOkResponse({ type: ProductResponseDto })
-  archive(
-    @Param('id', ParseIntPipe) id: number,
-    @ActiveUser() userId: number,
-    @ActiveUser('roles') roles: UserRole[],
-  ) {
-    return this.productsService.archive(id, userId, roles);
-  }
-
   @Delete(':id')
   @Roles(UserRole.SELLER)
   remove(

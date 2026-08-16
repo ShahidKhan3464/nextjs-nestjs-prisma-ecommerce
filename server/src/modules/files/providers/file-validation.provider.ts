@@ -116,7 +116,7 @@ export class FileValidationProvider {
     }
 
     const extension = this.resolveExtension(file);
-    if (!(EXT_BY_KIND[kind] as readonly string[]).includes(extension)) {
+    if (!EXT_BY_KIND[kind].includes(extension)) {
       throw new BadRequestException(
         'File content does not match the file extension',
       );

@@ -16,34 +16,44 @@ import { EmptyState } from "@/shared/components/feedback/empty-state";
 
 function StorePageSkeleton() {
   return (
-    <div className="space-y-6">
-      <Skeleton className="aspect-3/1 w-full rounded-lg" />
-      <div className="flex gap-4">
-        <Skeleton className="size-24 rounded-lg" />
-        <div className="flex-1 space-y-2">
-          <Skeleton className="h-8 w-48" />
-          <Skeleton className="h-4 w-32" />
-          <Skeleton className="h-4 w-40" />
-        </div>
+    <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_500px]">
+      <div className="space-y-6">
+        <section className="space-y-4">
+          <Skeleton className="aspect-3/1 w-full rounded-lg" />
+          <div className="flex gap-4">
+            <Skeleton className="size-24 rounded-lg" />
+            <div className="flex-1 space-y-2">
+              <Skeleton className="h-8 w-48" />
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-4 w-40" />
+            </div>
+          </div>
+        </section>
+        <Separator />
+        <section className="space-y-3">
+          <h3 className="font-heading text-lg font-semibold">Store details</h3>
+          <Skeleton className="h-20 w-full" />
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Skeleton className="h-12" />
+            <Skeleton className="h-12" />
+            <Skeleton className="h-12" />
+            <Skeleton className="h-12" />
+          </div>
+        </section>
       </div>
-      <Separator />
-      <div className="space-y-3">
-        <Skeleton className="h-6 w-36" />
-        <Skeleton className="h-20 w-full" />
-        <div className="grid gap-3 sm:grid-cols-2">
-          <Skeleton className="h-12" />
-          <Skeleton className="h-12" />
-          <Skeleton className="h-12" />
-          <Skeleton className="h-12" />
-        </div>
-      </div>
-      <Separator />
-      <div className="space-y-3">
-        <Skeleton className="h-6 w-28" />
-        <Skeleton className="h-10 w-full" />
-        <Skeleton className="h-24 w-full" />
-        <Skeleton className="h-10 w-full" />
-      </div>
+      <aside className="space-y-6 lg:sticky lg:top-28">
+        <section className="space-y-3">
+          <h3 className="font-heading text-lg font-semibold">Branding</h3>
+          <Skeleton className="h-32 w-full" />
+        </section>
+        <Separator />
+        <section className="space-y-3">
+          <h3 className="font-heading text-lg font-semibold">Edit store</h3>
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-24 w-full" />
+          <Skeleton className="h-10 w-full" />
+        </section>
+      </aside>
     </div>
   );
 }
@@ -91,12 +101,15 @@ export function StorePage() {
   const suspended = isStoreSuspended(data);
 
   return (
-    <div className="space-y-8">
-      <StoreView store={data} />
-      <Separator />
-      <StoreImageUpload store={data} disabled={suspended} />
-      <Separator />
-      <StoreEditForm store={data} disabled={suspended} />
+    <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_500px]">
+      <div className="space-y-6">
+        <StoreView store={data} />
+      </div>
+      <aside className="space-y-6 lg:sticky lg:top-28">
+        <StoreImageUpload store={data} disabled={suspended} />
+        <Separator />
+        <StoreEditForm store={data} disabled={suspended} />
+      </aside>
     </div>
   );
 }

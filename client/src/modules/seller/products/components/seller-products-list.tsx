@@ -20,7 +20,6 @@ import { useDebouncedValue } from "@/shared/hooks/use-debounced-value";
 import { fetchSellerCategories } from "../services/categories.service";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  Archive,
   Eye,
   Pencil,
   RotateCcw,
@@ -34,12 +33,10 @@ import type {
   SellerProductListResult,
 } from "../types";
 import {
-  canArchiveProduct,
   canPublishProduct,
   canRestoreProduct,
 } from "../types";
 import {
-  archiveSellerProduct,
   deleteSellerProduct,
   fetchSellerProducts,
   publishSellerProduct,
@@ -70,6 +67,20 @@ import {
   AlertDialogContent,
   AlertDialogDescription,
 } from "@/components/ui/alert-dialog";
+
+const PRODUCT_STATUS_FILTER_OPTIONS = [
+  { value: "all", label: "All statuses" },
+  { value: "DRAFT", label: "Draft" },
+  { value: "ACTIVE", label: "Published" },
+] as const;
+
+const PRODUCT_LIFECYCLE_FILTER_OPTIONS = [
+  { value: "all", label: "All" },
+  { value: "active", label: "In catalog" },
+  { value: "removed", label: "Removed" },
+] as const;
+
+const SELLER_CATEGORIES_LIMIT = 100;
 
 function ProductThumb({ src, alt }: { src: string; alt: string }) {
   const [failed, setFailed] = React.useState(false);
@@ -131,9 +142,9 @@ export function SellerProductsList() {
     },
   ] as const;
 
-  const { data: categories = [] } = useQuery({
-    queryKey: queryKeys.seller.categories,
-    queryFn: () => fetchSellerCategories({ limit: 200 }),
+  const { data: categories = [], isPending: categoriesLoading } = useQuery({
+    queryKey: queryKeys.seller.categories({ limit: SELLER_CATEGORIES_LIMIT }),
+    queryFn: () => fetchSellerCategories({ limit: SELLER_CATEGORIES_LIMIT }),
   });
 
   const { data, isPending, isFetching, isPlaceholderData, isError, error, refetch } =
@@ -173,30 +184,6 @@ export function SellerProductsList() {
     },
     onSuccess: async (product) => {
       toast.success("Product published");
-      if (product) {
-        qc.setQueryData(queryKeys.seller.products.detail(product.id), product);
-      }
-      await invalidateLists();
-    },
-  });
-
-  const archive = useMutation({
-    mutationFn: archiveSellerProduct,
-    onMutate: async (id) => {
-      await qc.cancelQueries({ queryKey: queryKeys.seller.products.all });
-      const previous = qc.getQueryData<SellerProductListResult>(listKey);
-      qc.setQueryData(
-        listKey,
-        patchListProduct(previous, id, { status: "ARCHIVED" })
-      );
-      return { previous };
-    },
-    onError: (err, _id, ctx) => {
-      if (ctx?.previous) qc.setQueryData(listKey, ctx.previous);
-      toast.error(getApiErrorMessage(err, "Could not archive product"));
-    },
-    onSuccess: async (product) => {
-      toast.success("Product archived");
       if (product) {
         qc.setQueryData(queryKeys.seller.products.detail(product.id), product);
       }
@@ -327,15 +314,20 @@ export function SellerProductsList() {
               onChange={(e) => setSearchInput(e.target.value)}
             />
           </div>
-          <div className="w-full sm:w-36">
+          <div className="w-full sm:w-50">
             <Select
               value={categoryFilter}
+              disabled={categoriesLoading}
               onValueChange={(val) => {
                 if (val) setCategoryFilter(val);
               }}
             >
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Category">
+                <SelectValue
+                  placeholder={
+                    categoriesLoading ? "Loading…" : "All categories"
+                  }
+                >
                   {categoryFilter !== "all"
                     ? formatFilterLabel(
                         categories.find((c) => String(c.id) === categoryFilter)
@@ -362,13 +354,20 @@ export function SellerProductsList() {
               }}
             >
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Status" />
+                <SelectValue placeholder="Status">
+                  {statusFilter !== "all"
+                    ? PRODUCT_STATUS_FILTER_OPTIONS.find(
+                        (opt) => opt.value === statusFilter
+                      )?.label
+                    : undefined}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All statuses</SelectItem>
-                <SelectItem value="DRAFT">Draft</SelectItem>
-                <SelectItem value="ACTIVE">Published</SelectItem>
-                <SelectItem value="ARCHIVED">Archived</SelectItem>
+                {PRODUCT_STATUS_FILTER_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -380,12 +379,18 @@ export function SellerProductsList() {
               }}
             >
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Lifecycle" />
+                <SelectValue placeholder="Lifecycle">
+                  {PRODUCT_LIFECYCLE_FILTER_OPTIONS.find(
+                    (opt) => opt.value === lifeCycle
+                  )?.label}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All</SelectItem>
-                <SelectItem value="active">In catalog</SelectItem>
-                <SelectItem value="removed">Removed</SelectItem>
+                {PRODUCT_LIFECYCLE_FILTER_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -497,17 +502,6 @@ export function SellerProductsList() {
                               onClick={() => publish.mutate(p.id)}
                             >
                               <Upload className="size-4" />
-                            </Button>
-                          ) : null}
-                          {canArchiveProduct(p) ? (
-                            <Button
-                              size="icon"
-                              variant="outline"
-                              disabled={archive.isPending}
-                              aria-label={`Archive ${p.name}`}
-                              onClick={() => archive.mutate(p.id)}
-                            >
-                              <Archive className="size-4" />
                             </Button>
                           ) : null}
                           {canRestoreProduct(p) ? (

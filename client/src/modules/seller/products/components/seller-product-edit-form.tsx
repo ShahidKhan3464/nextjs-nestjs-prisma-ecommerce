@@ -14,6 +14,7 @@ import { getApiErrorMessage } from "@/lib/api-error";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, type Resolver } from "react-hook-form";
 import { PlusIcon, Trash2Icon, XIcon } from "lucide-react";
+import { formatFilterLabel } from "@/lib/format-filter-label";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { SellerProduct, SellerProductImage } from "../types";
 import { updateSellerProduct } from "../services/products.service";
@@ -40,6 +41,13 @@ import {
   FormControl,
   FormMessage,
 } from "@/components/ui/form";
+import {
+  Select,
+  SelectItem,
+  SelectValue,
+  SelectContent,
+  SelectTrigger,
+} from "@/components/ui/select";
 
 export function SellerProductEditForm({
   initial,
@@ -56,8 +64,8 @@ export function SellerProductEditForm({
   );
 
   const { data: categories = [], isPending: categoriesLoading } = useQuery({
-    queryKey: queryKeys.seller.categories,
-    queryFn: () => fetchSellerCategories({ limit: 200 }),
+    queryKey: queryKeys.seller.categories({ limit: 100 }),
+    queryFn: () => fetchSellerCategories({ limit: 100 }),
   });
 
   const categoryOptions = sortCategoriesByName(categories);
@@ -191,34 +199,44 @@ export function SellerProductEditForm({
           name="categoryId"
           control={form.control}
           render={({ field }) => (
-            <FormItem>
-              <FormLabel>Category</FormLabel>
-              <FormControl>
-                <select
-                  ref={field.ref}
-                  name={field.name}
-                  value={field.value}
-                  onBlur={field.onBlur}
-                  disabled={categoriesLoading}
-                  onChange={(e) => field.onChange(e.target.value)}
-                  className="border-input bg-background ring-offset-background focus-visible:ring-ring flex h-10 w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+              <FormItem>
+                <FormLabel>Category</FormLabel>
+                <Select
+                  value={field.value || undefined}
+                  disabled={categoriesLoading || categoryOptions.length === 0}
+                  onValueChange={(value) => field.onChange(value ?? "")}
                 >
-                  <option value="">
-                    {categoriesLoading
-                      ? "Loading categories…"
-                      : categoryOptions.length === 0
-                        ? "No categories available"
-                        : "Select category"}
-                  </option>
-                  {categoryOptions.map((c) => (
-                    <option key={c.id} value={String(c.id)}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
+                  <FormControl>
+                    <SelectTrigger className="w-full">
+                      <SelectValue
+                        placeholder={
+                          categoriesLoading
+                            ? "Loading categories…"
+                            : categoryOptions.length === 0
+                              ? "No categories available"
+                              : "Select category"
+                        }
+                      >
+                        {field.value
+                          ? formatFilterLabel(
+                              categoryOptions.find(
+                                (c) => String(c.id) === field.value
+                              )?.name
+                            )
+                          : undefined}
+                      </SelectValue>
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {categoryOptions.map((c) => (
+                      <SelectItem key={c.id} value={String(c.id)}>
+                        {formatFilterLabel(c.name)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
           )}
         />
 
@@ -266,8 +284,8 @@ export function SellerProductEditForm({
                   size="icon"
                   type="button"
                   variant="ghost"
-                  className="text-destructive absolute top-2 right-2"
                   onClick={() => remove(index)}
+                  className="text-destructive absolute top-2 right-2"
                 >
                   <Trash2Icon className="size-4" />
                 </Button>
@@ -379,8 +397,8 @@ export function SellerProductEditForm({
                   <Image
                     fill
                     alt=""
-                    src={img.url}
                     unoptimized
+                    src={img.url}
                     className="object-cover"
                   />
                   <Button

@@ -44,8 +44,8 @@ export const PRODUCT_STATUS_TRANSITIONS: Record<
   ProductStatus[]
 > = {
   [ProductStatus.DRAFT]: [ProductStatus.ACTIVE],
-  [ProductStatus.ACTIVE]: [ProductStatus.ARCHIVED],
-  [ProductStatus.ARCHIVED]: [ProductStatus.ACTIVE],
+  [ProductStatus.ACTIVE]: [],
+  [ProductStatus.ARCHIVED]: [],
 };
 
 export const PRODUCT_UPLOAD_SUBDIR = 'products';

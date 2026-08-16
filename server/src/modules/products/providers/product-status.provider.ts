@@ -32,26 +32,7 @@ export class ProductStatusProvider {
     );
   }
 
-  /** ACTIVE → ARCHIVED. */
-  public async archive(
-    productId: number,
-    userId: number,
-    roles: UserRole[],
-  ): Promise<ProductWithRelations> {
-    return this.transition(
-      productId,
-      userId,
-      roles,
-      ProductStatus.ARCHIVED,
-      () => ({ status: ProductStatus.ARCHIVED }),
-    );
-  }
-
-  /**
-   * Restore semantics:
-   * - Soft-deleted → clear deletedAt
-   * - ARCHIVED (not deleted) → ACTIVE
-   */
+  /** Soft-deleted → clear deletedAt. */
   public async restore(
     productId: number,
     userId: number,
@@ -64,34 +45,17 @@ export class ProductStatusProvider {
       { includeDeleted: true, allowSuspendedStore: true },
     );
 
-    if (product.deletedAt) {
-      this.productOwnershipProvider.assertStoreAllowsProductWrite(product.store);
-
-      const restored = await this.prisma.product.update({
-        where: { id: productId },
-        data: { deletedAt: null },
-        include: PRODUCT_INCLUDE,
-      });
-
-      return mapProductToResponse(restored);
-    }
-
-    if (product.status !== ProductStatus.ARCHIVED) {
+    if (!product.deletedAt) {
       throw new BadRequestException(
-        'Product is not archived or soft-deleted and cannot be restored',
+        'Product is not soft-deleted and cannot be restored',
       );
     }
 
     this.productOwnershipProvider.assertStoreAllowsProductWrite(product.store);
 
-    assertProductStatusTransition(
-      product.status as ProductStatus,
-      ProductStatus.ACTIVE,
-    );
-
     const restored = await this.prisma.product.update({
       where: { id: productId },
-      data: { status: ProductStatus.ACTIVE },
+      data: { deletedAt: null },
       include: PRODUCT_INCLUDE,
     });
 

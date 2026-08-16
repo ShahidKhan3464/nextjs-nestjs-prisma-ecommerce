@@ -87,7 +87,9 @@ function mapStoreSummary(
   };
 }
 
-export function mapProductToResponse(product: ProductRow): ProductWithRelations {
+export function mapProductToResponse(
+  product: ProductRow,
+): ProductWithRelations {
   const images =
     product.files?.map((entry) => entry.file as StoredFile) ?? undefined;
 
