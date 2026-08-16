@@ -148,7 +148,7 @@ export function DashboardOverview() {
           <CardHeader>
             <CardTitle>Spending (6 months)</CardTitle>
           </CardHeader>
-          <CardContent className="h-72 pl-0">
+          <CardContent className={cn("h-72", !isPending && "pl-0")}>
             {isPending ? (
               <Skeleton className="h-full w-full" />
             ) : (
@@ -184,7 +184,12 @@ export function DashboardOverview() {
           <CardHeader>
             <CardTitle>Orders by status</CardTitle>
           </CardHeader>
-          <CardContent className="h-72 pl-0">
+          <CardContent
+            className={cn(
+              isPending || ordersByStatus.length > 0 ? "h-72" : undefined,
+              !isPending && ordersByStatus.length > 0 && "pl-0"
+            )}
+          >
             {isPending ? (
               <Skeleton className="h-full w-full" />
             ) : ordersByStatus.length === 0 ? (

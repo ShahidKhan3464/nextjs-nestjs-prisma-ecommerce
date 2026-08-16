@@ -148,8 +148,8 @@ export function SellerDashboard() {
                 <div className="flex flex-wrap items-center gap-2">
                   <RatingStars
                     readOnly
-                    value={store.averageRating ?? 0}
                     size="md"
+                    value={store.averageRating ?? 0}
                   />
                   <span className="text-muted-foreground text-xs tabular-nums">
                     {(store.averageRating ?? 0).toFixed(1)} (
@@ -196,7 +196,7 @@ export function SellerDashboard() {
           <CardHeader>
             <CardTitle>Revenue (7 days)</CardTitle>
           </CardHeader>
-          <CardContent className="h-72 pl-0">
+          <CardContent className={cn("h-72", !isPending && "pl-0")}>
             {isPending ? (
               <Skeleton className="h-full w-full" />
             ) : (
@@ -232,7 +232,12 @@ export function SellerDashboard() {
           <CardHeader>
             <CardTitle>Orders by status</CardTitle>
           </CardHeader>
-          <CardContent className="h-72 pl-0">
+          <CardContent
+            className={cn(
+              isPending || ordersByStatus.length > 0 ? "h-72" : undefined,
+              !isPending && ordersByStatus.length > 0 && "pl-0"
+            )}
+          >
             {isPending ? (
               <Skeleton className="h-full w-full" />
             ) : ordersByStatus.length === 0 ? (

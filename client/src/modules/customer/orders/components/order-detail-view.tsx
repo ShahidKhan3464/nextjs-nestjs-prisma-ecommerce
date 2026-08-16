@@ -36,6 +36,22 @@ type Props = {
   orderId: string;
 };
 
+function OrderDetailSkeleton() {
+  return (
+    <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_500px]">
+      <div className="space-y-6">
+        <Skeleton className="h-24 w-full max-w-md" />
+        <Skeleton className="h-64 w-full rounded-xl" />
+      </div>
+      <aside className="space-y-6 rounded-xl border bg-muted/40 p-4 lg:sticky lg:top-28">
+        <Skeleton className="h-20 w-full" />
+        <Skeleton className="h-32 w-full" />
+        <Skeleton className="h-28 w-full" />
+      </aside>
+    </div>
+  );
+}
+
 export function OrderDetailView({ orderId }: Props) {
   const qc = useQueryClient();
   const [cancelOpen, setCancelOpen] = useState(false);
@@ -63,11 +79,7 @@ export function OrderDetailView({ orderId }: Props) {
   const canCancel = useMemo(() => data?.status === "pending", [data?.status]);
 
   if (isPending) {
-    return (
-      <div className="space-y-6">
-        <Skeleton className="h-64 w-full rounded-xl" />
-      </div>
-    );
+    return <OrderDetailSkeleton />;
   }
 
   if (isError || !data) {
@@ -170,8 +182,8 @@ export function OrderDetailView({ orderId }: Props) {
           </div>
           {canCancel ? (
             <Button
+            size="sm"
               variant="destructive"
-              size="sm"
               onClick={() => setCancelOpen(true)}
             >
               Cancel order
