@@ -4,6 +4,15 @@ export type ProductStatus = (typeof PRODUCT_STATUSES)[number] | "ARCHIVED";
 export const PRODUCT_LIFE_CYCLES = ["active", "removed", "all"] as const;
 export type ProductLifeCycle = (typeof PRODUCT_LIFE_CYCLES)[number];
 
+export type FilterOption<T extends string = string> = {
+  value: T;
+  label: string;
+};
+
+export type ProductStatusFilterValue = ProductStatus | "all";
+
+export type ProductLifeCycleFilterValue = "all" | "active" | "removed";
+
 export type SellerProductImage = {
   id: number;
   url: string;

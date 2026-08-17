@@ -8,9 +8,13 @@ import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/constants/query-keys";
 import { useDebouncedCallback } from "use-debounce";
 import { formatFilterLabel } from "@/lib/format-filter-label";
-import { PRODUCT_SORT_OPTIONS, type ProductSort } from "../types";
 import { fetchBuyerCategories } from "../services/categories.service";
 import { useProductSearchParams } from "../hooks/use-product-search-params";
+import {
+  PRODUCT_SORT_LABELS,
+  PRODUCT_SORT_OPTIONS,
+  type ProductSort,
+} from "../types";
 import {
   Select,
   SelectItem,
@@ -18,15 +22,6 @@ import {
   SelectContent,
   SelectTrigger,
 } from "@/components/ui/select";
-
-const SORT_LABELS: Record<ProductSort, string> = {
-  newest: "Newest",
-  oldest: "Oldest",
-  price_asc: "Price: low to high",
-  price_desc: "Price: high to low",
-  name_asc: "Name: A–Z",
-  rating_desc: "Highest rated",
-};
 
 export function ProductFilters({ disabled = false }: { disabled?: boolean }) {
   const { values, setParams, resetFilters } = useProductSearchParams();
@@ -190,13 +185,13 @@ export function ProductFilters({ disabled = false }: { disabled?: boolean }) {
           >
             <SelectTrigger className="w-full" disabled={disabled}>
               <SelectValue placeholder="Newest">
-                {SORT_LABELS[(values.sort || "newest") as ProductSort]}
+                {PRODUCT_SORT_LABELS[(values.sort || "newest") as ProductSort]}
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
               {PRODUCT_SORT_OPTIONS.map((option) => (
                 <SelectItem key={option} value={option}>
-                  {SORT_LABELS[option]}
+                  {PRODUCT_SORT_LABELS[option]}
                 </SelectItem>
               ))}
             </SelectContent>

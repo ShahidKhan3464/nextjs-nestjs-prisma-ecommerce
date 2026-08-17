@@ -15,6 +15,15 @@ export const PRODUCT_SORT_OPTIONS = [
 
 export type ProductSort = (typeof PRODUCT_SORT_OPTIONS)[number];
 
+export const PRODUCT_SORT_LABELS: Record<ProductSort, string> = {
+  newest: "Newest",
+  oldest: "Oldest",
+  price_asc: "Price: low to high",
+  price_desc: "Price: high to low",
+  name_asc: "Name: A–Z",
+  rating_desc: "Highest rated",
+};
+
 export type ProductListParams = {
   q?: string;
   page?: number;

@@ -21,6 +21,10 @@ import {
   PaymentStatusBadge,
 } from "@/modules/buyer/orders/components/order-status-badges";
 import {
+  ORDER_STATUS_FILTER_OPTIONS,
+  BUYER_PAYMENT_STATUS_FILTER_OPTIONS,
+} from "@/modules/buyer/orders/constants";
+import {
   Select,
   SelectItem,
   SelectValue,
@@ -35,20 +39,6 @@ import {
   TableHead,
   TableHeader,
 } from "@/components/ui/table";
-
-const ORDER_STATUS_OPTIONS = [
-  { value: "all", label: "All" },
-  { value: "pending", label: "Pending" },
-  { value: "shipped", label: "Shipped" },
-  { value: "delivered", label: "Delivered" },
-  { value: "cancelled", label: "Cancelled" },
-] as const;
-
-const PAYMENT_STATUS_OPTIONS = [
-  { value: "all", label: "All" },
-  { value: "paid", label: "Paid" },
-  { value: "refunded", label: "Refunded" },
-] as const;
 
 export function AdminOrdersList() {
   const qc = useQueryClient();
@@ -169,7 +159,7 @@ export function AdminOrdersList() {
               <SelectValue placeholder="Order status" />
             </SelectTrigger>
             <SelectContent>
-              {ORDER_STATUS_OPTIONS.map((option) => (
+              {ORDER_STATUS_FILTER_OPTIONS.map((option) => (
                 <SelectItem key={option.value} value={option.value}>
                   {option.label}
                 </SelectItem>
@@ -187,7 +177,7 @@ export function AdminOrdersList() {
               <SelectValue placeholder="Payment" />
             </SelectTrigger>
             <SelectContent>
-              {PAYMENT_STATUS_OPTIONS.map((option) => (
+              {BUYER_PAYMENT_STATUS_FILTER_OPTIONS.map((option) => (
                 <SelectItem key={option.value} value={option.value}>
                   {option.label}
                 </SelectItem>

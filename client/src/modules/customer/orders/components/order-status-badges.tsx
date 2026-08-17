@@ -1,7 +1,5 @@
-import { Badge } from "@/components/ui/badge";
 import type { OrderStatus, PaymentStatus } from "../types";
-
-type BadgeVariant = "default" | "secondary" | "outline" | "destructive";
+import { Badge, type BadgeVariant } from "@/components/ui/badge";
 
 const orderStatusVariant: Record<OrderStatus, BadgeVariant> = {
   pending: "outline",

@@ -1,7 +1,5 @@
-import { Badge } from "@/components/ui/badge";
 import type { ProductStatus, SellerProduct } from "../types";
-
-type BadgeVariant = "default" | "secondary" | "outline" | "destructive";
+import { Badge, type BadgeVariant } from "@/components/ui/badge";
 
 const statusVariant: Record<ProductStatus, BadgeVariant> = {
   DRAFT: "secondary",

@@ -24,3 +24,5 @@ export type AdminStoreListResult = {
 export type SuspendStoreInput = {
   suspensionReason?: string;
 };
+
+export type StoreModerationAction = "unsuspend" | "verify" | "unverify";

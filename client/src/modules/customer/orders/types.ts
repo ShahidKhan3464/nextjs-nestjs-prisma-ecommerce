@@ -83,3 +83,16 @@ export type PaginatedOrdersResult = {
 export type CancelOrderInput = {
   reason: string;
 };
+
+export type FilterOption<T extends string = string> = {
+  value: T;
+  label: string;
+};
+
+export type OrderStatusFilterValue = OrderStatus | "all";
+
+export type OrderPaymentStatusFilterValue =
+  | "all"
+  | "paid"
+  | "refunded"
+  | "pending";

@@ -18,6 +18,10 @@ import { EmptyState } from "@/shared/components/feedback/empty-state";
 import { useDebouncedValue } from "@/shared/hooks/use-debounced-value";
 import { OrderStatusBadge, PaymentStatusBadge } from "./order-status-badges";
 import {
+  ORDER_STATUS_FILTER_OPTIONS,
+  BUYER_PAYMENT_STATUS_FILTER_OPTIONS,
+} from "../constants";
+import {
   Select,
   SelectItem,
   SelectValue,
@@ -32,20 +36,6 @@ import {
   TableHead,
   TableHeader,
 } from "@/components/ui/table";
-
-const ORDER_STATUS_OPTIONS = [
-  { value: "all", label: "All" },
-  { value: "pending", label: "Pending" },
-  { value: "shipped", label: "Shipped" },
-  { value: "delivered", label: "Delivered" },
-  { value: "cancelled", label: "Cancelled" },
-] as const;
-
-const PAYMENT_STATUS_OPTIONS = [
-  { value: "all", label: "All" },
-  { value: "paid", label: "Paid" },
-  { value: "refunded", label: "Refunded" },
-] as const;
 
 export function OrdersList() {
   const qc = useQueryClient();
@@ -171,7 +161,7 @@ export function OrdersList() {
               <SelectValue placeholder="Order status" />
             </SelectTrigger>
             <SelectContent>
-              {ORDER_STATUS_OPTIONS.map((option) => (
+              {ORDER_STATUS_FILTER_OPTIONS.map((option) => (
                 <SelectItem key={option.value} value={option.value}>
                   {option.label}
                 </SelectItem>
@@ -188,7 +178,7 @@ export function OrdersList() {
               <SelectValue placeholder="Payment" />
             </SelectTrigger>
             <SelectContent>
-              {PAYMENT_STATUS_OPTIONS.map((option) => (
+              {BUYER_PAYMENT_STATUS_FILTER_OPTIONS.map((option) => (
                 <SelectItem key={option.value} value={option.value}>
                   {option.label}
                 </SelectItem>

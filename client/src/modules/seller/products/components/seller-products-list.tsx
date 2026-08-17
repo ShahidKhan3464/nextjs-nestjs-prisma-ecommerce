@@ -20,6 +20,11 @@ import { useDebouncedValue } from "@/shared/hooks/use-debounced-value";
 import { fetchSellerCategories } from "../services/categories.service";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  PRODUCT_STATUS_FILTER_OPTIONS,
+  PRODUCT_LIFECYCLE_FILTER_OPTIONS,
+} from "../constants";
+
+import {
   Eye,
   Pencil,
   RotateCcw,
@@ -67,18 +72,6 @@ import {
   AlertDialogContent,
   AlertDialogDescription,
 } from "@/components/ui/alert-dialog";
-
-const PRODUCT_STATUS_FILTER_OPTIONS = [
-  { value: "all", label: "All" },
-  { value: "DRAFT", label: "Draft" },
-  { value: "ACTIVE", label: "Published" },
-] as const;
-
-const PRODUCT_LIFECYCLE_FILTER_OPTIONS = [
-  { value: "all", label: "All" },
-  { value: "active", label: "In catalog" },
-  { value: "removed", label: "Removed" },
-] as const;
 
 function ProductThumb({ src, alt }: { src: string; alt: string }) {
   const [failed, setFailed] = React.useState(false);

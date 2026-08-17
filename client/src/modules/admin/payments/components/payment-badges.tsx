@@ -1,7 +1,5 @@
-import { Badge } from "@/components/ui/badge";
 import type { PaymentProvider, PaymentStatus } from "../types";
-
-type BadgeVariant = "default" | "secondary" | "outline" | "destructive";
+import { Badge, type BadgeVariant } from "@/components/ui/badge";
 
 const statusVariant: Record<PaymentStatus, BadgeVariant> = {
   FAILED: "destructive",

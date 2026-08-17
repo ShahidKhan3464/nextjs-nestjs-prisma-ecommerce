@@ -1,9 +1,9 @@
 "use client";
 
 import { toast } from "sonner";
-import type { Store } from "../types";
 import { Button } from "@/components/ui/button";
 import { getApiErrorMessage } from "@/lib/api-error";
+import type { Store, StoreModerationAction } from "../types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { invalidateAdminStoreQueries } from "../utils/invalidate-store-queries";
 import {
@@ -16,12 +16,10 @@ import {
   AlertDialogDescription,
 } from "@/components/ui/alert-dialog";
 
-type Action = "unsuspend" | "verify" | "unverify";
-
 type Props = {
   open: boolean;
   store: Store | null;
-  action: Action;
+  action: StoreModerationAction;
   onOpenChange: (open: boolean) => void;
   mutationFn: (storeId: number) => Promise<Store>;
   successMessage: string;
