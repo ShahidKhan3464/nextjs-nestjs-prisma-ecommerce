@@ -10,9 +10,9 @@ import { ROUTES } from "@/constants/routes";
 import { Button } from "@/components/ui/button";
 import { queryKeys } from "@/constants/query-keys";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getApiErrorMessage } from "@/lib/api-error";
 import { formatOrderDate } from "@/lib/format-date";
 import { Textarea } from "@/components/ui/textarea";
+import { getApiErrorMessage } from "@/lib/api-error";
 import { Separator } from "@/components/ui/separator";
 import { buttonVariants } from "@/components/ui/button";
 import { EmptyState } from "@/shared/components/feedback/empty-state";
@@ -96,7 +96,9 @@ export function AdminOrderDetail({ orderId }: Props) {
 
   if (isPending) {
     return (
-      <div className="space-y-6">
+      <div className="mx-auto max-w-4xl space-y-6">
+        <Skeleton className="h-14 w-72" />
+        <Skeleton className="h-40 w-full rounded-xl" />
         <Skeleton className="h-64 w-full rounded-xl" />
       </div>
     );

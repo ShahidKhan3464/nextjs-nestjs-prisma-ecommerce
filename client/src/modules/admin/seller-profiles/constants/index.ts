@@ -4,7 +4,7 @@ export const SELLER_STATUS_FILTER_OPTIONS: Array<{
   value: "ALL" | SellerProfileStatus;
   label: string;
 }> = [
-  { value: "ALL", label: "All statuses" },
+  { value: "ALL", label: "All" },
   { value: "PENDING", label: "Pending" },
   { value: "APPROVED", label: "Approved" },
   { value: "REJECTED", label: "Rejected" },

@@ -79,7 +79,7 @@ export function ProductFilters({ disabled = false }: { disabled?: boolean }) {
               disabled={disabled || categoriesLoading}
             >
               <SelectValue
-                placeholder={categoriesLoading ? "Loading…" : "All categories"}
+                placeholder={categoriesLoading ? "Loading…" : "All"}
               >
                 {values.category && categories.length > 0
                   ? formatFilterLabel(
@@ -90,7 +90,7 @@ export function ProductFilters({ disabled = false }: { disabled?: boolean }) {
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All categories</SelectItem>
+              <SelectItem value="all">All</SelectItem>
               {categories.length > 0 ? (
                 categories.map((c) => (
                   <SelectItem key={c.id} value={String(c.id)}>

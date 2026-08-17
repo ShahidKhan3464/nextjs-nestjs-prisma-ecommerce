@@ -27,7 +27,7 @@ export function BlockedSessionGuard() {
     void verifyActiveSession();
     const id = window.setInterval(() => {
       void verifyActiveSession();
-    }, 60_000);
+    }, 120_000);
 
     return () => {
       cancelled = true;

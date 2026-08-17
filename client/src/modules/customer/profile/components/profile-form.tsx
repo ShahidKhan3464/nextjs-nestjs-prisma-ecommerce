@@ -372,23 +372,6 @@ export function ProfileForm() {
         <Separator />
 
         <section className="space-y-3">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <h2 className="font-heading text-lg font-semibold">Addresses</h2>
-            <Link
-              href={ROUTES.addresses}
-              className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
-            >
-              Manage addresses
-            </Link>
-          </div>
-          <p className="text-muted-foreground text-sm">
-            Save shipping and billing addresses for faster checkout.
-          </p>
-        </section>
-
-        <Separator />
-
-        <section className="space-y-3">
           <h2 className="font-heading text-lg font-semibold">Password</h2>
           <Form {...passwordForm}>
             <form

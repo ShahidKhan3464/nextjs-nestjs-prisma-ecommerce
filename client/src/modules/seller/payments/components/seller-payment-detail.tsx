@@ -112,7 +112,7 @@ export function SellerPaymentDetail({ paymentId }: Props) {
       <div className="space-y-6">
         <div className="min-w-0 space-y-2">
           <p className="text-muted-foreground text-sm">Payment</p>
-          <h2 className="font-heading text-3xl font-semibold tracking-tight">
+          <h2 className="font-heading text-2xl font-semibold tracking-tight">
             #{payment.id}
           </h2>
           <div className="flex flex-wrap items-center gap-2 pt-1">

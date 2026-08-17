@@ -11,7 +11,6 @@ import {
   Star,
   Store,
   Users,
-  MapPin,
   Wallet,
   Package,
   UserRound,
@@ -180,13 +179,6 @@ const BUYER_NAV: AppNavItem[] = [
     label: "Orders",
     roles: ["BUYER"],
     href: ROUTES.orders,
-  },
-  {
-    icon: MapPin,
-    id: "addresses",
-    roles: ["BUYER"],
-    label: "Addresses",
-    href: ROUTES.addresses,
   },
   {
     icon: Store,

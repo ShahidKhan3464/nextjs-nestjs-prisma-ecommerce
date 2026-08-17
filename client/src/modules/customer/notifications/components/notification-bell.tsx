@@ -24,7 +24,7 @@ export function NotificationBell({ className }: Props) {
     queryFn: fetchUnreadNotificationCount,
     enabled: Boolean(user),
     staleTime: 30_000,
-    refetchInterval: 60_000,
+    refetchInterval: 120_000,
   });
 
   useEffect(() => {

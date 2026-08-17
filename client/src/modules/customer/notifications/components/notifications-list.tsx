@@ -98,7 +98,7 @@ export function NotificationsList({ compact = false }: { compact?: boolean }) {
       return last.page < totalPages ? last.page + 1 : undefined;
     },
     staleTime: 30_000,
-    refetchInterval: 60_000,
+    refetchInterval: 120_000,
   });
 
   useEffect(() => {
@@ -233,7 +233,7 @@ export function NotificationsList({ compact = false }: { compact?: boolean }) {
               }}
             >
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="All types">
+                <SelectValue placeholder="All">
                   {typeFilter !== "all"
                     ? formatFilterLabel(
                         NOTIFICATION_TYPE_LABELS[
@@ -244,7 +244,7 @@ export function NotificationsList({ compact = false }: { compact?: boolean }) {
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All types</SelectItem>
+                <SelectItem value="all">All</SelectItem>
                 {NOTIFICATION_TYPES.map((type) => (
                   <SelectItem key={type} value={type}>
                     {formatFilterLabel(NOTIFICATION_TYPE_LABELS[type])}

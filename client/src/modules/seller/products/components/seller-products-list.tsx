@@ -69,7 +69,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 const PRODUCT_STATUS_FILTER_OPTIONS = [
-  { value: "all", label: "All statuses" },
+  { value: "all", label: "All" },
   { value: "DRAFT", label: "Draft" },
   { value: "ACTIVE", label: "Published" },
 ] as const;
@@ -79,8 +79,6 @@ const PRODUCT_LIFECYCLE_FILTER_OPTIONS = [
   { value: "active", label: "In catalog" },
   { value: "removed", label: "Removed" },
 ] as const;
-
-const SELLER_CATEGORIES_LIMIT = 100;
 
 function ProductThumb({ src, alt }: { src: string; alt: string }) {
   const [failed, setFailed] = React.useState(false);
@@ -143,8 +141,8 @@ export function SellerProductsList() {
   ] as const;
 
   const { data: categories = [], isPending: categoriesLoading } = useQuery({
-    queryKey: queryKeys.seller.categories({ limit: SELLER_CATEGORIES_LIMIT }),
-    queryFn: () => fetchSellerCategories({ limit: SELLER_CATEGORIES_LIMIT }),
+    queryKey: queryKeys.seller.categories(),
+    queryFn: () => fetchSellerCategories(),
   });
 
   const { data, isPending, isFetching, isPlaceholderData, isError, error, refetch } =
@@ -325,7 +323,7 @@ export function SellerProductsList() {
               <SelectTrigger className="w-full">
                 <SelectValue
                   placeholder={
-                    categoriesLoading ? "Loading…" : "All categories"
+                    categoriesLoading ? "Loading…" : "All"
                   }
                 >
                   {categoryFilter !== "all"
@@ -337,7 +335,7 @@ export function SellerProductsList() {
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All categories</SelectItem>
+                <SelectItem value="all">All</SelectItem>
                 {categories.map((c) => (
                   <SelectItem key={c.id} value={String(c.id)}>
                     {formatFilterLabel(c.name)}

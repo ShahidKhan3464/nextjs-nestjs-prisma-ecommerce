@@ -54,7 +54,7 @@ export const queryKeys = {
   },
   seller: {
     categories: (params?: { limit?: number }) =>
-      ["seller", "categories", params ?? { limit: 100 }] as const,
+      ["seller", "categories", params ?? {}] as const,
     products: {
       all: ["seller", "products"] as const,
       detail: (id: string) => ["seller", "products", "detail", id] as const,

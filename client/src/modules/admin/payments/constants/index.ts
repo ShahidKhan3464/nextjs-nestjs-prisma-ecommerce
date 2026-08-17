@@ -7,7 +7,7 @@ export const PAYMENT_STATUS_FILTER_OPTIONS: {
   value: PaymentStatusFilter;
   label: string;
 }[] = [
-  { value: "ALL", label: "All statuses" },
+  { value: "ALL", label: "All" },
   { value: "PENDING", label: "Pending" },
   { value: "PROCESSING", label: "Processing" },
   { value: "SUCCEEDED", label: "Succeeded" },
@@ -21,7 +21,7 @@ export const PAYMENT_PROVIDER_FILTER_OPTIONS: {
   value: PaymentProviderFilter;
   label: string;
 }[] = [
-  { value: "ALL", label: "All methods" },
+  { value: "ALL", label: "All" },
   { value: "STRIPE", label: "Card (Stripe)" },
   { value: "COD", label: "Cash on delivery" },
   { value: "OTHER", label: "Other" },

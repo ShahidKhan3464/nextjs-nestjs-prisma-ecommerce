@@ -99,7 +99,7 @@ export function AppChromeHeader({ sectionTitle, sectionHint }: Props) {
             <User className="size-4 shrink-0" />
             <span className="max-w-35 truncate">{user.name}</span>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
+          <DropdownMenuContent align="end" className="w-52">
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col space-y-1">
                 <span className="text-sm font-medium">{user.name}</span>
