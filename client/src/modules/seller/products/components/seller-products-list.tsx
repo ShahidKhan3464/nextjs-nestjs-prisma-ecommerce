@@ -110,7 +110,7 @@ export function SellerProductsList() {
   const [perPage, setPerPage] = useState(10);
   const [searchInput, setSearchInput] = useState("");
   const debouncedSearch = useDebouncedValue(searchInput, 500);
-  const [lifeCycle, setLifeCycle] = useState<ProductLifeCycle>("active");
+  const [lifeCycle, setLifeCycle] = useState<ProductLifeCycle>("all");
   const [deleteTarget, setDeleteTarget] = useState<SellerProduct | null>(null);
   const [statusFilter, setStatusFilter] = useState<ProductStatus | "all">(
     "all"
@@ -272,7 +272,7 @@ export function SellerProductsList() {
   const total = data.pagination?.total ?? 0;
   const hasSearch = debouncedSearch.trim().length > 0;
   const hasFilters =
-    lifeCycle !== "active" ||
+    lifeCycle !== "all" ||
     statusFilter !== "all" ||
     categoryFilter !== "all";
   const isEmptyCatalog = total === 0 && !hasSearch && !hasFilters;
@@ -404,9 +404,8 @@ export function SellerProductsList() {
               : ""
           }
         >
-          <div className="overflow-x-auto rounded-md border">
-            <Table>
-              <TableHeader>
+        <Table>
+          <TableHeader>
                 <TableRow>
                   <TableHead className="w-16" />
                   <TableHead>Name</TableHead>
@@ -521,9 +520,8 @@ export function SellerProductsList() {
                     </TableRow>
                   ))
                 )}
-              </TableBody>
-            </Table>
-          </div>
+            </TableBody>
+          </Table>
 
           {total > 0 ? (
             <Pagination

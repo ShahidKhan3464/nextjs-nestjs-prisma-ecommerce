@@ -54,7 +54,7 @@ export function AdminCategoriesList() {
   const debouncedSearch = useDebouncedValue(searchInput, 500);
   const [statusFilter, setStatusFilter] = useState<
     "active" | "removed" | "all"
-  >("active");
+  >("all");
   const [deleteTarget, setDeleteTarget] = useState<AdminCategoryOption | null>(
     null
   );
@@ -120,7 +120,7 @@ export function AdminCategoriesList() {
 
   const total = data.pagination?.total ?? 0;
   const hasSearch = debouncedSearch.trim().length > 0;
-  const hasStatusFilter = statusFilter !== "active";
+  const hasStatusFilter = statusFilter !== "all";
   const isEmptyCatalog = total === 0 && !hasSearch && !hasStatusFilter;
   const showPagination = total > 0;
 

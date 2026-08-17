@@ -216,9 +216,8 @@ export function SellerOrdersList() {
           isFetching ? "opacity-60 transition-opacity" : "transition-opacity"
         }
       >
-        <div className="overflow-x-auto rounded-md border">
-          <Table>
-            <TableHeader>
+        <Table>
+          <TableHeader>
               <TableRow>
                 <TableHead>Order</TableHead>
                 <TableHead className="hidden md:table-cell">Customer</TableHead>
@@ -290,7 +289,6 @@ export function SellerOrdersList() {
               )}
             </TableBody>
           </Table>
-        </div>
 
         {(data?.pagination.total ?? 0) > 0 || filtered.length > 0 ? (
           <Pagination

@@ -55,7 +55,7 @@ export function AdminUsersList() {
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
   const [searchInput, setSearchInput] = useState("");
-  const [statusFilter, setStatusFilter] = useState("active");
+  const [statusFilter, setStatusFilter] = useState("all");
   const isBlockedFilter = blockedFilterParam(statusFilter);
   const debouncedSearch = useDebouncedValue(searchInput, 500);
   const [blockTarget, setBlockTarget] = useState<BlockTarget | null>(null);
@@ -123,7 +123,7 @@ export function AdminUsersList() {
 
   const total = data.meta.totalItems ?? 0;
   const hasSearch = debouncedSearch.trim().length > 0;
-  const hasStatusFilter = statusFilter !== "active";
+  const hasStatusFilter = statusFilter !== "all";
   const isEmptyCatalog = total === 0 && !hasSearch && !hasStatusFilter;
   const showPagination = total > 0;
 

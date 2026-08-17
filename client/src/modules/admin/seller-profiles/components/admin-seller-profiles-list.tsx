@@ -40,7 +40,7 @@ export function AdminSellerProfilesList() {
   const [perPage, setPerPage] = useState(10);
   const [searchInput, setSearchInput] = useState("");
   const [statusFilter, setStatusFilter] =
-    useState<SellerProfileStatusFilter>("PENDING");
+    useState<SellerProfileStatusFilter>("ALL");
   const debouncedSearch = useDebouncedValue(searchInput, 500);
 
   useEffect(() => {

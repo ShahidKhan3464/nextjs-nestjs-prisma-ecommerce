@@ -67,7 +67,7 @@ export function AdminReviewsList() {
     [page, perPage, ratingFilter, storeIdInput]
   );
 
-  const { data, isPending, isError, refetch } = useQuery({
+  const { data, isPending, isFetching, isPlaceholderData, isError, refetch } = useQuery({
     queryKey: queryKeys.reviews.admin(listParams),
     queryFn: () => fetchAdminReviews(listParams),
     placeholderData: (prev) => prev,
@@ -127,6 +127,7 @@ export function AdminReviewsList() {
   const total = data.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / perPage));
   const hasFilters = ratingFilter !== "all" || storeIdInput.trim().length > 0;
+  const showPagination = total > 0;
 
   return (
     <div className="space-y-4">
@@ -144,10 +145,10 @@ export function AdminReviewsList() {
             onValueChange={(value) => setRatingFilter(value ?? "all")}
           >
             <SelectTrigger className="w-full!">
-              <SelectValue placeholder="Rating" />
+              <SelectValue placeholder="All" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All ratings</SelectItem>
+              <SelectItem value="all">All</SelectItem>
               {[5, 4, 3, 2, 1].map((rating) => (
                 <SelectItem key={rating} value={String(rating)}>
                   {rating} stars
@@ -156,90 +157,106 @@ export function AdminReviewsList() {
             </SelectContent>
           </Select>
         </div>
+        <Button
+          type="button"
+          onClick={() =>
+            qc.invalidateQueries({ queryKey: queryKeys.reviews.all })
+          }
+        >
+          Refresh
+        </Button>
       </div>
 
-      {reviews.length === 0 ? (
-        <EmptyState
-          title={hasFilters ? "No matching reviews" : "No reviews"}
-          description={
-            hasFilters
-              ? "Try adjusting the rating or store filters."
-              : "There are no product reviews to moderate yet."
-          }
-        />
-      ) : (
-        <>
-          <div className="border-border overflow-x-auto rounded-xl border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Product</TableHead>
-                  <TableHead>Store</TableHead>
-                  <TableHead>Buyer</TableHead>
-                  <TableHead>Rating</TableHead>
-                  <TableHead>Review</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead className="w-12" />
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {reviews.map((review) => (
-                  <TableRow key={review.id}>
-                    <TableCell>
-                      {review.product ? (
-                        <Link
-                          href={ROUTES.product(review.product.slug)}
-                          className="font-medium hover:underline"
-                        >
-                          {review.product.name}
-                        </Link>
-                      ) : (
-                        <span className="text-muted-foreground text-xs">
-                          #{review.productId}
-                        </span>
-                      )}
-                    </TableCell>
-                    <TableCell className="font-mono text-xs">
-                      {review.product?.storeId ? (
-                        <Link
-                          href={ROUTES.adminStore(review.product.storeId)}
-                          className="hover:underline"
-                        >
-                          #{review.product.storeId}
-                        </Link>
-                      ) : (
-                        "—"
-                      )}
-                    </TableCell>
-                    <TableCell>
+      <div
+        className={
+          isFetching && !isPlaceholderData
+            ? "opacity-60 transition-opacity"
+            : ""
+        }
+      >
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Product</TableHead>
+              <TableHead>Store</TableHead>
+              <TableHead>Buyer</TableHead>
+              <TableHead>Rating</TableHead>
+              <TableHead>Review</TableHead>
+              <TableHead>Date</TableHead>
+              <TableHead className="w-12 text-center">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {reviews.length === 0 ? (
+              <TableRow>
+                <TableCell
+                  colSpan={7}
+                  className="text-muted-foreground py-10 text-center text-sm"
+                >
+                  {hasFilters
+                    ? "No reviews match your filters."
+                    : "No reviews yet."}
+                </TableCell>
+              </TableRow>
+            ) : (
+              reviews.map((review) => (
+                <TableRow key={review.id}>
+                  <TableCell>
+                    {review.product ? (
                       <Link
-                        href={ROUTES.user(review.buyer.id)}
+                        href={ROUTES.product(review.product.slug)}
+                        className="font-medium hover:underline"
+                      >
+                        {review.product.name}
+                      </Link>
+                    ) : (
+                      <span className="text-muted-foreground text-xs">
+                        #{review.productId}
+                      </span>
+                    )}
+                  </TableCell>
+                  <TableCell className="font-mono text-xs">
+                    {review.product?.storeId ? (
+                      <Link
+                        href={ROUTES.adminStore(review.product.storeId)}
                         className="hover:underline"
                       >
-                        {review.buyer.displayName}
+                        #{review.product.storeId}
                       </Link>
-                    </TableCell>
-                    <TableCell>
-                      <RatingStars readOnly value={review.rating} size="sm" />
-                    </TableCell>
-                    <TableCell className="max-w-xs">
-                      {review.title ? (
-                        <p className="truncate text-sm font-medium">
-                          {review.title}
-                        </p>
-                      ) : null}
-                      {review.comment ? (
-                        <p className="text-muted-foreground truncate text-xs">
-                          {review.comment}
-                        </p>
-                      ) : (
-                        <span className="text-muted-foreground text-xs">—</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground text-xs whitespace-nowrap">
-                      {formatOrderDate(review.createdAt)}
-                    </TableCell>
-                    <TableCell>
+                    ) : (
+                      "—"
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <Link
+                      href={ROUTES.user(review.buyer.id)}
+                      className="hover:underline"
+                    >
+                      {review.buyer.displayName}
+                    </Link>
+                  </TableCell>
+                  <TableCell>
+                    <RatingStars readOnly value={review.rating} size="sm" />
+                  </TableCell>
+                  <TableCell className="max-w-xs">
+                    {review.title ? (
+                      <p className="truncate text-sm font-medium">
+                        {review.title}
+                      </p>
+                    ) : null}
+                    {review.comment ? (
+                      <p className="text-muted-foreground truncate text-xs">
+                        {review.comment}
+                      </p>
+                    ) : (
+                      <span className="text-muted-foreground text-xs">—</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-muted-foreground text-xs whitespace-nowrap">
+                    {formatOrderDate(review.createdAt)}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center justify-center">
                       <Button
                         size="icon"
                         type="button"
@@ -250,13 +267,15 @@ export function AdminReviewsList() {
                       >
                         <Trash2 className="size-4" />
                       </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
 
+        {showPagination ? (
           <Pagination
             page={page}
             perPage={perPage}
@@ -267,8 +286,8 @@ export function AdminReviewsList() {
               setPage(1);
             }}
           />
-        </>
-      )}
+        ) : null}
+      </div>
 
       <AlertDialog
         open={deleteTarget != null}

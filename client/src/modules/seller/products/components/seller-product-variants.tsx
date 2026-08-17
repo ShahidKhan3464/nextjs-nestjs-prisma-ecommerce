@@ -382,9 +382,8 @@ export function SellerProductVariants({
           </Button>
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-md border">
-          <Table>
-            <TableHeader>
+        <Table>
+          <TableHeader>
               <TableRow>
                 <TableHead>SKU</TableHead>
                 <TableHead>Size</TableHead>
@@ -455,7 +454,6 @@ export function SellerProductVariants({
               )}
             </TableBody>
           </Table>
-        </div>
       )}
 
       <AlertDialog

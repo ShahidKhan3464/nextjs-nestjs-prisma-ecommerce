@@ -94,9 +94,8 @@ export function SellerReviewsList() {
             : ""
         }
       >
-        <div className="overflow-x-auto rounded-md border">
-          <Table>
-            <TableHeader>
+        <Table>
+          <TableHeader>
               <TableRow>
                 <TableHead>Product</TableHead>
                 <TableHead>Buyer</TableHead>
@@ -145,7 +144,6 @@ export function SellerReviewsList() {
               ))}
             </TableBody>
           </Table>
-        </div>
       </div>
 
       <Pagination
