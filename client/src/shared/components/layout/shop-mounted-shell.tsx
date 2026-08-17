@@ -1,17 +1,44 @@
 "use client";
 
 import * as React from "react";
+import { useRouter } from "next/navigation";
+import { api } from "@/services/api/client";
 import { useAuthStore } from "@/store/auth-store";
 import { ShopRoleShell } from "@/shared/components/layout/shop-role-shell";
+import { fetchProfile } from "@/modules/customer/profile/services/profile.service";
 
 /** Shared chrome for admin / customer / shared route groups. */
 export function ShopMountedShell({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
   const user = useAuthStore((s) => s.user);
+  const setUser = useAuthStore((s) => s.setUser);
   const [mounted, setMounted] = React.useState(false);
 
   React.useEffect(() => {
     setMounted(true);
   }, []);
+
+  React.useEffect(() => {
+    if (!mounted || !user || user.roles.length > 0) return;
+
+    let cancelled = false;
+
+    void (async () => {
+      try {
+        await api.post("/api/v1/auth/refresh", {});
+        const profile = await fetchProfile();
+        if (cancelled || profile.roles.length === 0) return;
+        setUser(profile);
+        router.refresh();
+      } catch {
+        /* ignore — user can sign in again */
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [mounted, router, setUser, user]);
 
   if (!mounted) {
     return (

@@ -50,11 +50,30 @@ export class SeedAdminProvider implements OnApplicationBootstrap {
 
     const existingUser = await this.prisma.user.findUnique({
       where: { email: normalizedEmail },
+      include: { userRoles: true },
     });
 
     if (existingUser) {
+      const hasSuperAdmin = existingUser.userRoles.some(
+        (userRole) => userRole.role === UserRole.SUPER_ADMIN,
+      );
+
+      if (hasSuperAdmin) {
+        this.logger.log(
+          `Admin seeding skipped. User already exists: ${normalizedEmail}`,
+        );
+        return;
+      }
+
+      await this.prisma.userRole.create({
+        data: {
+          userId: existingUser.id,
+          role: UserRole.SUPER_ADMIN,
+        },
+      });
+
       this.logger.log(
-        `Admin seeding skipped. User already exists: ${normalizedEmail}`,
+        `Assigned SUPER_ADMIN role to existing admin user: ${normalizedEmail}`,
       );
       return;
     }
