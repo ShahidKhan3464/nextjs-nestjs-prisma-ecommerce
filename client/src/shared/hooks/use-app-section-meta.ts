@@ -91,6 +91,9 @@ export function useAppSectionMeta(): { title: string; hint?: string } {
               : "Reviews",
       };
     }
+    if (pathname === "/shop") {
+      return { title: "Shop", hint: "Browse catalog" };
+    }
     if (pathname === "/cart") return { title: "Cart" };
     if (pathname === "/checkout/success") return { title: "Order confirmed" };
     if (pathname === "/checkout") return { title: "Checkout" };

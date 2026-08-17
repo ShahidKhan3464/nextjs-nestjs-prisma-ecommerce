@@ -199,6 +199,13 @@ const BUYER_NAV: AppNavItem[] = [
 /** Buyer shopping links sellers may also use when they hold BUYER. */
 const SELLER_BUYER_EXTRA: AppNavItem[] = [
   {
+    id: "shop",
+    label: "Shop",
+    roles: ["BUYER"],
+    href: ROUTES.shop,
+    icon: ShoppingBag,
+  },
+  {
     id: "cart",
     label: "Cart",
     roles: ["BUYER"],

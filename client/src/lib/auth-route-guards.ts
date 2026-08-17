@@ -52,6 +52,7 @@ export function isProtectedShopPath(pathname: string): boolean {
     isSellerProductPath(pathname) ||
     pathname.startsWith("/categories") ||
     pathname.startsWith("/cart") ||
+    pathname.startsWith("/shop") ||
     pathname.startsWith("/checkout") ||
     pathname.startsWith("/wishlist") ||
     pathname.startsWith("/users") ||
