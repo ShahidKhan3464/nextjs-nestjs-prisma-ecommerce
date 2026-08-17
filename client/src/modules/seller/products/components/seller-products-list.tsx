@@ -324,7 +324,7 @@ export function SellerProductsList() {
                         categories.find((c) => String(c.id) === categoryFilter)
                           ?.name
                       )
-                    : undefined}
+                    : "All"}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
@@ -346,11 +346,11 @@ export function SellerProductsList() {
             >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Status">
-                  {statusFilter !== "all"
-                    ? PRODUCT_STATUS_FILTER_OPTIONS.find(
-                        (opt) => opt.value === statusFilter
-                      )?.label
-                    : undefined}
+                  {
+                    PRODUCT_STATUS_FILTER_OPTIONS.find(
+                      (opt) => opt.value === statusFilter
+                    )?.label
+                  }
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>

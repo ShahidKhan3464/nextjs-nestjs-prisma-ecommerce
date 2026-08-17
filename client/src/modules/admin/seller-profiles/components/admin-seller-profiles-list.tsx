@@ -133,11 +133,11 @@ export function AdminSellerProfilesList() {
           >
             <SelectTrigger className="w-full!" disabled={isEmptyCatalog && statusFilter === "ALL"}>
               <SelectValue placeholder="Status">
-                {statusFilter !== "ALL"
-                  ? SELLER_STATUS_FILTER_OPTIONS.find(
-                      (opt) => opt.value === statusFilter
-                    )?.label
-                  : undefined}
+                {
+                  SELLER_STATUS_FILTER_OPTIONS.find(
+                    (opt) => opt.value === statusFilter
+                  )?.label
+                }
               </SelectValue>
             </SelectTrigger>
             <SelectContent>

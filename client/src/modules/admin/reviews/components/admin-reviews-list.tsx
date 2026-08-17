@@ -8,10 +8,10 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { queryKeys } from "@/constants/query-keys";
 import { formatOrderDate } from "@/lib/format-date";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useEffect, useMemo, useState } from "react";
 import { getApiErrorMessage } from "@/lib/api-error";
 import { Pagination } from "@/components/ui/pagination";
+import { AdminTableSkeleton } from "@/modules/admin/shared";
 import type { Review } from "@/modules/buyer/reviews/types";
 import { EmptyState } from "@/shared/components/feedback/empty-state";
 import { RatingStars } from "@/shared/components/marketplace/rating-stars";
@@ -45,16 +45,6 @@ import {
   AlertDialogDescription,
 } from "@/components/ui/alert-dialog";
 
-function AdminReviewsSkeleton() {
-  return (
-    <div className="space-y-3">
-      {Array.from({ length: 6 }).map((_, i) => (
-        <Skeleton key={i} className="h-12 w-full rounded-lg" />
-      ))}
-    </div>
-  );
-}
-
 export function AdminReviewsList() {
   const qc = useQueryClient();
   const [page, setPage] = useState(1);
@@ -80,6 +70,7 @@ export function AdminReviewsList() {
   const { data, isPending, isError, refetch } = useQuery({
     queryKey: queryKeys.reviews.admin(listParams),
     queryFn: () => fetchAdminReviews(listParams),
+    placeholderData: (prev) => prev,
   });
 
   const removeMutation = useMutation({
@@ -99,9 +90,24 @@ export function AdminReviewsList() {
     onError: (error) => toast.error(getApiErrorMessage(error)),
   });
 
-  if (isPending) return <AdminReviewsSkeleton />;
+  if (isPending && !data) {
+    return (
+      <AdminTableSkeleton
+        filterWidths={["w-36", "w-40"]}
+        columns={[
+          { className: "flex-1" },
+          { className: "w-24" },
+          { className: "flex-1" },
+          { className: "w-24" },
+          { className: "flex-1" },
+          { className: "w-28" },
+          { className: "w-12 shrink-0", isAction: true },
+        ]}
+      />
+    );
+  }
 
-  if (isError) {
+  if (isError && !data) {
     return (
       <EmptyState
         title="Could not load reviews"
@@ -115,8 +121,10 @@ export function AdminReviewsList() {
     );
   }
 
-  const reviews = data?.reviews ?? [];
-  const total = data?.total ?? 0;
+  if (!data) return null;
+
+  const reviews = data.reviews ?? [];
+  const total = data.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / perPage));
   const hasFilters = ratingFilter !== "all" || storeIdInput.trim().length > 0;
 

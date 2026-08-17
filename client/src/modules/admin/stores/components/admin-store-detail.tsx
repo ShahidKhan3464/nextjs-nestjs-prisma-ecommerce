@@ -8,10 +8,9 @@ import { ROUTES } from "@/constants/routes";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/constants/query-keys";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Separator } from "@/components/ui/separator";
 import { ExternalLink, RefreshCw } from "lucide-react";
 import { SuspendStoreDialog } from "./suspend-store-dialog";
+import { AdminDetailSkeleton } from "@/modules/admin/shared";
 import { isStoreVerified } from "@/modules/seller/store/types";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { EmptyState } from "@/shared/components/feedback/empty-state";
@@ -59,13 +58,7 @@ export function AdminStoreDetail({ storeId }: Props) {
   });
 
   if (isPending) {
-    return (
-      <div className="mx-auto max-w-4xl space-y-6">
-        <Skeleton className="h-14 w-72" />
-        <Skeleton className="h-40 w-full rounded-xl" />
-        <Skeleton className="h-64 w-full rounded-xl" />
-      </div>
-    );
+    return <AdminDetailSkeleton />;
   }
 
   if (isError || !data) {
@@ -98,95 +91,19 @@ export function AdminStoreDetail({ storeId }: Props) {
   return (
     <div
       className={cn(
-        "mx-auto max-w-4xl space-y-6",
+        "grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_500px]",
         isFetching ? "opacity-90" : undefined
       )}
     >
-      <div className="flex flex-wrap items-start justify-between gap-4">
+      <div className="space-y-6">
         <div className="min-w-0 space-y-2">
           <p className="text-muted-foreground text-sm">Store</p>
-          <h2 className="font-heading text-2xl font-semibold tracking-tight">
+          <h2 className="font-heading text-3xl font-semibold tracking-tight">
             {store.name}
           </h2>
-          <div className="flex flex-wrap items-center gap-2 pt-1">
-            <Badge variant={isSuspended ? "destructive" : "default"}>
-              {store.status}
-            </Badge>
-            <Badge variant="outline">
-              {verified ? "Verified" : "Unverified"}
-            </Badge>
-            <Badge variant="outline" className="font-mono">
-              #{store.id}
-            </Badge>
-          </div>
         </div>
-        <div className="flex flex-wrap gap-2">
-          {!verified ? (
-            <Button type="button" onClick={() => setVerifyOpen(true)}>
-              Verify
-            </Button>
-          ) : (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setUnverifyOpen(true)}
-            >
-              Unverify
-            </Button>
-          )}
-          {isSuspended ? (
-            <Button type="button" onClick={() => setUnsuspendOpen(true)}>
-              Unsuspend
-            </Button>
-          ) : (
-            <Button
-              type="button"
-              variant="destructive"
-              onClick={() => setSuspendOpen(true)}
-            >
-              Suspend
-            </Button>
-          )}
-        </div>
-      </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <MetaCard label="Created">
-          <p className="tabular-nums">{formatDateTime(store.createdAt)}</p>
-        </MetaCard>
-        <MetaCard label="Verified at">
-          <p className="tabular-nums">{formatDateTime(store.verifiedAt)}</p>
-        </MetaCard>
-        <MetaCard label="Avg rating">
-          <p className="tabular-nums">
-            {store.averageRating != null
-              ? store.averageRating.toFixed(1)
-              : "—"}
-          </p>
-        </MetaCard>
-        <MetaCard label="Products sold">
-          <p className="tabular-nums">{store.productsSold ?? "—"}</p>
-        </MetaCard>
-      </div>
-
-      {store.suspensionReason ? (
-        <div className="border-destructive/30 bg-destructive/5 rounded-lg border p-4 text-sm">
-          <p className="font-medium">Suspension reason</p>
-          <p className="text-muted-foreground mt-1 whitespace-pre-wrap">
-            {store.suspensionReason}
-          </p>
-          {store.suspendedAt ? (
-            <p className="text-muted-foreground mt-2 text-xs tabular-nums">
-              Suspended {formatDateTime(store.suspendedAt)}
-            </p>
-          ) : null}
-        </div>
-      ) : null}
-
-      <Separator />
-
-      <section className="grid gap-6 sm:grid-cols-2">
-        <div className="space-y-3 text-sm">
+        <section className="space-y-3 text-sm">
           <h3 className="font-medium tracking-wide uppercase">
             Store information
           </h3>
@@ -212,8 +129,9 @@ export function AdminStoreDetail({ storeId }: Props) {
               </dd>
             </div>
           </dl>
-        </div>
-        <div className="space-y-3 text-sm">
+        </section>
+
+        <section className="space-y-3 text-sm">
           <h3 className="font-medium tracking-wide uppercase">
             Seller / business
           </h3>
@@ -251,10 +169,8 @@ export function AdminStoreDetail({ storeId }: Props) {
               <dd className="tabular-nums">{store.totalReviews ?? 0}</dd>
             </div>
           </dl>
-        </div>
-      </section>
+        </section>
 
-      <div className="flex flex-wrap gap-2">
         <Link
           href={ROUTES.publicStore(store.slug)}
           className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
@@ -262,17 +178,92 @@ export function AdminStoreDetail({ storeId }: Props) {
           <ExternalLink className="size-3.5" />
           View public store
         </Link>
+      </div>
+
+      <aside className="bg-muted/40 border-border space-y-4 rounded-xl border p-4 lg:sticky lg:top-28">
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge variant={isSuspended ? "destructive" : "default"}>
+            {store.status}
+          </Badge>
+          <Badge variant="outline">
+            {verified ? "Verified" : "Unverified"}
+          </Badge>
+          <Badge variant="outline" className="font-mono">
+            #{store.id}
+          </Badge>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          {!verified ? (
+            <Button type="button" onClick={() => setVerifyOpen(true)}>
+              Verify
+            </Button>
+          ) : (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setUnverifyOpen(true)}
+            >
+              Unverify
+            </Button>
+          )}
+          {isSuspended ? (
+            <Button type="button" onClick={() => setUnsuspendOpen(true)}>
+              Unsuspend
+            </Button>
+          ) : (
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={() => setSuspendOpen(true)}
+            >
+              Suspend
+            </Button>
+          )}
+        </div>
+
+        <MetaCard label="Created">
+          <p className="tabular-nums">{formatDateTime(store.createdAt)}</p>
+        </MetaCard>
+        <MetaCard label="Verified at">
+          <p className="tabular-nums">{formatDateTime(store.verifiedAt)}</p>
+        </MetaCard>
+        <MetaCard label="Avg rating">
+          <p className="tabular-nums">
+            {store.averageRating != null
+              ? store.averageRating.toFixed(1)
+              : "—"}
+          </p>
+        </MetaCard>
+        <MetaCard label="Products sold">
+          <p className="tabular-nums">{store.productsSold ?? "—"}</p>
+        </MetaCard>
+
+        {store.suspensionReason ? (
+          <div className="border-destructive/30 bg-destructive/5 rounded-lg border p-4 text-sm">
+            <p className="font-medium">Suspension reason</p>
+            <p className="text-muted-foreground mt-1 whitespace-pre-wrap">
+              {store.suspensionReason}
+            </p>
+            {store.suspendedAt ? (
+              <p className="text-muted-foreground mt-2 text-xs tabular-nums">
+                Suspended {formatDateTime(store.suspendedAt)}
+              </p>
+            ) : null}
+          </div>
+        ) : null}
+
         <Link
           href={ROUTES.adminStores}
-          className={cn(buttonVariants({ variant: "outline" }))}
+          className={cn(buttonVariants({ variant: "outline" }), "w-full")}
         >
           All stores
         </Link>
-      </div>
+      </aside>
 
       <SuspendStoreDialog
-        open={suspendOpen}
         store={store}
+        open={suspendOpen}
         onOpenChange={setSuspendOpen}
       />
       <ConfirmStoreActionDialog

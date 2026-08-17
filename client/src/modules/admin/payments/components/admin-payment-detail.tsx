@@ -9,8 +9,7 @@ import { ROUTES } from "@/constants/routes";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/constants/query-keys";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Separator } from "@/components/ui/separator";
+import { AdminDetailSkeleton } from "@/modules/admin/shared";
 import { RefundPaymentDialog } from "./refund-payment-dialog";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { fetchAdminPayment } from "../services/payments.service";
@@ -54,13 +53,7 @@ export function AdminPaymentDetail({ paymentId }: Props) {
   });
 
   if (isPending) {
-    return (
-      <div className="mx-auto max-w-4xl space-y-6">
-        <Skeleton className="h-14 w-72" />
-        <Skeleton className="h-40 w-full rounded-xl" />
-        <Skeleton className="h-64 w-full rounded-xl" />
-      </div>
-    );
+    return <AdminDetailSkeleton />;
   }
 
   if (isError || !data) {
@@ -97,14 +90,14 @@ export function AdminPaymentDetail({ paymentId }: Props) {
   return (
     <div
       className={cn(
-        "mx-auto max-w-4xl space-y-6",
+        "grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_500px]",
         isFetching ? "opacity-90" : undefined
       )}
     >
-      <div className="flex flex-wrap items-start justify-between gap-4">
+      <div className="space-y-6">
         <div className="min-w-0 space-y-2">
           <p className="text-muted-foreground text-sm">Payment</p>
-          <h2 className="font-heading text-2xl font-semibold tracking-tight">
+          <h2 className="font-heading text-3xl font-semibold tracking-tight">
             #{payment.id}
           </h2>
           <div className="flex flex-wrap items-center gap-2 pt-1">
@@ -115,65 +108,31 @@ export function AdminPaymentDetail({ paymentId }: Props) {
             ) : null}
           </div>
         </div>
-        <div className="flex flex-wrap gap-2">
-          {canRefund ? (
-            <Button
-              type="button"
-              variant="destructive"
-              onClick={() => setRefundOpen(true)}
-            >
-              Record refund
-            </Button>
-          ) : null}
-        </div>
-      </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <MetaCard label="Amount">
-          <p className="font-medium tabular-nums">
-            {formatPaymentAmount(payment.amount, payment.currency)}
-          </p>
-        </MetaCard>
-        <MetaCard label="Refunded">
-          <p className="tabular-nums">
-            {formatPaymentAmount(payment.refundedAmount, payment.currency)}
-          </p>
-        </MetaCard>
-        <MetaCard label="Created">
-          <p className="tabular-nums">{formatDateTime(payment.createdAt)}</p>
-        </MetaCard>
-        <MetaCard label="Paid at">
-          <p className="tabular-nums">{formatDateTime(payment.paidAt)}</p>
-        </MetaCard>
-      </div>
-
-      {payment.failureReason ? (
-        <div className="border-destructive/30 bg-destructive/5 rounded-lg border p-4 text-sm">
-          <p className="font-medium">Failure reason</p>
-          <p className="text-muted-foreground mt-1 whitespace-pre-wrap">
-            {payment.failureReason}
-          </p>
-        </div>
-      ) : null}
-
-      {payment.refundReason ? (
-        <div className="rounded-lg border p-4 text-sm">
-          <p className="font-medium">Refund reason</p>
-          <p className="text-muted-foreground mt-1 whitespace-pre-wrap">
-            {payment.refundReason}
-          </p>
-          {payment.refundedAt ? (
-            <p className="text-muted-foreground mt-2 text-xs tabular-nums">
-              Refunded {formatDateTime(payment.refundedAt)}
+        {payment.failureReason ? (
+          <div className="border-destructive/30 bg-destructive/5 rounded-lg border p-4 text-sm">
+            <p className="font-medium">Failure reason</p>
+            <p className="text-muted-foreground mt-1 whitespace-pre-wrap">
+              {payment.failureReason}
             </p>
-          ) : null}
-        </div>
-      ) : null}
+          </div>
+        ) : null}
 
-      <Separator />
+        {payment.refundReason ? (
+          <div className="rounded-lg border p-4 text-sm">
+            <p className="font-medium">Refund reason</p>
+            <p className="text-muted-foreground mt-1 whitespace-pre-wrap">
+              {payment.refundReason}
+            </p>
+            {payment.refundedAt ? (
+              <p className="text-muted-foreground mt-2 text-xs tabular-nums">
+                Refunded {formatDateTime(payment.refundedAt)}
+              </p>
+            ) : null}
+          </div>
+        ) : null}
 
-      <section className="grid gap-6 sm:grid-cols-2">
-        <div className="space-y-3 text-sm">
+        <section className="space-y-3 text-sm">
           <h3 className="font-medium tracking-wide uppercase">Order</h3>
           <dl className="space-y-2">
             <div>
@@ -218,8 +177,39 @@ export function AdminPaymentDetail({ paymentId }: Props) {
               </dd>
             </div>
           </dl>
-        </div>
-        <div className="space-y-3 text-sm">
+        </section>
+      </div>
+
+      <aside className="bg-muted/40 border-border space-y-4 rounded-xl border p-4 lg:sticky lg:top-28">
+        {canRefund ? (
+          <Button
+            type="button"
+            variant="destructive"
+            className="w-full"
+            onClick={() => setRefundOpen(true)}
+          >
+            Record refund
+          </Button>
+        ) : null}
+
+        <MetaCard label="Amount">
+          <p className="font-medium tabular-nums">
+            {formatPaymentAmount(payment.amount, payment.currency)}
+          </p>
+        </MetaCard>
+        <MetaCard label="Refunded">
+          <p className="tabular-nums">
+            {formatPaymentAmount(payment.refundedAmount, payment.currency)}
+          </p>
+        </MetaCard>
+        <MetaCard label="Created">
+          <p className="tabular-nums">{formatDateTime(payment.createdAt)}</p>
+        </MetaCard>
+        <MetaCard label="Paid at">
+          <p className="tabular-nums">{formatDateTime(payment.paidAt)}</p>
+        </MetaCard>
+
+        <section className="space-y-3 text-sm">
           <h3 className="font-medium tracking-wide uppercase">References</h3>
           <dl className="space-y-2">
             <div>
@@ -241,15 +231,15 @@ export function AdminPaymentDetail({ paymentId }: Props) {
               </dd>
             </div>
           </dl>
-        </div>
-      </section>
+        </section>
 
-      <Link
-        href={ROUTES.payments}
-        className={cn(buttonVariants({ variant: "outline" }))}
-      >
-        All payments
-      </Link>
+        <Link
+          href={ROUTES.payments}
+          className={cn(buttonVariants({ variant: "outline" }), "w-full")}
+        >
+          All payments
+        </Link>
+      </aside>
 
       <RefundPaymentDialog
         open={refundOpen}

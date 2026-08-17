@@ -126,11 +126,11 @@ export function AdminStoresList() {
           >
             <SelectTrigger className="w-full!">
               <SelectValue placeholder="Status">
-                {statusFilter !== "ALL"
-                  ? STORE_STATUS_FILTER_OPTIONS.find(
-                      (opt) => opt.value === statusFilter
-                    )?.label
-                  : undefined}
+                {
+                  STORE_STATUS_FILTER_OPTIONS.find(
+                    (opt) => opt.value === statusFilter
+                  )?.label
+                }
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
