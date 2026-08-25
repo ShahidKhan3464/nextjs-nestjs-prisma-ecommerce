@@ -13,7 +13,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { LayoutDashboard, LogOut, User } from "lucide-react";
 import { resolveShopChrome } from "@/shared/navigation/app-nav";
 import { NotificationBell } from "@/modules/buyer/notifications";
-import { resetCartWishlistSession } from "@/lib/cart-wishlist-session";
+import { clearLocalCartAndWishlist } from "@/lib/cart-wishlist-session";
 import {
   DropdownMenu,
   DropdownMenuItem,
@@ -58,8 +58,8 @@ export function AppChromeHeader({ sectionTitle, sectionHint }: Props) {
     } catch {
       /* ignore */
     }
+    clearLocalCartAndWishlist();
     clearSession();
-    resetCartWishlistSession();
     qc.clear();
     router.push(ROUTES.home);
     router.refresh();

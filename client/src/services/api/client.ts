@@ -1,7 +1,7 @@
 import { getSiteUrl } from "@/lib/backend-url";
 import { useAuthStore, isTokenExpired } from "@/store/auth-store";
 import { handlePossibleBlockedApiError } from "@/lib/account-blocked";
-import { resetCartWishlistSession } from "@/lib/cart-wishlist-session";
+import { clearLocalCartAndWishlist } from "@/lib/cart-wishlist-session";
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from "axios";
 
 declare module "axios" {
@@ -71,8 +71,8 @@ api.interceptors.request.use(async (config) => {
       config.headers.Authorization = `Bearer ${fresh}`;
     } catch (refreshError) {
       if (!handlePossibleBlockedApiError(refreshError)) {
+        clearLocalCartAndWishlist();
         useAuthStore.getState().clearSession();
-        resetCartWishlistSession();
       }
     }
   } else if (token) {
@@ -117,8 +117,8 @@ api.interceptors.response.use(
       return api(original);
     } catch (refreshError) {
       if (!handlePossibleBlockedApiError(refreshError)) {
+        clearLocalCartAndWishlist();
         useAuthStore.getState().clearSession();
-        resetCartWishlistSession();
       }
       return Promise.reject(error);
     }

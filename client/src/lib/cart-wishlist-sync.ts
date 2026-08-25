@@ -1,5 +1,7 @@
+import { useAuthStore } from "@/store/auth-store";
 import { useCartStore } from "@/store/cart-store";
 import { useWishlistStore } from "@/store/wishlist-store";
+import { shouldMergeLocalCartWishlistOnLogin } from "@/lib/cart-wishlist-ownership";
 import {
   syncCart,
   fetchCart,
@@ -16,9 +18,9 @@ import {
 let syncInFlight: Promise<void> | null = null;
 
 /**
- * Login-only: merge persisted local cart/wishlist into the server, then
- * replace Zustand with the server truth. Avoids duplicate GETs when sync
- * already returns the full list.
+ * Login-only: merge a **guest** local cart/wishlist into the server, then
+ * replace Zustand with the server truth. Bags owned by another account are
+ * never imported.
  */
 export async function syncCartAndWishlistWithServer(): Promise<void> {
   if (!isAuthenticatedForCartWishlist()) return;
@@ -29,11 +31,22 @@ export async function syncCartAndWishlistWithServer(): Promise<void> {
   }
 
   syncInFlight = (async () => {
+    const currentUserId = useAuthStore.getState().user?.id;
+    if (!currentUserId) return;
+
     const localCart = useCartStore.getState().items;
     const localWishlist = useWishlistStore.getState().productIds;
+    const mergeCart = shouldMergeLocalCartWishlistOnLogin({
+      currentUserId,
+      ownerUserId: useCartStore.getState().ownerUserId,
+    });
+    const mergeWishlist = shouldMergeLocalCartWishlistOnLogin({
+      currentUserId,
+      ownerUserId: useWishlistStore.getState().ownerUserId,
+    });
 
     const [serverCart, serverWishlistIds] = await Promise.all([
-      localCart.length > 0
+      mergeCart && localCart.length > 0
         ? syncCart(
             localCart.map((i) => ({
               variantId: i.variantId,
@@ -41,7 +54,7 @@ export async function syncCartAndWishlistWithServer(): Promise<void> {
             }))
           )
         : fetchCart(),
-      localWishlist.length > 0
+      mergeWishlist && localWishlist.length > 0
         ? syncWishlist(localWishlist)
         : fetchWishlist().then((w) => w.productIds),
     ]);
