@@ -1,8 +1,9 @@
-import { StoreStatus } from 'src/modules/stores/constants/store.constants';
 import { ProductStatus } from 'src/common/enums/product-status.enum';
 import { CartItemWithRelations } from 'src/common/types/domain.types';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
+import { StoreStatus } from 'src/modules/stores/constants/store.constants';
 import { SellerProfileStatus } from 'src/modules/sellers/constants/seller.constants';
+import { assertNotOwnStorePurchase } from 'src/common/utils/assert-not-own-store-purchase.util';
 
 export type ValidatedCheckoutLine = {
   cartItemId: number;
@@ -32,6 +33,7 @@ export type StoreCheckoutGroup = {
  */
 export function validateAndGroupCheckoutCart(
   cartItems: CartItemWithRelations[],
+  buyerUserId: number,
 ): StoreCheckoutGroup[] {
   if (cartItems.length === 0) {
     throw new BadRequestException('Cart is empty');
@@ -40,7 +42,7 @@ export function validateAndGroupCheckoutCart(
   const groups = new Map<number, ValidatedCheckoutLine[]>();
 
   for (const item of cartItems) {
-    const line = validateCheckoutCartItem(item);
+    const line = validateCheckoutCartItem(item, buyerUserId);
     const existing = groups.get(line.storeId) ?? [];
     existing.push(line);
     groups.set(line.storeId, existing);
@@ -64,6 +66,7 @@ export function validateAndGroupCheckoutCart(
 
 function validateCheckoutCartItem(
   item: CartItemWithRelations,
+  buyerUserId: number,
 ): ValidatedCheckoutLine {
   if (!item.quantity || item.quantity <= 0) {
     throw new BadRequestException('Invalid quantity');
@@ -116,6 +119,8 @@ function validateCheckoutCartItem(
   if (sellerProfile.status !== SellerProfileStatus.APPROVED) {
     throw new BadRequestException('Store unavailable');
   }
+
+  assertNotOwnStorePurchase(buyerUserId, sellerProfile.userId);
 
   if (item.quantity > variant.stockQuantity) {
     throw new BadRequestException(`Insufficient stock for ${variant.sku}`);

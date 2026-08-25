@@ -24,10 +24,26 @@ export class SyncCartProvider {
               id: { in: variantIds },
               ...AVAILABLE_VARIANT_WHERE,
             },
-            select: { id: true, stockQuantity: true },
+            select: {
+              id: true,
+              stockQuantity: true,
+              product: {
+                select: {
+                  store: {
+                    select: {
+                      sellerProfile: { select: { userId: true } },
+                    },
+                  },
+                },
+              },
+            },
           })
         : [];
-    const variantById = new Map(variants.map((v) => [v.id, v]));
+    const variantById = new Map(
+      variants
+        .filter((v) => v.product.store?.sellerProfile?.userId !== userId)
+        .map((v) => [v.id, v]),
+    );
 
     const existing = await this.prisma.cartItem.findMany({
       where: { userId },

@@ -1,8 +1,14 @@
 import type { PaginatedResponse } from "@/types";
 import { getBackendUrl } from "@/lib/backend-url";
+import { isSeller } from "@/modules/auth/utils/roles";
 import { jsonMessage, jsonOk } from "@/lib/api-response";
+import { getAccessTokenPayload } from "@/lib/session-cookie";
 import type { Product } from "@/modules/buyer/products/types";
-import { nestErrorMessage, forwardAuthorization } from "@/lib/nest-http";
+import {
+  nestErrorMessage,
+  forwardAuthorization,
+  unwrapNestDataResponsePayload,
+} from "@/lib/nest-http";
 import {
   type NestProductPayload,
   normalizeNestProductPayload,
@@ -16,6 +22,40 @@ type NestPagedEnvelope = {
     data?: NestProductPayload[];
   };
 };
+
+/** Seller store id for shop-list exclusion. Never used when listing a specific store. */
+async function resolveExcludeStoreId(
+  req: Request,
+  storeId: string | null
+): Promise<number | undefined> {
+  if (storeId) return undefined;
+
+  const session = await getAccessTokenPayload();
+  if (!session || !isSeller(session.roles)) return undefined;
+
+  const auth = forwardAuthorization(req);
+  if (!("Authorization" in auth)) return undefined;
+
+  try {
+    const res = await fetch(`${getBackendUrl()}/stores/me`, {
+      headers: { ...auth },
+    });
+    if (!res.ok) return undefined;
+    const raw: unknown = await res.json();
+    const data = unwrapNestDataResponsePayload(raw);
+    if (!data || typeof data !== "object") return undefined;
+    const idRaw = (data as { id?: unknown }).id;
+    const id =
+      typeof idRaw === "number"
+        ? idRaw
+        : typeof idRaw === "string"
+          ? Number(idRaw)
+          : Number.NaN;
+    return Number.isFinite(id) && id > 0 ? id : undefined;
+  } catch {
+    return undefined;
+  }
+}
 
 export async function GET(req: Request) {
   const url = new URL(req.url);
@@ -46,6 +86,11 @@ export async function GET(req: Request) {
   if (sort) searchParams.set("sort", sort);
   if (page) searchParams.set("page", page);
   if (limit) searchParams.set("limit", limit);
+
+  const excludeStoreId = await resolveExcludeStoreId(req, storeId);
+  if (excludeStoreId != null) {
+    searchParams.set("excludeStoreId", String(excludeStoreId));
+  }
 
   const res = await fetch(`${backend}/products?${searchParams.toString()}`, {
     headers: { ...forwardAuthorization(req) },

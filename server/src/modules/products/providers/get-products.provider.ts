@@ -44,6 +44,8 @@ export class GetProductsProvider {
       where.storeId = scope.storeId;
     } else if (query.storeId) {
       where.storeId = query.storeId;
+    } else if (query.excludeStoreId) {
+      where.storeId = { not: query.excludeStoreId };
     }
 
     if (query.sellerId) {

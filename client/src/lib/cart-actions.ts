@@ -29,6 +29,7 @@ export async function cartAddItem(item: CartItem): Promise<void> {
   } catch (error) {
     toast.error(getApiErrorMessage(error, "Could not update cart"));
     await refetchCart().catch(() => undefined);
+    throw error;
   }
 }
 

@@ -1,7 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
 import { Prisma } from 'src/generated/prisma/client';
-import { StoreStatus } from 'src/modules/stores/constants/store.constants';
 import { ProductStatus } from 'src/common/enums/product-status.enum';
+import { StoreStatus } from 'src/modules/stores/constants/store.constants';
 import { SellerProfileStatus } from 'src/modules/sellers/constants/seller.constants';
 
 /** Prisma where: variant is purchasable (same rules as checkout). */
@@ -36,6 +36,7 @@ export const AVAILABLE_VARIANT_INCLUDE = {
           sellerProfile: {
             select: {
               id: true,
+              userId: true,
               status: true,
               deletedAt: true,
             },

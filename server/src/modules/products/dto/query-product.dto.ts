@@ -38,6 +38,16 @@ export class QueryProductDto extends PaginationQueryDto {
   @Min(1)
   sellerId?: number;
 
+  @ApiPropertyOptional({
+    description:
+      'Exclude this store from the public catalog (ignored when storeId is set)',
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  excludeStoreId?: number;
+
   @ApiPropertyOptional({ enum: ProductStatus })
   @IsOptional()
   @IsEnum(ProductStatus)

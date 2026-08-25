@@ -11,9 +11,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cartAddItem } from "@/lib/cart-actions";
 import { ProductBadges } from "./product-badges";
+import { useQuery } from "@tanstack/react-query";
+import { queryKeys } from "@/constants/query-keys";
 import type { Product, ProductVariant } from "../types";
+import { useIsSeller } from "@/modules/auth/hooks/use-roles";
 import { useWishlistHydrate } from "@/shared/hooks/use-wishlist-hydrate";
 import { RatingStars } from "@/shared/components/marketplace/rating-stars";
+import { fetchMyStore } from "@/modules/seller/store/services/store.service";
 import {
   formatVariantLabel,
   findVariantForSize,
@@ -96,6 +100,20 @@ function OptionPills({
 
 export function ProductDetailView({ product }: Props) {
   useWishlistHydrate();
+  const isSellerUser = useIsSeller();
+  const { data: myStore, isPending: myStorePending } = useQuery({
+    queryKey: queryKeys.store.me,
+    queryFn: fetchMyStore,
+    enabled: isSellerUser,
+    staleTime: 60_000,
+    retry: false,
+  });
+  const isOwnListing =
+    isSellerUser &&
+    myStore != null &&
+    product.store != null &&
+    String(myStore.id) === product.store.id;
+  const blockAddToBag = isOwnListing || (isSellerUser && myStorePending);
 
   const sizes = React.useMemo(
     () => uniqueVariantOptionValues(product.variants, "size"),
@@ -163,7 +181,7 @@ export function ProductDetailView({ product }: Props) {
   const [adding, setAdding] = React.useState(false);
 
   async function handleAddToCart() {
-    if (!variant || adding) return;
+    if (!variant || adding || blockAddToBag) return;
     setAdding(true);
     try {
       await cartAddItem({
@@ -189,6 +207,8 @@ export function ProductDetailView({ product }: Props) {
           : null,
       });
       toast.success("Added to bag");
+    } catch {
+      /* cartAddItem already toasted */
     } finally {
       setAdding(false);
     }
@@ -389,11 +409,22 @@ export function ProductDetailView({ product }: Props) {
               size="lg"
               type="button"
               onClick={() => void handleAddToCart()}
-              disabled={!variant || !inStock || adding}
               className="h-12 w-full text-base font-semibold"
+              disabled={!variant || !inStock || adding || blockAddToBag}
             >
-              {adding ? "Adding…" : inStock ? "Add to bag" : "Out of stock"}
+              {isOwnListing
+                ? "Your listing"
+                : adding
+                  ? "Adding…"
+                  : inStock
+                    ? "Add to bag"
+                    : "Out of stock"}
             </Button>
+            {isOwnListing ? (
+              <p className="text-muted-foreground text-center text-xs">
+                You cannot purchase products from your own store.
+              </p>
+            ) : null}
           </div>
         </div>
       </motion.div>

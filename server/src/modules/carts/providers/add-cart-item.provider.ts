@@ -4,6 +4,7 @@ import type { CartItemResponse } from '../types/cart.types';
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { mapCartItemToResponse } from '../utils/map-cart-item.util';
 import { findCartItemsWithImages } from 'src/common/prisma/file-query.util';
+import { assertNotOwnStorePurchase } from 'src/common/utils/assert-not-own-store-purchase.util';
 import {
   assertVariantAvailable,
   AVAILABLE_VARIANT_INCLUDE,
@@ -27,6 +28,10 @@ export class AddCartItemProvider {
     }
 
     assertVariantAvailable(variant);
+    assertNotOwnStorePurchase(
+      userId,
+      variant.product.store?.sellerProfile?.userId,
+    );
 
     if (dto.quantity > variant.stockQuantity) {
       throw new BadRequestException('Insufficient stock');

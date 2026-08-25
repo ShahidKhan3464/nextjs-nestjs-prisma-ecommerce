@@ -10,6 +10,7 @@ import { findCartItemsWithImages } from 'src/common/prisma/file-query.util';
 import { ProductStatus } from 'src/modules/products/constants/product.constants';
 import { validateAndGroupCheckoutCart } from '../utils/validate-checkout-cart.util';
 import { ExpireAbandonedCheckoutsProvider } from './expire-abandoned-checkouts.provider';
+import { assertNotOwnStorePurchase } from 'src/common/utils/assert-not-own-store-purchase.util';
 import {
   type StockLine,
   adjustVariantStock,
@@ -41,7 +42,7 @@ export class CreateCheckoutProvider {
     await this.expireAbandonedCheckouts.clearForUser(userId);
 
     const cartItems = await findCartItemsWithImages(this.prisma, { userId });
-    const storeGroups = validateAndGroupCheckoutCart(cartItems);
+    const storeGroups = validateAndGroupCheckoutCart(cartItems, userId);
 
     const checkoutSubtotal = storeGroups.reduce(
       (sum, group) => sum + group.subtotal,
@@ -79,7 +80,7 @@ export class CreateCheckoutProvider {
                     deletedAt: true,
                     status: true,
                     sellerProfile: {
-                      select: { deletedAt: true },
+                      select: { deletedAt: true, userId: true },
                     },
                   },
                 },
@@ -121,6 +122,8 @@ export class CreateCheckoutProvider {
           ) {
             throw new BadRequestException('Product unavailable');
           }
+
+          assertNotOwnStorePurchase(userId, product.store.sellerProfile.userId);
         }
 
         // Reserve inventory at checkout create so concurrent checkouts cannot oversell.

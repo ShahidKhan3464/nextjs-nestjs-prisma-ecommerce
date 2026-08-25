@@ -4,6 +4,7 @@ import { UpdateCartItemDto } from '../dto/update-cart-item.dto';
 import { mapCartItemToResponse } from '../utils/map-cart-item.util';
 import { assertVariantAvailable } from '../utils/available-variant.util';
 import { findCartItemsWithImages } from 'src/common/prisma/file-query.util';
+import { assertNotOwnStorePurchase } from 'src/common/utils/assert-not-own-store-purchase.util';
 import {
   Injectable,
   NotFoundException,
@@ -50,6 +51,10 @@ export class UpdateCartItemProvider {
           : null,
       },
     });
+    assertNotOwnStorePurchase(
+      userId,
+      item.variant.product.store?.sellerProfile?.userId,
+    );
 
     if (dto.quantity > item.variant.stockQuantity) {
       throw new BadRequestException('Insufficient stock');
