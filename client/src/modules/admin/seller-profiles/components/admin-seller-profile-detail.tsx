@@ -16,6 +16,7 @@ import { RejectSellerProfileDialog } from "./reject-seller-profile-dialog";
 import { SuspendSellerProfileDialog } from "./suspend-seller-profile-dialog";
 import { ApproveSellerProfileDialog } from "./approve-seller-profile-dialog";
 import { fetchAdminSellerProfile } from "../services/seller-profiles.service";
+import { UnsuspendSellerProfileDialog } from "./unsuspend-seller-profile-dialog";
 import { SellerStatusBadge } from "@/modules/buyer/seller-registration/components/seller-status-badge";
 import {
   DOCUMENT_TYPE_LABELS,
@@ -55,9 +56,10 @@ function MetaCard({
 }
 
 export function AdminSellerProfileDetail({ profileId }: Props) {
-  const [approveOpen, setApproveOpen] = useState(false);
   const [rejectOpen, setRejectOpen] = useState(false);
+  const [approveOpen, setApproveOpen] = useState(false);
   const [suspendOpen, setSuspendOpen] = useState(false);
+  const [unsuspendOpen, setUnsuspendOpen] = useState(false);
 
   const { data, isPending, isError, refetch, isFetching } = useQuery({
     queryKey: queryKeys.admin.sellerProfile(profileId),
@@ -96,6 +98,7 @@ export function AdminSellerProfileDetail({ profileId }: Props) {
   const canReject = profile.status === "PENDING";
   const canSuspend =
     profile.status === "PENDING" || profile.status === "APPROVED";
+  const canUnsuspend = profile.status === "SUSPENDED";
 
   return (
     <div
@@ -318,6 +321,11 @@ export function AdminSellerProfileDetail({ profileId }: Props) {
               Suspend
             </Button>
           ) : null}
+          {canUnsuspend ? (
+            <Button type="button" onClick={() => setUnsuspendOpen(true)}>
+              Unsuspend
+            </Button>
+          ) : null}
         </div>
 
         <MetaCard label="Application ID">
@@ -351,8 +359,8 @@ export function AdminSellerProfileDetail({ profileId }: Props) {
       </aside>
 
       <ApproveSellerProfileDialog
-        open={approveOpen}
         profile={profile}
+        open={approveOpen}
         onOpenChange={setApproveOpen}
       />
       <RejectSellerProfileDialog
@@ -361,9 +369,14 @@ export function AdminSellerProfileDetail({ profileId }: Props) {
         onOpenChange={setRejectOpen}
       />
       <SuspendSellerProfileDialog
-        open={suspendOpen}
         profile={profile}
+        open={suspendOpen}
         onOpenChange={setSuspendOpen}
+      />
+      <UnsuspendSellerProfileDialog
+        profile={profile}
+        open={unsuspendOpen}
+        onOpenChange={setUnsuspendOpen}
       />
     </div>
   );

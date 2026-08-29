@@ -137,7 +137,7 @@ URLs are **not** under `/admin`. Middleware redirects legacy `/admin/*` → thes
 | `/categories/new` | Create category |
 | `/categories/[id]` | Edit category |
 | `/seller-profiles` | Seller applications list |
-| `/seller-profiles/[id]` | Application detail (approve / reject / suspend) |
+| `/seller-profiles/[id]` | Application detail (approve / reject / suspend / unsuspend) |
 | `/stores` | Admin store list (not public `/stores/[slug]`) |
 | `/stores/manage/[id]` | Admin store detail (verify / suspend) |
 | `/products/new` | **Seller** product create form |
@@ -279,7 +279,7 @@ Guards: `requireUser` / `requireAdmin` / `requireSeller` (`lib/require-auth.ts`)
 | `users`, `users/[id]`, `users/[id]/detail`, `users/[id]/block` | GET, PATCH | Users |
 | `reviews`, `reviews/[id]` | GET, DELETE | Platform reviews + moderate delete |
 | `seller-profiles`, `seller-profiles/[id]` | GET | Seller applications |
-| `seller-profiles/[id]/approve`, `reject`, `suspend` | PATCH | Application decisions |
+| `seller-profiles/[id]/approve`, `reject`, `suspend`, `unsuspend` | PATCH | Application decisions |
 | `stores`, `stores/[id]` | GET | Store list / detail |
 | `stores/[id]/verify`, `unverify`, `suspend`, `unsuspend` | PATCH | Store moderation |
 | `files/secure/[fileId]` | GET | Proxy private Nest file stream (e.g. seller docs) |
@@ -340,7 +340,7 @@ Guards: `requireUser` / `requireAdmin` / `requireSeller` (`lib/require-auth.ts`)
 | `payments/` | list, detail, badges, refund dialog | `payments.service.ts` | Admin refunds |
 | `users/` | list, detail | `users.service.ts` | Block |
 | `reviews/` | `admin-reviews-list` | `reviews.service.ts` | Platform reviews + delete |
-| `seller-profiles/` | list, detail, approve/reject/suspend dialogs | seller-profiles service | Become-seller moderation |
+| `seller-profiles/` | list, detail, approve/reject/suspend/unsuspend dialogs | seller-profiles service | Become-seller moderation |
 | `stores/` | list, detail, suspend/confirm dialogs | `stores.service.ts` | Verify / suspend |
 | `shared/` | table / filter skeletons | — | Loading UI |
 
@@ -558,7 +558,7 @@ Current unit coverage is thin (e.g. `modules/customer/checkout/services/checkout
 1. Middleware requires auth.
 2. `become-seller-view` loads `/api/v1/customer/seller-profile/me`.
 3. Buyer submits application + documents → Nest `seller-profile` endpoints.
-4. Admin reviews at `/seller-profiles` → BFF `PATCH .../approve|reject|suspend`.
+4. Admin reviews at `/seller-profiles` → BFF `PATCH .../approve|reject|suspend|unsuspend`.
 5. On approve, Nest creates store + `SELLER` role + notification; client refreshes session so seller chrome unlocks.
 
 ### Admin store moderation (`/stores` → `/stores/manage/:id`)

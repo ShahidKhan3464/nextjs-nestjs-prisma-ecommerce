@@ -15,6 +15,7 @@ import { ApproveSellerProfileProvider } from './providers/approve-seller-profile
 import { SuspendSellerProfileProvider } from './providers/suspend-seller-profile.provider';
 import { UploadSellerDocumentProvider } from './providers/upload-seller-document.provider';
 import { PaginateQueryResult } from 'src/common/pagination/interfaces/paginated.interfaces';
+import { UnsuspendSellerProfileProvider } from './providers/unsuspend-seller-profile.provider';
 
 @Injectable()
 export class SellerService {
@@ -26,6 +27,7 @@ export class SellerService {
     private readonly approveSellerProfileProvider: ApproveSellerProfileProvider,
     private readonly suspendSellerProfileProvider: SuspendSellerProfileProvider,
     private readonly uploadSellerDocumentProvider: UploadSellerDocumentProvider,
+    private readonly unsuspendSellerProfileProvider: UnsuspendSellerProfileProvider,
   ) {}
 
   public createProfile(
@@ -75,6 +77,10 @@ export class SellerService {
     dto: SuspendSellerProfileDto,
   ): Promise<SellerProfileMapped> {
     return this.suspendSellerProfileProvider.suspend(id, dto);
+  }
+
+  public unsuspendProfile(id: number): Promise<SellerProfileMapped> {
+    return this.unsuspendSellerProfileProvider.unsuspend(id);
   }
 
   public uploadDocument(

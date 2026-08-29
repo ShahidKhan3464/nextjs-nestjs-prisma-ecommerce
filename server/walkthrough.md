@@ -68,7 +68,7 @@ All live under `src/modules/` (plus `src/health/`):
 |--------|------|---------|
 | **Auth** | `auth` | Register, login, forgot/reset password, refresh, logout |
 | **Users** | `users` | Profile, password, avatar; admin list/detail/block |
-| **Sellers** | `sellers` | Become-seller application, docs, admin approve/reject/suspend |
+| **Sellers** | `sellers` | Become-seller application, docs, admin approve/reject/suspend/unsuspend |
 | **Stores** | `stores` | Seller store CRUD/files; admin list + suspend/verify |
 | **Categories** | `categories` | Public catalog; admin CRUD + soft-delete/restore |
 | **Products** | `products` | Catalog, slug detail, seller catalog, publish/archive/soft-delete |
@@ -184,6 +184,7 @@ Auth: **Bearer required** unless noted public. Roles via `@Roles(...)`.
 | PATCH | `/seller-profile/:id/approve` | SUPER_ADMIN | Approve → create store + `SELLER` role + notify |
 | PATCH | `/seller-profile/:id/reject` | SUPER_ADMIN | Reject + reason |
 | PATCH | `/seller-profile/:id/suspend` | SUPER_ADMIN | Suspend |
+| PATCH | `/seller-profile/:id/unsuspend` | SUPER_ADMIN | Unsuspend (restore PENDING or APPROVED; unsuspend store if cascaded) |
 | GET | `/seller-profiles` | SUPER_ADMIN | Paginated list |
 
 ### Stores — `@Controller('stores')`

@@ -56,7 +56,7 @@ export function BecomeSellerView() {
     queryKey: queryKeys.sellerProfile.me,
     refetchInterval: (query) => {
       const status = query.state.data?.status;
-      return status === "PENDING" ? 15_000 : false;
+      return status === "PENDING" || status === "SUSPENDED" ? 15_000 : false;
     },
   });
 

@@ -8,6 +8,7 @@ import { RejectSellerProfileProvider } from './providers/reject-seller-profile.p
 import { ApproveSellerProfileProvider } from './providers/approve-seller-profile.provider';
 import { SuspendSellerProfileProvider } from './providers/suspend-seller-profile.provider';
 import { UploadSellerDocumentProvider } from './providers/upload-seller-document.provider';
+import { UnsuspendSellerProfileProvider } from './providers/unsuspend-seller-profile.provider';
 import {
   SellerController,
   SellerProfilesController,
@@ -24,6 +25,7 @@ import {
     ApproveSellerProfileProvider,
     SuspendSellerProfileProvider,
     UploadSellerDocumentProvider,
+    UnsuspendSellerProfileProvider,
   ],
   exports: [SellerService],
 })

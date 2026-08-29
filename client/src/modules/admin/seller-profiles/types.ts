@@ -31,6 +31,7 @@ export type SuspendSellerProfileInput = {
 export type SellerProfileAction =
   | { type: "approve"; profile: SellerProfile }
   | { type: "reject"; profile: SellerProfile }
-  | { type: "suspend"; profile: SellerProfile };
+  | { type: "suspend"; profile: SellerProfile }
+  | { type: "unsuspend"; profile: SellerProfile };
 
 export type SellerProfileStatusFilter = SellerProfileStatus | "ALL";

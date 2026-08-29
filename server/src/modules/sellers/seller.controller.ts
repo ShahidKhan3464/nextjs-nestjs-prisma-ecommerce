@@ -119,6 +119,13 @@ export class SellerController {
   ) {
     return this.sellerService.suspendProfile(id, dto);
   }
+
+  @Patch(':id/unsuspend')
+  @Roles(UserRole.SUPER_ADMIN)
+  @ApiOkResponse({ type: SellerProfileResponseDto })
+  unsuspend(@Param('id', ParseIntPipe) id: number) {
+    return this.sellerService.unsuspendProfile(id);
+  }
 }
 
 @ApiTags('seller')

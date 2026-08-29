@@ -81,3 +81,11 @@ export async function suspendAdminSellerProfile(
   );
   return res.data.data;
 }
+
+export async function unsuspendAdminSellerProfile(id: string | number) {
+  const res = await api.patch<{ data: SellerProfile }>(
+    `/api/v1/admin/seller-profiles/${id}/unsuspend`,
+    {}
+  );
+  return res.data.data;
+}

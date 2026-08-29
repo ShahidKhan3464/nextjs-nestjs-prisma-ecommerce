@@ -65,6 +65,8 @@ export function StorePage() {
     queryKey: queryKeys.store.me,
     queryFn: fetchMyStore,
     enabled: isSeller,
+    refetchInterval: (query) =>
+      query.state.data?.status === "SUSPENDED" ? 15_000 : false,
   });
 
   if (!isSeller) {
