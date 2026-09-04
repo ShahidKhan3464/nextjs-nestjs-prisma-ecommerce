@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { ArrayMaxSize, IsArray, IsInt, Min } from 'class-validator';
 
-export const SYNC_WISHLIST_MAX_ITEMS = 100;
+const SYNC_WISHLIST_MAX_ITEMS = 100;
 
 export class SyncWishlistDto {
   @ApiProperty({

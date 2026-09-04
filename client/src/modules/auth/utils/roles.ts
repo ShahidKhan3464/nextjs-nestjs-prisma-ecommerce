@@ -17,15 +17,8 @@ export function normalizeRoles(roles: unknown): UserRole[] {
   return result;
 }
 
-export function hasRole(userRoles: UserRole[], role: UserRole): boolean {
+function hasRole(userRoles: UserRole[], role: UserRole): boolean {
   return userRoles.includes(role);
-}
-
-export function hasAnyRole(
-  userRoles: UserRole[],
-  requiredRoles: UserRole[]
-): boolean {
-  return requiredRoles.some((role) => userRoles.includes(role));
 }
 
 export function isSeller(userRoles: UserRole[]): boolean {

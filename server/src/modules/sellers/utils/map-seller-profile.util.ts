@@ -1,9 +1,9 @@
-import { StoreStatus } from 'src/modules/stores/constants/store.constants';
 import { SellerProfileStatus } from '../constants/seller.constants';
 import { seller_document_type_enum } from 'src/generated/prisma/client';
+import { StoreStatus } from 'src/modules/stores/constants/store.constants';
 import { buildSecureFileUrlPath } from 'src/modules/files/constants/file.constants';
 
-export type SellerDocumentFile = {
+type SellerDocumentFile = {
   id: number;
   urlPath: string;
   createdAt: Date;
@@ -12,13 +12,13 @@ export type SellerDocumentFile = {
   originalName: string;
 };
 
-export type SellerDocumentMapped = {
+type SellerDocumentMapped = {
   id: number;
   file: SellerDocumentFile;
   type: seller_document_type_enum;
 };
 
-export type SellerStoreSummary = {
+type SellerStoreSummary = {
   id: number;
   name: string;
   city: string;

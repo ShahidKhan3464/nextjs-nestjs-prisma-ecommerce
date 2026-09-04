@@ -1,9 +1,9 @@
 import { api } from "@/services/api/client";
 import type {
-  CreateSellerVariantInput,
   SellerProductVariant,
   SellerVariantListParams,
   SellerVariantListResult,
+  CreateSellerVariantInput,
   UpdateSellerVariantInput,
 } from "../types";
 
@@ -15,15 +15,6 @@ export async function fetchSellerVariants(
     { params }
   );
   return res.data.data;
-}
-
-export async function fetchSellerVariant(
-  id: string
-): Promise<SellerProductVariant> {
-  const res = await api.get<{ data: { variant: SellerProductVariant } }>(
-    `/api/v1/seller/product-variants/${id}`
-  );
-  return res.data.data.variant;
 }
 
 export async function createSellerVariant(

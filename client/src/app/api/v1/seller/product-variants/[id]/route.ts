@@ -16,42 +16,6 @@ import {
 
 type RouteCtx = { params: Promise<{ id: string }> };
 
-export async function GET(req: Request, ctx: RouteCtx) {
-  const seller = await requireSeller(req);
-  if (seller instanceof Response) return seller;
-
-  const { id } = await ctx.params;
-  const backend = getBackendUrl();
-  const res = await fetch(
-    `${backend}/product-variants/${encodeURIComponent(id)}`,
-    { headers: { ...forwardAuthorization(req) } }
-  );
-
-  let raw: unknown = null;
-  try {
-    raw = await res.json();
-  } catch {
-    raw = null;
-  }
-
-  if (!res.ok) {
-    return jsonMessage(nestErrorMessage(raw), res.status);
-  }
-
-  const payload = unwrapNestDataResponsePayload(raw);
-  if (payload === null || typeof payload !== "object") {
-    return jsonMessage("Unexpected variant response", 502);
-  }
-
-  const variant = mapNestSellerProductVariant(
-    payload as NestSellerProductVariantDto
-  );
-  const body: ApiResponse<{ variant: SellerProductVariant }> = {
-    data: { variant },
-  };
-  return jsonOk(body);
-}
-
 export async function PATCH(req: Request, ctx: RouteCtx) {
   const seller = await requireSeller(req);
   if (seller instanceof Response) return seller;

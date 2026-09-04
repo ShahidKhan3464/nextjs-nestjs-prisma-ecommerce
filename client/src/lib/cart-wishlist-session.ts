@@ -19,7 +19,7 @@ let wishlistLoadedForSession = false;
 let cartHydrateInFlight: Promise<void> | null = null;
 let wishlistHydrateInFlight: Promise<void> | null = null;
 
-export function resetCartWishlistSession(): void {
+function resetCartWishlistSession(): void {
   sessionUserId = null;
   cartLoadedForSession = false;
   wishlistLoadedForSession = false;
@@ -52,14 +52,6 @@ export async function refetchCart(): Promise<void> {
   cartLoadedForSession = false;
   cartHydrateInFlight = null;
   await hydrateCartOnce();
-}
-
-/** Force a fresh wishlist fetch (used after optimistic update failures). */
-export async function refetchWishlist(): Promise<void> {
-  if (!isAuthenticatedForCartWishlist()) return;
-  wishlistLoadedForSession = false;
-  wishlistHydrateInFlight = null;
-  await hydrateWishlistOnce();
 }
 
 function currentUserId(): string | null {

@@ -27,7 +27,6 @@ Auth is **custom JWT** (`jose` + Nest `/auth/*`) — not Clerk.
 | `src/constants/` | `routes.ts`, `query-keys.ts` |
 | `src/types/` | Shared `ApiResponse`, entity re-exports |
 | `src/middleware.ts` | JWT cookie guards, role paths, legacy `/admin` redirects |
-| `src/i18n/messages/` | `en.json` (locale stub via `siteConfig`) |
 | `components.json` | **shadcn** CLI config (`npx shadcn add`) |
 | `vitest.config.ts` | Unit tests (`src/**/*.test.ts(x)`) |
 
@@ -71,8 +70,6 @@ src/
 ├── components/ui/                # shadcn primitives
 ├── config/site.ts
 ├── constants/routes.ts, query-keys.ts
-├── hooks/                        # Thin re-exports (e.g. debounced value)
-├── i18n/messages/en.json
 ├── lib/                          # Auth, mappers, API helpers
 ├── middleware.ts
 ├── modules/admin|auth|customer|seller/
@@ -310,7 +307,8 @@ Guards: `requireUser` / `requireAdmin` / `requireSeller` (`lib/require-auth.ts`)
 | `categories` | GET | Categories for product forms |
 | `products`, `products/[id]` | GET, POST, PATCH, DELETE | Seller catalog |
 | `products/[id]/publish`, `archive`, `restore` | PATCH | Lifecycle |
-| `product-variants`, `product-variants/[id]` | GET, POST, PATCH, DELETE | Variants |
+| `product-variants` | GET, POST | Variant list + create |
+| `product-variants/[id]` | PATCH, DELETE | Variant update + delete |
 | `orders`, `orders/[id]`, `orders/[id]/status` | GET, PATCH | Store orders |
 | `payments`, `payments/[id]` | GET | Store payments |
 | `payments/[id]/cod/confirm`, `payments/[id]/cod/reject` | POST | COD actions |
@@ -360,7 +358,7 @@ Guards: `requireUser` / `requireAdmin` / `requireSeller` (`lib/require-auth.ts`)
 | `reviews/` | Product reviews section, rating distribution |
 | `seller-registration/` | Become-seller view, application form, docs, status panels |
 | `stores/` | Public store view + service |
-| `discovery/` | Recommended / recently viewed / recently purchased rails |
+| `discovery/` | Continue-shopping CTA used from the cart page |
 | `shared/` | Store grouping helpers for cart/checkout |
 
 ### `modules/seller/`

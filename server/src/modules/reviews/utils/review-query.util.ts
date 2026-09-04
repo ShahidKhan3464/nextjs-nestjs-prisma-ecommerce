@@ -2,12 +2,12 @@ import { ReviewRow } from './map-review.util';
 import { Prisma } from 'src/generated/prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 
-export const reviewBuyerSelect = {
+const reviewBuyerSelect = {
   id: true,
   fullName: true,
 } satisfies Prisma.UserSelect;
 
-export const reviewProductSelect = {
+const reviewProductSelect = {
   id: true,
   name: true,
   slug: true,

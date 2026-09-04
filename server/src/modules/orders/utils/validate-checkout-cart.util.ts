@@ -5,7 +5,7 @@ import { StoreStatus } from 'src/modules/stores/constants/store.constants';
 import { SellerProfileStatus } from 'src/modules/sellers/constants/seller.constants';
 import { assertNotOwnStorePurchase } from 'src/common/utils/assert-not-own-store-purchase.util';
 
-export type ValidatedCheckoutLine = {
+type ValidatedCheckoutLine = {
   cartItemId: number;
   storeId: number;
   variantId: number;

@@ -18,6 +18,4 @@ export const createReviewSchema = z.object({
     ),
 });
 
-export const updateReviewSchema = createReviewSchema;
-
 export type ReviewFormValues = z.infer<typeof createReviewSchema>;

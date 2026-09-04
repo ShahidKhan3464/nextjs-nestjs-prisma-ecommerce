@@ -3,7 +3,7 @@ import { useAuthStore } from "@/store/auth-store";
 export const CART_STORAGE_BASE = "cart-storage";
 export const WISHLIST_STORAGE_BASE = "wishlist-storage";
 
-export function namespacedCartWishlistKey(
+function namespacedCartWishlistKey(
   base: string,
   userId: string | null
 ): string {

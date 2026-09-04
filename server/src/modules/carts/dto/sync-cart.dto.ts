@@ -10,7 +10,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 
-export const SYNC_CART_MAX_ITEMS = 100;
+const SYNC_CART_MAX_ITEMS = 100;
 
 class SyncCartLineDto {
   @ApiProperty()

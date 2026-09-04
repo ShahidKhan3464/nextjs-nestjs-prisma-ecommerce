@@ -2,7 +2,7 @@ import type { StoreMapped } from '../types/store.types';
 import { StoreStatus, StoreFileType } from '../constants/store.constants';
 import { SellerProfileStatus } from 'src/modules/sellers/constants/seller.constants';
 
-export type { StoreFileMapped, StoreMapped } from '../types/store.types';
+export type { StoreMapped } from '../types/store.types';
 
 type StoreFileSource = {
   id: number;

@@ -20,7 +20,7 @@ export type OrderLineItemResponse = {
   sku?: string;
 };
 
-export type OrderStoreResponse = {
+type OrderStoreResponse = {
   id: string;
   name: string;
   slug: string;
@@ -29,7 +29,7 @@ export type OrderStoreResponse = {
   logoUrl: string | null;
 };
 
-export type OrderBuyerResponse = {
+type OrderBuyerResponse = {
   id: string;
   email: string;
   fullName: string;
@@ -63,7 +63,7 @@ export type MapOrderOptions = {
   includeBuyer?: boolean;
 };
 
-export type CheckoutPreview = {
+type CheckoutPreview = {
   tax: number;
   total: number;
   subtotal: number;

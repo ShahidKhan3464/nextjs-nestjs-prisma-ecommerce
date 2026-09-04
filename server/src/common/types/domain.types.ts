@@ -81,7 +81,7 @@ export type PaymentWithRelations = Omit<
   provider: PaymentProvider;
 };
 
-export type OrderStoreSummary = {
+type OrderStoreSummary = {
   id: number;
   name: string;
   slug: string;

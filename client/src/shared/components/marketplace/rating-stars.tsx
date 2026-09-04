@@ -12,7 +12,7 @@ const SIZES = {
 
 type Size = keyof typeof SIZES;
 
-export type RatingStarsProps = {
+type RatingStarsProps = {
   value: number;
   onChange?: (value: number) => void;
   size?: Size;

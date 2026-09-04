@@ -5,7 +5,7 @@ type DashboardStatusCount = {
   status: string;
 };
 
-export type DashboardActivityItem = {
+type DashboardActivityItem = {
   id: string;
   type: string;
   title: string;
@@ -14,7 +14,7 @@ export type DashboardActivityItem = {
   createdAt: string;
 };
 
-export type DashboardPurchasedProduct = {
+type DashboardPurchasedProduct = {
   productId: string;
   name: string;
   slug: string;

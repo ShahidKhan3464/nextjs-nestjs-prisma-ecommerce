@@ -13,7 +13,7 @@ export enum ProductFileType {
 }
 
 /** Nested store summary used on product list/detail payloads. */
-export const PRODUCT_STORE_SELECT = {
+const PRODUCT_STORE_SELECT = {
   id: true,
   name: true,
   slug: true,
@@ -50,7 +50,7 @@ export const PRODUCT_STATUS_TRANSITIONS: Record<
 
 export const PRODUCT_UPLOAD_SUBDIR = 'products';
 
-export const PRODUCT_FILE_SELECT = {
+const PRODUCT_FILE_SELECT = {
   id: true,
   urlPath: true,
   mimeType: true,

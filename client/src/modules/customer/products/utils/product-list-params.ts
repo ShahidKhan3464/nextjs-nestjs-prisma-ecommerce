@@ -1,8 +1,6 @@
 import type { ProductListParams } from "../types";
 import type { useProductSearchParams } from "../hooks/use-product-search-params";
 
-export const PRODUCT_LIST_PAGE_SIZE = 12;
-
 export function toProductListParams(
   values: ReturnType<typeof useProductSearchParams>["values"],
   overrides?: Partial<{ storeId: number }>

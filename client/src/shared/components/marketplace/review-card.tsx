@@ -5,7 +5,7 @@ import { Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatOrderDate } from "@/lib/format-date";
 
-export type ReviewCardProps = {
+type ReviewCardProps = {
   title: string;
   rating: number;
   comment: string;

@@ -1,7 +1,7 @@
 import { PaymentWithRelations } from 'src/common/types/domain.types';
 import { PaymentProvider, PaymentStatus } from '../constants/payment.constants';
 
-export type PaymentOrderSummary = {
+type PaymentOrderSummary = {
   id: string;
   userId: string;
   storeId: string;

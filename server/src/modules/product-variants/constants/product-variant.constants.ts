@@ -1,4 +1,4 @@
-export const VARIANT_PRODUCT_SELECT = {
+const VARIANT_PRODUCT_SELECT = {
   id: true,
   name: true,
   slug: true,

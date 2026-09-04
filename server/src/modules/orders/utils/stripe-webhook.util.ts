@@ -37,7 +37,7 @@ export function isPermanentCompletionFailure(err: unknown): boolean {
   );
 }
 
-export function exceptionMessage(err: HttpException): string {
+function exceptionMessage(err: HttpException): string {
   const response = err.getResponse();
   if (typeof response === 'string') return response;
   if (response && typeof response === 'object' && 'message' in response) {

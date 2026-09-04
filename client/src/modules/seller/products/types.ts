@@ -1,8 +1,6 @@
+export type ProductLifeCycle = "active" | "removed" | "all";
 export const PRODUCT_STATUSES = ["DRAFT", "ACTIVE"] as const;
 export type ProductStatus = (typeof PRODUCT_STATUSES)[number] | "ARCHIVED";
-
-export const PRODUCT_LIFE_CYCLES = ["active", "removed", "all"] as const;
-export type ProductLifeCycle = (typeof PRODUCT_LIFE_CYCLES)[number];
 
 export type FilterOption<T extends string = string> = {
   value: T;
@@ -138,12 +136,8 @@ export type SellerVariantListResult = {
   };
 };
 
-export function isProductDraft(product: SellerProduct): boolean {
+function isProductDraft(product: SellerProduct): boolean {
   return product.status === "DRAFT" && !product.isRemoved;
-}
-
-export function isProductActive(product: SellerProduct): boolean {
-  return product.status === "ACTIVE" && !product.isRemoved;
 }
 
 export function canPublishProduct(product: SellerProduct): boolean {

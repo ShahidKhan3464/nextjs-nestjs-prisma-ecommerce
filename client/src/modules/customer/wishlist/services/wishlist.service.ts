@@ -9,11 +9,6 @@ export async function fetchWishlist(): Promise<WishlistPayload> {
   return res.data.data;
 }
 
-export async function fetchWishlistProductIds(): Promise<string[]> {
-  const payload = await fetchWishlist();
-  return payload.productIds;
-}
-
 export async function toggleWishlistItem(productId: string) {
   const res = await api.post<
     ApiResponse<{ productIds: string[]; added: boolean }>

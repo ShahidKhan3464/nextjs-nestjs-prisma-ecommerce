@@ -1,8 +1,6 @@
 import type { GroupedCart, StoreCartGroup } from "./types";
 import type { CartItem } from "@/modules/buyer/cart/types";
 
-export type { StoreCartGroup, GroupedCart } from "./types";
-
 const UNKNOWN_STORE_KEY = "__unknown__";
 
 /** Group cart lines by store. Never merges products across different stores. */

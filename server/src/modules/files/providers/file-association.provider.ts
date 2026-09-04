@@ -10,8 +10,6 @@ import {
 
 type TxClient = Parameters<Parameters<PrismaService['$transaction']>[0]>[0];
 
-export type AssociationKind = 'product' | 'store' | 'user' | 'sellerDocument';
-
 @Injectable()
 export class FileAssociationProvider {
   constructor(private readonly prisma: PrismaService) {}

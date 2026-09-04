@@ -7,7 +7,6 @@ import type {
 } from '../types/payment.types';
 
 export type {
-  PaymentOrderSummary,
   PaymentResponse,
   MapPaymentOptions,
   PaymentWithOrder,

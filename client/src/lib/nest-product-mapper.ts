@@ -7,7 +7,7 @@ import type {
   ProductStoreSeller,
 } from "@/modules/buyer/products/types";
 
-export type NestProductStorePayload = {
+type NestProductStorePayload = {
   id: number;
   name: string;
   slug: string;

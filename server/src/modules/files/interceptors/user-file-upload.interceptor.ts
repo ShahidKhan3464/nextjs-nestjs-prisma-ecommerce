@@ -2,20 +2,10 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { FileUploadSubdir } from '../constants/file.constants';
 import { createFileDiskMulterOptions } from './shared-multer.config';
 
-const userImageMulter = createFileDiskMulterOptions(
-  FileUploadSubdir.USERS,
-  'image',
-);
-
 const userDocumentMulter = createFileDiskMulterOptions(
   FileUploadSubdir.USER_DOCUMENTS,
   'document',
 );
-
-/** User avatar / cover image upload. */
-export function UserFileUploadInterceptor(fieldName = 'file') {
-  return FileInterceptor(fieldName, userImageMulter);
-}
 
 /**
  * User document upload (PDF + images). Use when `type=DOCUMENT`.

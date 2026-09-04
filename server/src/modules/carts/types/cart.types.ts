@@ -1,4 +1,4 @@
-export type CartItemStoreResponse = {
+type CartItemStoreResponse = {
   id: string;
   name: string;
   slug: string;

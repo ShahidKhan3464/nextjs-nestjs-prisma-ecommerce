@@ -1,5 +1,4 @@
 import { User } from 'src/generated/prisma/client';
-import { CreateUserDto } from './dto/create-user.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UserRole } from 'src/common/enums/user-role.enum';
 import { UpdateProfileDto } from './dto/update-profile.dto';
@@ -8,7 +7,6 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { UserMeResponse, UserResponse } from './types/user.types';
 import { BlockUserProvider } from './providers/block-user.provider';
 import { UserWithRoles } from 'src/common/types/user-with-roles.type';
-import { CreateUserProvider } from './providers/create-user.provider';
 import { UpdateProfileProvider } from './providers/update-profile.provider';
 import { ChangePasswordProvider } from './providers/change-password.provider';
 import { USER_ROLES_INCLUDE } from 'src/common/constants/user-roles.constants';
@@ -33,7 +31,6 @@ export class UsersService {
     private readonly prisma: PrismaService,
     private readonly getUsersProvider: GetUsersProvider,
     private readonly blockUserProvider: BlockUserProvider,
-    private readonly createUserProvider: CreateUserProvider,
     private readonly getUserDetailProvider: GetUserDetailProvider,
     private readonly updateProfileProvider: UpdateProfileProvider,
     private readonly changePasswordProvider: ChangePasswordProvider,
@@ -94,10 +91,6 @@ export class UsersService {
     isBlocked: boolean,
   ): Promise<UserResponse> {
     return await this.blockUserProvider.blockUser(id, isBlocked);
-  }
-
-  public async createUser(dto: CreateUserDto): Promise<User> {
-    return await this.createUserProvider.createUser(dto);
   }
 
   public async findOneById(id: number): Promise<User | null> {

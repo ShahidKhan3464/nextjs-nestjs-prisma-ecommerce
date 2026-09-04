@@ -60,7 +60,6 @@ export const queryKeys = {
       detail: (id: string) => ["seller", "products", "detail", id] as const,
     },
     variants: {
-      all: ["seller", "variants"] as const,
       byProduct: (productId: string) =>
         ["seller", "variants", "product", productId] as const,
       detail: (id: string) => ["seller", "variants", "detail", id] as const,

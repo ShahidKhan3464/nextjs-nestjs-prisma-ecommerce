@@ -1,11 +1,8 @@
-export const SELLER_PROFILE_STATUSES = [
-  "PENDING",
-  "APPROVED",
-  "REJECTED",
-  "SUSPENDED",
-] as const;
-
-export type SellerProfileStatus = (typeof SELLER_PROFILE_STATUSES)[number];
+export type SellerProfileStatus =
+  | "PENDING"
+  | "APPROVED"
+  | "REJECTED"
+  | "SUSPENDED";
 
 export const SELLER_DOCUMENT_TYPES = [
   "TAX_DOCUMENT",
@@ -14,7 +11,7 @@ export const SELLER_DOCUMENT_TYPES = [
 
 export type SellerDocumentType = (typeof SELLER_DOCUMENT_TYPES)[number];
 
-export type SellerDocumentFile = {
+type SellerDocumentFile = {
   id: number;
   urlPath: string;
   mimeType: string;

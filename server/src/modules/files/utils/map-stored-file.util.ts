@@ -1,12 +1,10 @@
-import { Injectable } from '@nestjs/common';
 import {
-  STORED_FILE_SELECT,
   isPrivateStorageKey,
   buildSecureFileUrlPath,
   isPrivateAssociationType,
 } from '../constants/file.constants';
 
-export type StoredFileMapped = {
+type StoredFileMapped = {
   id: number;
   urlPath: string;
   mimeType: string;
@@ -50,7 +48,7 @@ function resolveUrlPath(
   return file.urlPath;
 }
 
-export function mapStoredFile(
+function mapStoredFile(
   file: StoredFileSelectRow,
   associationType?: string,
 ): StoredFileMapped {
@@ -79,5 +77,3 @@ export function mapAssociation(entry: {
     file: mapStoredFile(entry.file, entry.type),
   };
 }
-
-export { STORED_FILE_SELECT };

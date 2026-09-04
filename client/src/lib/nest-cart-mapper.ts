@@ -1,7 +1,7 @@
 import { getBackendUrl } from "@/lib/backend-url";
 import type { CartItem, CartItemStore } from "@/modules/buyer/cart/types";
 
-export type NestCartItemStorePayload = {
+type NestCartItemStorePayload = {
   id: string | number;
   name: string;
   slug: string;

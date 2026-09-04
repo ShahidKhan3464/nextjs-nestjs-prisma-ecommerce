@@ -4,10 +4,7 @@ import {
 } from 'src/common/types/domain.types';
 import type { CartItemResponse } from '../types/cart.types';
 
-export type {
-  CartItemStoreResponse,
-  CartItemResponse,
-} from '../types/cart.types';
+export type { CartItemResponse } from '../types/cart.types';
 
 function formatVariantLabel(variant: ProductVariantWithRelations): string {
   const parts = [variant.size, variant.color].filter(

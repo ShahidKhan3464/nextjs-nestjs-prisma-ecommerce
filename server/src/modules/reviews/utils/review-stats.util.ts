@@ -2,7 +2,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { OrderStatus } from 'src/common/enums/order-status.enum';
 import { PaymentStatus } from 'src/common/enums/payment-status.enum';
 
-export type RatingDistribution = {
+type RatingDistribution = {
   1: number;
   2: number;
   3: number;
@@ -35,14 +35,6 @@ const EMPTY_DISTRIBUTION: RatingDistribution = {
   4: 0,
   5: 0,
 };
-
-export function emptyReviewStats(): ReviewStats {
-  return {
-    averageRating: 0,
-    totalReviews: 0,
-    distribution: { ...EMPTY_DISTRIBUTION },
-  };
-}
 
 function roundRating(value: number): number {
   return Math.round(value * 10) / 10;

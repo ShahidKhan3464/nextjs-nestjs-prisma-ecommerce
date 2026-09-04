@@ -43,13 +43,6 @@ export async function requireAdmin(req: Request): Promise<User | Response> {
   return res;
 }
 
-/** Alias for `requireAdmin` — prefers the multi-vendor role name. */
-export async function requireSuperAdmin(
-  req: Request
-): Promise<User | Response> {
-  return requireAdmin(req);
-}
-
 /** Requires an authenticated session with the `SELLER` role. */
 export async function requireSeller(req: Request): Promise<User | Response> {
   const res = await requireUser(req);

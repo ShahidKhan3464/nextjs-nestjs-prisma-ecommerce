@@ -1,9 +1,9 @@
-export type ReviewBuyerSource = {
+type ReviewBuyerSource = {
   id: number;
   fullName: string;
 };
 
-export type ReviewProductSource = {
+type ReviewProductSource = {
   id: number;
   name: string;
   slug: string;
@@ -24,12 +24,12 @@ export type ReviewRow = {
   product?: ReviewProductSource;
 };
 
-export type ReviewBuyerResponse = {
+type ReviewBuyerResponse = {
   id: string;
   displayName: string;
 };
 
-export type ReviewProductSummary = {
+type ReviewProductSummary = {
   id: string;
   name: string;
   slug: string;

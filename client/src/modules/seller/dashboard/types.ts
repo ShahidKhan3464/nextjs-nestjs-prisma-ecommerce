@@ -5,7 +5,7 @@ type DashboardStatusCount = {
   status: string;
 };
 
-export type SellerStoreSummary = {
+type SellerStoreSummary = {
   id: number;
   name: string;
   slug: string;
@@ -21,7 +21,7 @@ export type SellerStoreSummary = {
   productsSold: number;
 };
 
-export type SellerDashboardActivity = {
+type SellerDashboardActivity = {
   id: string;
   type: string;
   title: string;
@@ -30,7 +30,7 @@ export type SellerDashboardActivity = {
   createdAt: string;
 };
 
-export type DashboardReviewItem = {
+type DashboardReviewItem = {
   id: string;
   rating: number;
   title: string | null;
@@ -41,7 +41,7 @@ export type DashboardReviewItem = {
   createdAt: string;
 };
 
-export type DashboardTopProduct = {
+type DashboardTopProduct = {
   productId: string;
   name: string;
   slug: string;

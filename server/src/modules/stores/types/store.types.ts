@@ -1,7 +1,7 @@
 import { StoreStatus, StoreFileType } from '../constants/store.constants';
 import { SellerProfileStatus } from 'src/modules/sellers/constants/seller.constants';
 
-export type StoreFileMapped = {
+type StoreFileMapped = {
   id: number;
   type: StoreFileType;
   sortOrder: number;

@@ -9,6 +9,3 @@ export const PaymentFailureReason = {
   AUTHENTICATION_REQUIRED: 'Authentication required',
   WEBHOOK_VERIFICATION_FAILED: 'Webhook verification failed',
 } as const;
-
-export type PaymentFailureReasonValue =
-  (typeof PaymentFailureReason)[keyof typeof PaymentFailureReason];

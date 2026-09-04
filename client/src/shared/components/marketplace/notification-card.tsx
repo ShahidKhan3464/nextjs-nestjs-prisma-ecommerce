@@ -15,7 +15,7 @@ import {
   XCircle,
 } from "lucide-react";
 
-export const NOTIFICATION_TYPE_ICONS = {
+const NOTIFICATION_TYPE_ICONS = {
   ORDER_CREATED: Package,
   ORDER_SHIPPED: Truck,
   ORDER_DELIVERED: CheckCircle,
@@ -29,9 +29,9 @@ export const NOTIFICATION_TYPE_ICONS = {
   SYSTEM: Bell,
 } as const satisfies Record<string, LucideIcon>;
 
-export type MarketplaceNotificationType = keyof typeof NOTIFICATION_TYPE_ICONS;
+type MarketplaceNotificationType = keyof typeof NOTIFICATION_TYPE_ICONS;
 
-export type NotificationCardProps = {
+type NotificationCardProps = {
   id: string;
   title: string;
   message: string;

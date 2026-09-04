@@ -50,7 +50,7 @@ Browser / SSR → axios /api/v1/... → Route Handler (BFF) → Nest (BACKEND_UR
 
 - Canonical paths: `src/constants/routes.ts`
 - Middleware + `lib/auth-route-guards.ts` / `lib/require-auth.ts`
-- BFF guards: `requireUser`, `requireAdmin` (**means `SUPER_ADMIN`**), `requireSuperAdmin` (alias of `requireAdmin`), `requireSeller`
+- BFF guards: `requireUser`, `requireAdmin` (**means `SUPER_ADMIN`**), `requireSeller`
 - Admin URLs are **not** under `/admin` (legacy `/admin/*` redirected)
 - Seller product paths require `SELLER`; admin moderation requires `SUPER_ADMIN`
 

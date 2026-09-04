@@ -6,13 +6,13 @@ import type {
   OrderStore,
 } from "@/modules/buyer/orders/types";
 
-export type NestOrderBuyerPayload = {
+type NestOrderBuyerPayload = {
   email: string;
   fullName: string;
   id: string | number;
 };
 
-export type NestOrderStorePayload = {
+type NestOrderStorePayload = {
   id: string | number;
   name: string;
   slug: string;
@@ -135,7 +135,7 @@ export function normalizeNestSellerOrderPayload(
   };
 }
 
-export type NestPagedOrdersPayload = {
+type NestPagedOrdersPayload = {
   data?: NestOrderPayload[];
   page?: number;
   limit?: number;

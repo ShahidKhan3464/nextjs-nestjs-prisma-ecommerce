@@ -7,7 +7,7 @@ import { PaymentProvider } from 'src/common/enums/payment-provider.enum';
  * Allowed forward-only transitions for PATCH status.
  * PENDING → CANCELLED is handled by CancelOrderProvider.
  */
-export const ALLOWED_ORDER_STATUS_TRANSITIONS: Partial<
+const ALLOWED_ORDER_STATUS_TRANSITIONS: Partial<
   Record<OrderStatus, OrderStatus[]>
 > = {
   [OrderStatus.PENDING]: [OrderStatus.SHIPPED],

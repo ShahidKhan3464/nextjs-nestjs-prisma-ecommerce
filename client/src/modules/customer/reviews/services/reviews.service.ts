@@ -1,12 +1,11 @@
 import type { ApiResponse } from "@/types";
 import { api } from "@/services/api/client";
 import type {
-  CreateReviewInput,
   Review,
+  ReviewSummary,
   ReviewListParams,
   ReviewListResult,
-  ReviewSummary,
-  StoreReputation,
+  CreateReviewInput,
   UpdateReviewInput,
 } from "../types";
 
@@ -35,13 +34,6 @@ export async function fetchProductSummary(productId: string) {
     `/api/v1/customer/reviews/product/${encodeURIComponent(productId)}/summary`
   );
   return res.data.data.summary;
-}
-
-export async function fetchStoreReputation(storeId: string) {
-  const res = await api.get<ApiResponse<{ reputation: StoreReputation }>>(
-    `/api/v1/customer/reviews/store/${encodeURIComponent(storeId)}/reputation`
-  );
-  return res.data.data.reputation;
 }
 
 export async function fetchMyReviews(

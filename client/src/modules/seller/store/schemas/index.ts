@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { STORE_FILE_TYPES } from "../types";
 
 export const updateStoreSchema = z.object({
   name: z
@@ -34,28 +33,3 @@ export const updateStoreSchema = z.object({
 });
 
 export type UpdateStoreValues = z.infer<typeof updateStoreSchema>;
-
-const IMAGE_TYPES = [
-  "image/jpeg",
-  "image/png",
-  "image/gif",
-  "image/webp",
-] as const;
-
-const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
-
-export const storeImageUploadSchema = z.object({
-  type: z.enum(STORE_FILE_TYPES),
-  file: z
-    .custom<File>((value) => value instanceof File, {
-      message: "Image file is required",
-    })
-    .refine((file) => IMAGE_TYPES.includes(file.type as (typeof IMAGE_TYPES)[number]), {
-      message: "Use a JPEG, PNG, GIF, or WebP image",
-    })
-    .refine((file) => file.size <= MAX_IMAGE_BYTES, {
-      message: "Image must be 5MB or smaller",
-    }),
-});
-
-export type StoreImageUploadValues = z.infer<typeof storeImageUploadSchema>;

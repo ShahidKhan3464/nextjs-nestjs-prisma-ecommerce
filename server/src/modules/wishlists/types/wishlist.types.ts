@@ -1,6 +1,6 @@
 export type WishlistAvailability = 'in_stock' | 'low_stock' | 'out_of_stock';
 
-export type WishlistProductStore = {
+type WishlistProductStore = {
   id: string;
   name: string;
   slug: string;

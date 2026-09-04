@@ -7,12 +7,12 @@ import type {
   ReviewProductSummary,
 } from "@/modules/buyer/reviews/types";
 
-export type NestReviewBuyer = {
+type NestReviewBuyer = {
   id: string | number;
   displayName: string;
 };
 
-export type NestReviewProduct = {
+type NestReviewProduct = {
   id: string | number;
   name: string;
   slug: string;

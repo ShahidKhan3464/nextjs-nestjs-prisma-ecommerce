@@ -13,7 +13,6 @@ interface WishlistState {
   setProductIds: (productIds: string[]) => void;
   toggle: (productId: string) => void;
   has: (productId: string) => boolean;
-  clear: () => void;
   resetToGuest: () => void;
 }
 
@@ -37,11 +36,6 @@ export const useWishlistStore = create<WishlistState>()(
         });
       },
       has: (productId) => get().productIds.includes(productId),
-      clear: () =>
-        set({
-          productIds: [],
-          ownerUserId: currentCartWishlistOwnerId() ?? get().ownerUserId,
-        }),
       resetToGuest: () => set({ productIds: [], ownerUserId: null }),
     }),
     {

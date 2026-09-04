@@ -3,7 +3,7 @@ import type {
   OrderListParams,
 } from "@/modules/buyer/orders/types";
 
-export type OrderBuyer = {
+type OrderBuyer = {
   id: string;
   email: string;
   fullName: string;

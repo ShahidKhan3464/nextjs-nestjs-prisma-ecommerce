@@ -1,6 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
 
-export const OWN_STORE_PURCHASE_MESSAGE =
+const OWN_STORE_PURCHASE_MESSAGE =
   'You cannot purchase products from your own store';
 
 /** Buyers cannot add/checkout items whose store is owned by the same user. */

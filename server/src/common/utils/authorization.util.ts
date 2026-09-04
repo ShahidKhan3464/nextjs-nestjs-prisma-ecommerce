@@ -4,7 +4,7 @@ import {
   UserRole as UserRoleRecord,
 } from 'src/generated/prisma/client';
 
-export function mapPrismaRoleToUserRole(role: user_role_name_enum): UserRole {
+function mapPrismaRoleToUserRole(role: user_role_name_enum): UserRole {
   return role as UserRole;
 }
 
@@ -23,18 +23,10 @@ export function hasAnyRole(
   return requiredRoles.some((role) => userRoles.includes(role));
 }
 
-export function hasRole(userRoles: UserRole[], role: UserRole): boolean {
+function hasRole(userRoles: UserRole[], role: UserRole): boolean {
   return userRoles.includes(role);
 }
 
 export function isSuperAdmin(userRoles: UserRole[]): boolean {
   return hasRole(userRoles, UserRole.SUPER_ADMIN);
-}
-
-export function isSeller(userRoles: UserRole[]): boolean {
-  return hasRole(userRoles, UserRole.SELLER);
-}
-
-export function isBuyer(userRoles: UserRole[]): boolean {
-  return hasRole(userRoles, UserRole.BUYER);
 }

@@ -4,7 +4,7 @@ export type StoreStatus = (typeof STORE_STATUSES)[number];
 export const STORE_FILE_TYPES = ["LOGO", "BANNER"] as const;
 export type StoreFileType = (typeof STORE_FILE_TYPES)[number];
 
-export type StoreFileAsset = {
+type StoreFileAsset = {
   id: number;
   originalName: string;
   mimeType: string;

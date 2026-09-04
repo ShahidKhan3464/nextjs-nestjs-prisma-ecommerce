@@ -32,10 +32,3 @@ export type ListFilters = {
   type?: NotificationType;
   isRead?: boolean;
 };
-
-/** Re-export constants for callers that historically imported from types. */
-export {
-  NOTIFICATION_TYPES,
-  NOTIFICATION_TYPE_LABELS,
-  READ_FILTERS,
-} from "./constants";

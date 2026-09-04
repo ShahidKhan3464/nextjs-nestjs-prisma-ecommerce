@@ -10,14 +10,7 @@ import type {
   OrderLineItemResponse,
 } from '../types/order.types';
 
-export type {
-  OrderAddress,
-  OrderResponse,
-  MapOrderOptions,
-  OrderBuyerResponse,
-  OrderStoreResponse,
-  OrderLineItemResponse,
-} from '../types/order.types';
+export type { OrderResponse, MapOrderOptions } from '../types/order.types';
 
 function formatVariantLabel(item: OrderItemWithRelations): string {
   const parts = [item.variantSize, item.variantColor].filter(

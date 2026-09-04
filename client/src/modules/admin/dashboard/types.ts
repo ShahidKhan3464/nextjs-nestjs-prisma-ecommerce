@@ -5,7 +5,7 @@ type DashboardStatusCount = {
   status: string;
 };
 
-export type DashboardActivityItem = {
+type DashboardActivityItem = {
   id: string;
   type: string;
   title: string;
@@ -14,7 +14,7 @@ export type DashboardActivityItem = {
   createdAt: string;
 };
 
-export type DashboardReviewItem = {
+type DashboardReviewItem = {
   id: string;
   rating: number;
   buyerName: string;
@@ -25,7 +25,7 @@ export type DashboardReviewItem = {
   comment: string | null;
 };
 
-export type DashboardTopProduct = {
+type DashboardTopProduct = {
   name: string;
   slug: string;
   revenue: number;
@@ -35,7 +35,7 @@ export type DashboardTopProduct = {
   averageRating: number;
 };
 
-export type DashboardRecentCustomer = {
+type DashboardRecentCustomer = {
   id: string;
   email: string;
   fullName: string;
@@ -43,7 +43,7 @@ export type DashboardRecentCustomer = {
   lastOrderAt: string;
 };
 
-export type DashboardPendingApproval = {
+type DashboardPendingApproval = {
   id: string;
   name: string;
   status: string;

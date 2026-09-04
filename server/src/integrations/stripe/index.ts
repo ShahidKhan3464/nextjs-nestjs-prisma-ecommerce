@@ -1,13 +1,2 @@
-export { StripeModule } from './stripe.module';
 export { StripeService } from './stripe.service';
-export type {
-  StripeEvent,
-  StripeClient,
-  StripeRefund,
-  CreateRefundParams,
-  StripePaymentIntent,
-  CreatePaymentIntentParams,
-  CreateRefundRequestOptions,
-  RetrievePaymentIntentParams,
-  CreatePaymentIntentRequestOptions,
-} from './types/stripe.types';
+export type { StripeEvent, StripePaymentIntent } from './types/stripe.types';

@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils";
 import { BadgeCheck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
-export type VerifiedBadgeProps = {
+type VerifiedBadgeProps = {
   className?: string;
   compact?: boolean;
 };

@@ -1,17 +1,13 @@
-export const PAYMENT_STATUSES = [
-  "FAILED",
-  "PENDING",
-  "REFUNDED",
-  "SUCCEEDED",
-  "CANCELLED",
-  "PROCESSING",
-  "PARTIALLY_REFUNDED",
-] as const;
+export type PaymentStatus =
+  | "FAILED"
+  | "PENDING"
+  | "REFUNDED"
+  | "SUCCEEDED"
+  | "CANCELLED"
+  | "PROCESSING"
+  | "PARTIALLY_REFUNDED";
 
-export type PaymentStatus = (typeof PAYMENT_STATUSES)[number];
-
-export const PAYMENT_PROVIDERS = ["STRIPE", "COD", "OTHER"] as const;
-export type PaymentProvider = (typeof PAYMENT_PROVIDERS)[number];
+export type PaymentProvider = "STRIPE" | "COD" | "OTHER";
 
 export type PaymentStatusFilter = PaymentStatus | "ALL";
 export type PaymentProviderFilter = PaymentProvider | "ALL";

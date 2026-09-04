@@ -1,13 +1,6 @@
-import type {
-  SellerProfile,
-  SellerProfileStatus,
-} from "@/modules/buyer/seller-registration/types";
-
+import type { SellerProfileStatus } from "@/modules/buyer/seller-registration/types";
 export type {
   SellerProfile,
-  SellerDocument,
-  SellerDocumentType,
-  SellerStoreSummary,
   SellerProfileStatus,
 } from "@/modules/buyer/seller-registration/types";
 
@@ -27,11 +20,5 @@ export type RejectSellerProfileInput = {
 export type SuspendSellerProfileInput = {
   suspensionReason?: string;
 };
-
-export type SellerProfileAction =
-  | { type: "approve"; profile: SellerProfile }
-  | { type: "reject"; profile: SellerProfile }
-  | { type: "suspend"; profile: SellerProfile }
-  | { type: "unsuspend"; profile: SellerProfile };
 
 export type SellerProfileStatusFilter = SellerProfileStatus | "ALL";

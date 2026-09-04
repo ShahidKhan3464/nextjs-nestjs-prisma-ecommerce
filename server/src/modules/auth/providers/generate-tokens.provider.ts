@@ -10,7 +10,7 @@ import { UserWithRoles } from 'src/common/types/user-with-roles.type';
 import { extractUserRoles } from 'src/common/utils/authorization.util';
 import { RefreshTokenStoreProvider } from './refresh-token-store.provider';
 
-export type AuthenticatedUserSummary = {
+type AuthenticatedUserSummary = {
   id: number;
   email: string;
   fullName: string;
