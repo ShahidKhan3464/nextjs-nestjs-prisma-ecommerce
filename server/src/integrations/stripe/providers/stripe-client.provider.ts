@@ -18,7 +18,10 @@ export const stripeClientProvider: Provider = {
     if (!secretKey) {
       throw new Error('STRIPE_SECRET_KEY is not configured');
     }
-    return new Stripe(secretKey);
+    return new Stripe(secretKey, {
+      timeout: 20_000,
+      maxNetworkRetries: 1,
+    });
   },
 };
 

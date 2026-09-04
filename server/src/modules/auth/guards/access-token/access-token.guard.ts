@@ -3,10 +3,11 @@ import { JwtService } from '@nestjs/jwt';
 import jwtConfig from 'src/config/jwt.config';
 import type { ConfigType } from '@nestjs/config';
 import { UsersService } from 'src/modules/users/users.service';
-import { JwtTokenType } from 'src/modules/auth/constants/jwt-token-type.enum';
 import { extractUserRoles } from 'src/common/utils/authorization.util';
 import { JwtAccessTokenPayload } from 'src/common/types/jwt-payload.type';
+import { JwtTokenType } from 'src/modules/auth/constants/jwt-token-type.enum';
 import { REQUEST_USER_KEY } from 'src/common/constants/request-user.constants';
+import { patchRequestContext } from 'src/common/request-context/request-context';
 import { ACCOUNT_BLOCKED_MESSAGE } from 'src/modules/auth/constants/auth-messages.constants';
 import {
   Inject,
@@ -68,6 +69,11 @@ export class AccessTokenGuard implements CanActivate {
       (request as Request & { [REQUEST_USER_KEY]?: JwtAccessTokenPayload })[
         REQUEST_USER_KEY
       ] = authenticatedUser;
+
+      patchRequestContext({
+        userId,
+        roles: authenticatedUser.roles,
+      });
     } catch (error) {
       if (
         error instanceof ForbiddenException ||

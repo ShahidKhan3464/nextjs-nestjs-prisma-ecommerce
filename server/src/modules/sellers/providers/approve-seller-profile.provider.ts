@@ -1,8 +1,10 @@
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UserRole } from 'src/common/enums/user-role.enum';
+import { AuditProvider } from 'src/common/audit/audit.provider';
 import { generateStoreSlug } from '../utils/generate-store-slug.util';
 import { StoreStatus } from 'src/modules/stores/constants/store.constants';
 import { ApproveSellerProfileDto } from '../dto/approve-seller-profile.dto';
+import { AuditAction, AuditEntityType } from 'src/common/audit/audit.constants';
 import { NotificationService } from 'src/modules/notifications/notification.service';
 import { NotificationType } from 'src/modules/notifications/constants/notification.constants';
 import {
@@ -24,6 +26,7 @@ import {
 export class ApproveSellerProfileProvider {
   constructor(
     private readonly prisma: PrismaService,
+    private readonly auditProvider: AuditProvider,
     private readonly notificationService: NotificationService,
   ) {}
 
@@ -109,6 +112,14 @@ export class ApproveSellerProfileProvider {
       }
 
       return mapSellerProfileToResponse(updated);
+    });
+
+    this.auditProvider.record({
+      action: AuditAction.SELLER_APPROVED,
+      entityType: AuditEntityType.SELLER_PROFILE,
+      entityId: id,
+      before: { status: 'PENDING' },
+      after: { status: 'APPROVED', storeName: response.store?.name ?? null },
     });
 
     void this.notificationService

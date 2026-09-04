@@ -17,6 +17,7 @@ const checkoutSchema = z.object({
     phone: z.string().optional(),
     postalCode: z.string().min(1),
   }),
+  idempotencyKey: z.string().min(8).max(128).optional(),
 });
 
 export async function POST(req: Request) {
@@ -35,14 +36,21 @@ export async function POST(req: Request) {
     return jsonMessage("Invalid checkout payload", 422);
   }
 
+  const headerKey = req.headers.get("idempotency-key")?.trim();
+  const idempotencyKey = parsed.data.idempotencyKey ?? headerKey;
+
   const backend = getBackendUrl();
   const res = await fetch(`${backend}/orders/checkout`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      ...(idempotencyKey ? { "Idempotency-Key": idempotencyKey } : {}),
       ...forwardAuthorization(req),
     },
-    body: JSON.stringify(parsed.data),
+    body: JSON.stringify({
+      shippingAddress: parsed.data.shippingAddress,
+      ...(idempotencyKey ? { idempotencyKey } : {}),
+    }),
   });
 
   let raw: unknown = null;

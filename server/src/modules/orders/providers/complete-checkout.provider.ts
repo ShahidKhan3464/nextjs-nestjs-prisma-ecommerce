@@ -125,7 +125,9 @@ export class CompleteCheckoutProvider {
     const payments = await this.prisma.payment.findMany({
       where: {
         transactionId: paymentIntent.id,
-        status: PaymentStatus.PENDING,
+        status: {
+          in: [PaymentStatus.PENDING, PaymentStatus.PROCESSING],
+        },
         order: { userId, status: OrderStatus.PENDING },
       },
       include: {
@@ -190,7 +192,7 @@ export class CompleteCheckoutProvider {
     const created = await this.loadOrders(orderIds);
     const responses = created.map((order) => mapOrderToResponse(order));
 
-    await this.sendConfirmationEmails(userId, responses);
+    void this.sendConfirmationEmails(userId, responses).catch(() => undefined);
     this.notifyOrdersCreated(userId, responses);
 
     return { orders: responses };

@@ -8,5 +8,6 @@ export type StripeRefund = Stripe.Response<Stripe.Refund>;
 
 export type CreateRefundParams = Stripe.RefundCreateParams;
 export type CreateRefundRequestOptions = Stripe.RequestOptions;
+export type CreatePaymentIntentRequestOptions = Stripe.RequestOptions;
 export type CreatePaymentIntentParams = Stripe.PaymentIntentCreateParams;
 export type RetrievePaymentIntentParams = Stripe.PaymentIntentRetrieveParams;

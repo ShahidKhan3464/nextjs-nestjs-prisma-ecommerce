@@ -1,5 +1,7 @@
 import { PrismaService } from 'src/prisma/prisma.service';
+import { AuditProvider } from 'src/common/audit/audit.provider';
 import { RejectSellerProfileDto } from '../dto/reject-seller-profile.dto';
+import { AuditAction, AuditEntityType } from 'src/common/audit/audit.constants';
 import { NotificationService } from 'src/modules/notifications/notification.service';
 import { NotificationType } from 'src/modules/notifications/constants/notification.constants';
 import {
@@ -20,6 +22,7 @@ import {
 export class RejectSellerProfileProvider {
   constructor(
     private readonly prisma: PrismaService,
+    private readonly auditProvider: AuditProvider,
     private readonly notificationService: NotificationService,
   ) {}
 
@@ -59,6 +62,14 @@ export class RejectSellerProfileProvider {
     });
 
     const response = mapSellerProfileToResponse(updated);
+
+    this.auditProvider.record({
+      action: AuditAction.SELLER_REJECTED,
+      entityType: AuditEntityType.SELLER_PROFILE,
+      entityId: id,
+      before: { status: 'PENDING' },
+      after: { status: 'REJECTED' },
+    });
 
     void this.notificationService
       .create({

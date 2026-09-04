@@ -1,6 +1,7 @@
 import { Prisma } from 'src/generated/prisma/client';
 import { StripeService } from 'src/integrations/stripe';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { JobLockProvider } from 'src/common/jobs/job-lock.provider';
 import { adjustVariantStock } from '../utils/adjust-variant-stock.util';
 import {
   Logger,
@@ -16,6 +17,8 @@ import {
 } from '../constants/order.constants';
 
 const SWEEP_INTERVAL_MS = 5 * 60 * 1000;
+const SWEEP_LOCK_NAME = 'expire-abandoned-checkouts';
+const SWEEP_LOCK_TTL_MS = 4 * 60 * 1000;
 
 type CheckoutSessionRow = {
   id: number;
@@ -33,6 +36,7 @@ export class ExpireAbandonedCheckoutsProvider
 
   constructor(
     private readonly prisma: PrismaService,
+    private readonly jobLock: JobLockProvider,
     private readonly stripeService: StripeService,
   ) {}
 
@@ -57,6 +61,15 @@ export class ExpireAbandonedCheckoutsProvider
 
   /** Expire all pending sessions past TTL (global sweep). */
   async expireStale(): Promise<number> {
+    const result = await this.jobLock.runExclusive(
+      SWEEP_LOCK_NAME,
+      SWEEP_LOCK_TTL_MS,
+      () => this.expireStaleUnlocked(),
+    );
+    return result ?? 0;
+  }
+
+  private async expireStaleUnlocked(): Promise<number> {
     const cutoff = new Date(Date.now() - CHECKOUT_ABANDON_TTL_MS);
     const staleSessions = await this.prisma.checkoutSession.findMany({
       where: {
@@ -105,32 +118,16 @@ export class ExpireAbandonedCheckoutsProvider
   private async expireSession(session: CheckoutSessionRow): Promise<boolean> {
     const piId = session.stripePaymentIntentId;
     if (piId && piId !== 'pending') {
-      try {
-        const paymentIntent =
-          await this.stripeService.retrievePaymentIntent(piId);
-        if (
-          paymentIntent.status === 'succeeded' ||
-          paymentIntent.status === 'processing'
-        ) {
-          return false;
-        }
-
-        if (
-          paymentIntent.status === 'requires_payment_method' ||
-          paymentIntent.status === 'requires_confirmation' ||
-          paymentIntent.status === 'requires_action' ||
-          paymentIntent.status === 'requires_capture'
-        ) {
-          await this.stripeService
-            .cancelPaymentIntent(piId)
-            .catch(() => undefined);
-        }
-      } catch {
-        /* continue cleanup for unreachable PI lookups */
+      const unpaid = await this.ensurePaymentIntentNotCapturing(
+        piId,
+        session.id,
+      );
+      if (!unpaid) {
+        return false;
       }
     }
 
-    await this.prisma.$transaction(async (tx) => {
+    return this.prisma.$transaction(async (tx) => {
       const claimed = await tx.checkoutSession.updateMany({
         where: {
           id: session.id,
@@ -140,7 +137,7 @@ export class ExpireAbandonedCheckoutsProvider
       });
 
       if (claimed.count === 0) {
-        return;
+        return false;
       }
 
       const orderIds = await this.resolvePendingOrderIds(tx, session);
@@ -152,7 +149,7 @@ export class ExpireAbandonedCheckoutsProvider
         });
         await adjustVariantStock(tx, items, 'release');
         await tx.order.deleteMany({ where: { id: { in: orderIds } } });
-        return;
+        return true;
       }
 
       const sessionItems = await tx.checkoutSessionItem.findMany({
@@ -162,7 +159,54 @@ export class ExpireAbandonedCheckoutsProvider
       if (sessionItems.length > 0) {
         await adjustVariantStock(tx, sessionItems, 'release');
       }
+      return true;
     });
+  }
+
+  /**
+   * Returns true only when Stripe confirms the PI is not succeeded/processing.
+   * Lookup failures must not expire — that can release stock after a paid PI.
+   */
+  private async ensurePaymentIntentNotCapturing(
+    piId: string,
+    sessionId: number,
+  ): Promise<boolean> {
+    let paymentIntent: { status: string };
+    try {
+      paymentIntent = await this.stripeService.retrievePaymentIntent(piId);
+    } catch (err) {
+      const detail = err instanceof Error ? err.message : String(err);
+      this.logger.warn(
+        `Skipping expire for session ${sessionId}: PaymentIntent lookup failed (${detail})`,
+      );
+      return false;
+    }
+
+    if (isCapturingPaymentIntentStatus(paymentIntent.status)) {
+      return false;
+    }
+
+    if (isCancellablePaymentIntentStatus(paymentIntent.status)) {
+      try {
+        await this.stripeService.cancelPaymentIntent(piId);
+      } catch {
+        /* PI may have succeeded between retrieve and cancel — re-check. */
+      }
+
+      try {
+        paymentIntent = await this.stripeService.retrievePaymentIntent(piId);
+      } catch (err) {
+        const detail = err instanceof Error ? err.message : String(err);
+        this.logger.warn(
+          `Skipping expire for session ${sessionId}: PaymentIntent re-check failed (${detail})`,
+        );
+        return false;
+      }
+
+      if (isCapturingPaymentIntentStatus(paymentIntent.status)) {
+        return false;
+      }
+    }
 
     return true;
   }
@@ -171,6 +215,17 @@ export class ExpireAbandonedCheckoutsProvider
     tx: Prisma.TransactionClient,
     session: CheckoutSessionRow,
   ): Promise<number[]> {
+    const linked = await tx.order.findMany({
+      where: {
+        checkoutSessionId: session.id,
+        status: OrderStatus.PENDING,
+      },
+      select: { id: true },
+    });
+    if (linked.length > 0) {
+      return linked.map((order) => order.id);
+    }
+
     const piId = session.stripePaymentIntentId;
 
     if (piId && piId !== 'pending') {
@@ -205,4 +260,17 @@ export class ExpireAbandonedCheckoutsProvider
     });
     return [...new Set(payments.map((p) => p.orderId))];
   }
+}
+
+function isCapturingPaymentIntentStatus(status: string): boolean {
+  return status === 'succeeded' || status === 'processing';
+}
+
+function isCancellablePaymentIntentStatus(status: string): boolean {
+  return (
+    status === 'requires_payment_method' ||
+    status === 'requires_confirmation' ||
+    status === 'requires_action' ||
+    status === 'requires_capture'
+  );
 }

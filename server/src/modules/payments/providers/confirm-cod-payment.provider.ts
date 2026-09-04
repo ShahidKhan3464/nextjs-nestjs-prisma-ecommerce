@@ -1,8 +1,10 @@
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UserRole } from 'src/common/enums/user-role.enum';
+import { AuditProvider } from 'src/common/audit/audit.provider';
 import { findPaymentWithOrder } from '../utils/payment-query.util';
 import { PaymentOwnershipProvider } from './payment-ownership.provider';
 import { PaymentLifecycleProvider } from './payment-lifecycle.provider';
+import { AuditAction, AuditEntityType } from 'src/common/audit/audit.constants';
 import { PaymentProvider, PaymentStatus } from '../constants/payment.constants';
 import { getPaymentProviderCapabilities } from '../utils/payment-provider.registry';
 import {
@@ -19,6 +21,7 @@ import {
 export class ConfirmCodPaymentProvider {
   constructor(
     private readonly prisma: PrismaService,
+    private readonly auditProvider: AuditProvider,
     private readonly paymentOwnershipProvider: PaymentOwnershipProvider,
     private readonly paymentLifecycleProvider: PaymentLifecycleProvider,
   ) {}
@@ -70,6 +73,14 @@ export class ConfirmCodPaymentProvider {
         methodSummary:
           payment.methodSummary ?? capabilities.defaultMethodSummary,
       });
+    });
+
+    this.auditProvider.record({
+      action: AuditAction.PAYMENT_COD_CONFIRMED,
+      entityType: AuditEntityType.PAYMENT,
+      entityId: paymentId,
+      before: { status: payment.status },
+      after: { status: PaymentStatus.SUCCEEDED },
     });
 
     const updated = await findPaymentWithOrder(this.prisma, { id: paymentId });

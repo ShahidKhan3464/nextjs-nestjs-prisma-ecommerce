@@ -29,9 +29,16 @@ export function useCreateCheckoutSession() {
           // Prior session may already be expired/cancelled.
         }
         clearCheckoutSession();
+        const nextKey = crypto.randomUUID();
+        useCheckoutStore.getState().setIdempotencyKey(nextKey);
       }
       setShipping(shippingAddress);
-      return createCheckout({ shippingAddress });
+      let idempotencyKey = useCheckoutStore.getState().idempotencyKey;
+      if (!idempotencyKey) {
+        idempotencyKey = crypto.randomUUID();
+        useCheckoutStore.getState().setIdempotencyKey(idempotencyKey);
+      }
+      return createCheckout({ shippingAddress, idempotencyKey });
     },
     onSuccess: (session: CheckoutSession) => {
       setCheckoutSession({

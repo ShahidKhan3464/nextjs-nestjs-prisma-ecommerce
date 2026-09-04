@@ -44,8 +44,12 @@ export class OrdersService {
     return this.getOrderProvider.findOne(orderId, userId, roles);
   }
 
-  createCheckout(userId: number, dto: CreateCheckoutDto) {
-    return this.createCheckoutProvider.create(userId, dto);
+  createCheckout(
+    userId: number,
+    dto: CreateCheckoutDto,
+    idempotencyKey?: string,
+  ) {
+    return this.createCheckoutProvider.create(userId, dto, idempotencyKey);
   }
 
   cancelCheckout(userId: number, dto: CancelCheckoutDto) {

@@ -1,5 +1,7 @@
 import { PrismaService } from 'src/prisma/prisma.service';
+import { AuditProvider } from 'src/common/audit/audit.provider';
 import { StoreStatus } from 'src/modules/stores/constants/store.constants';
+import { AuditAction, AuditEntityType } from 'src/common/audit/audit.constants';
 import {
   Injectable,
   NotFoundException,
@@ -16,10 +18,13 @@ import {
 
 @Injectable()
 export class UnsuspendSellerProfileProvider {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly auditProvider: AuditProvider,
+  ) {}
 
   public async unsuspend(id: number): Promise<SellerProfileMapped> {
-    return this.prisma.$transaction(async (tx) => {
+    const response = await this.prisma.$transaction(async (tx) => {
       const profile = await tx.sellerProfile.findFirst({
         where: { id, deletedAt: null },
         include: { store: true },
@@ -73,5 +78,13 @@ export class UnsuspendSellerProfileProvider {
 
       return mapSellerProfileToResponse(updated);
     });
+
+    this.auditProvider.record({
+      action: AuditAction.SELLER_UNSUSPENDED,
+      entityType: AuditEntityType.SELLER_PROFILE,
+      entityId: id,
+      after: { status: response.status },
+    });
+    return response;
   }
 }

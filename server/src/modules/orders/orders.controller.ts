@@ -85,8 +85,12 @@ export class OrdersController {
 
   @Post('checkout')
   @ApiCreatedResponse({ type: CheckoutSessionResponseDto })
-  createCheckout(@ActiveUser() userId: number, @Body() dto: CreateCheckoutDto) {
-    return this.ordersService.createCheckout(userId, dto);
+  createCheckout(
+    @ActiveUser() userId: number,
+    @Body() dto: CreateCheckoutDto,
+    @Headers('idempotency-key') idempotencyKey?: string,
+  ) {
+    return this.ordersService.createCheckout(userId, dto, idempotencyKey);
   }
 
   @Post('checkout/complete')

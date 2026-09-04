@@ -9,4 +9,5 @@ export type {
   CreatePaymentIntentParams,
   CreateRefundRequestOptions,
   RetrievePaymentIntentParams,
+  CreatePaymentIntentRequestOptions,
 } from './types/stripe.types';

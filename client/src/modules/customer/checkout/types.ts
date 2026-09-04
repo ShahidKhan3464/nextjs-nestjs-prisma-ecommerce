@@ -24,6 +24,7 @@ export type PaymentProviderMeta = {
 
 export type CreateCheckoutInput = {
   shippingAddress: Address;
+  idempotencyKey?: string;
 };
 
 export type CheckoutPreview = {

@@ -74,4 +74,15 @@ export class CreateCheckoutDto {
   @ValidateNested()
   @Type(() => ShippingAddressDto)
   shippingAddress: ShippingAddressDto;
+
+  @ApiPropertyOptional({
+    description:
+      'Client-generated key so retries/double-clicks reuse the same checkout. Also accepted via the Idempotency-Key header.',
+    maxLength: 128,
+  })
+  @IsOptional()
+  @IsString()
+  @MinLength(8)
+  @MaxLength(128)
+  idempotencyKey?: string;
 }

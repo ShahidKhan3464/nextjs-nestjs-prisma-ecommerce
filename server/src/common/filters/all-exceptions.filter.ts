@@ -1,4 +1,5 @@
 import type { Request, Response } from 'express';
+import { getRequestId } from 'src/common/request-context/request-context';
 import { buildApiErrorBody, readRequestId } from './api-error-response.util';
 import {
   Catch,
@@ -17,7 +18,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request & { requestId?: string }>();
-    const requestId = readRequestId(request);
+    const requestId = readRequestId(request) ?? getRequestId();
 
     if (exception instanceof HttpException) {
       const status = exception.getStatus();
@@ -30,7 +31,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
                 status,
                 this.extractMessage(exceptionResponse, status),
                 requestId,
-                this.extractErrorName(exceptionResponse, status),
+                this.extractErrorName(exceptionResponse),
               ),
               ...(typeof exceptionResponse === 'object' &&
               exceptionResponse !== null
@@ -72,7 +73,6 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
   private extractErrorName(
     exceptionResponse: string | object,
-    status: number,
   ): string | undefined {
     if (typeof exceptionResponse !== 'object' || exceptionResponse === null) {
       return undefined;
@@ -94,8 +94,8 @@ export class AllExceptionsFilter implements ExceptionFilter {
 }
 
 function httpFallbackMessage(status: number): string {
-  if (status === HttpStatus.UNAUTHORIZED) return 'Unauthorized';
-  if (status === HttpStatus.FORBIDDEN) return 'Forbidden';
-  if (status === HttpStatus.NOT_FOUND) return 'Not found';
+  if (status === 401) return 'Unauthorized';
+  if (status === 403) return 'Forbidden';
+  if (status === 404) return 'Not found';
   return 'Request failed';
 }

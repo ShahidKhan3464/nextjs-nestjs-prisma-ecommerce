@@ -14,6 +14,8 @@ import { OrderOwnershipProvider } from './providers/order-ownership.provider';
 import { CompleteCheckoutProvider } from './providers/complete-checkout.provider';
 import { NotificationModule } from 'src/modules/notifications/notification.module';
 import { UpdateOrderStatusProvider } from './providers/update-order-status.provider';
+import { CheckoutIdempotencyProvider } from './providers/checkout-idempotency.provider';
+import { HandlePaymentFailedProvider } from './providers/handle-payment-failed.provider';
 import { ExpireAbandonedCheckoutsProvider } from './providers/expire-abandoned-checkouts.provider';
 
 @Module({
@@ -30,6 +32,8 @@ import { ExpireAbandonedCheckoutsProvider } from './providers/expire-abandoned-c
     CancelCheckoutProvider,
     CompleteCheckoutProvider,
     UpdateOrderStatusProvider,
+    CheckoutIdempotencyProvider,
+    HandlePaymentFailedProvider,
     ExpireAbandonedCheckoutsProvider,
   ],
 })

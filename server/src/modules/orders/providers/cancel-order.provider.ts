@@ -5,11 +5,13 @@ import type { OrderResponse } from '../types/order.types';
 import { UserRole } from 'src/common/enums/user-role.enum';
 import { mapOrderToResponse } from '../utils/map-order.util';
 import { UsersService } from 'src/modules/users/users.service';
+import { AuditProvider } from 'src/common/audit/audit.provider';
 import { MailService } from 'src/integrations/mail/mail.service';
 import { OrderOwnershipProvider } from './order-ownership.provider';
 import { findOrderWithImages } from 'src/common/prisma/file-query.util';
 import { adjustVariantStock } from '../utils/adjust-variant-stock.util';
 import { OrderStatus, PaymentStatus } from '../constants/order.constants';
+import { AuditAction, AuditEntityType } from 'src/common/audit/audit.constants';
 import { NotificationService } from 'src/modules/notifications/notification.service';
 import { PaymentFailureReason } from 'src/modules/payments/constants/payment.constants';
 import { NotificationType } from 'src/modules/notifications/constants/notification.constants';
@@ -27,6 +29,7 @@ export class CancelOrderProvider {
     private readonly mailService: MailService,
     private readonly usersService: UsersService,
     private readonly stripeService: StripeService,
+    private readonly auditProvider: AuditProvider,
     private readonly notificationService: NotificationService,
     private readonly orderOwnershipProvider: OrderOwnershipProvider,
     private readonly paymentLifecycleProvider: PaymentLifecycleProvider,
@@ -166,6 +169,14 @@ export class CancelOrderProvider {
 
     const response = mapOrderToResponse(updated, {
       includeBuyer: this.orderOwnershipProvider.shouldIncludeBuyer(roles),
+    });
+
+    this.auditProvider.record({
+      action: AuditAction.ORDER_CANCELLED,
+      entityType: AuditEntityType.ORDER,
+      entityId: orderId,
+      before: { status: OrderStatus.PENDING },
+      after: { status: OrderStatus.CANCELLED, reason: dto.reason.trim() },
     });
 
     const customer = await this.usersService.findOneById(updated.userId);

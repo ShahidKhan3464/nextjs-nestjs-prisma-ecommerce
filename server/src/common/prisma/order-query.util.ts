@@ -86,6 +86,7 @@ export async function findOrdersWithImages(
     status: order.status as OrderStatus,
     totalAmount: Number(order.totalAmount),
     shippingAddress: order.shippingAddress,
+    checkoutSessionId: order.checkoutSessionId,
     cancellationReason: order.cancellationReason,
     store: order.store
       ? {

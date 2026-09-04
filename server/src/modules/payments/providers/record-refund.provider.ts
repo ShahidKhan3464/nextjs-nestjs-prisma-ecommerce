@@ -1,9 +1,11 @@
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UserRole } from 'src/common/enums/user-role.enum';
 import { RecordRefundDto } from '../dto/record-refund.dto';
+import { AuditProvider } from 'src/common/audit/audit.provider';
 import { findPaymentWithOrder } from '../utils/payment-query.util';
 import { PaymentOwnershipProvider } from './payment-ownership.provider';
 import { PaymentLifecycleProvider } from './payment-lifecycle.provider';
+import { AuditAction, AuditEntityType } from 'src/common/audit/audit.constants';
 import {
   Injectable,
   NotFoundException,
@@ -22,6 +24,7 @@ import {
 export class RecordRefundProvider {
   constructor(
     private readonly prisma: PrismaService,
+    private readonly auditProvider: AuditProvider,
     private readonly paymentOwnershipProvider: PaymentOwnershipProvider,
     private readonly paymentLifecycleProvider: PaymentLifecycleProvider,
   ) {}
@@ -56,6 +59,17 @@ export class RecordRefundProvider {
         reason: dto.reason.trim(),
         externalRefundId: dto.externalRefundId?.trim() || null,
       });
+    });
+
+    this.auditProvider.record({
+      action: AuditAction.PAYMENT_REFUND_RECORDED,
+      entityType: AuditEntityType.PAYMENT,
+      entityId: paymentId,
+      before: {
+        status: payment.status,
+        refundedAmount: payment.refundedAmount,
+      },
+      after: { amount: refundAmount, reason: dto.reason.trim() },
     });
 
     const updated = await findPaymentWithOrder(this.prisma, { id: paymentId });

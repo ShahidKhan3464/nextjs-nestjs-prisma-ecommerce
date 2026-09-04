@@ -22,6 +22,7 @@ interface CheckoutState {
   submitting: boolean;
   clientSecret: string | null;
   paymentSummary: string | null;
+  idempotencyKey: string | null;
   paymentIntentId: string | null;
   paymentStatus: PaymentUiStatus;
   preview: CheckoutPreview | null;
@@ -33,6 +34,7 @@ interface CheckoutState {
   shippingAddress: Partial<Address> | null;
   setPaymentSummary: (summary: string) => void;
   setSubmitting: (submitting: boolean) => void;
+  setIdempotencyKey: (key: string | null) => void;
   setPaymentProvider: (provider: PaymentProviderId) => void;
   setPaymentStatus: (status: PaymentUiStatus, failure?: PaymentFailure | null) => void;
   setCheckoutSession: (session: {
@@ -54,6 +56,7 @@ const initialState = {
   orderIds: [] as string[],
   clientSecret: null as string | null,
   paymentSummary: null as string | null,
+  idempotencyKey: null as string | null,
   paymentIntentId: null as string | null,
   preview: null as CheckoutPreview | null,
   checkoutSessionId: null as string | null,
@@ -74,6 +77,7 @@ export const useCheckoutStore = create<CheckoutState>((set, get) => ({
     set({ shippingAddress });
     get().syncPersistence();
   },
+  setIdempotencyKey: (idempotencyKey) => set({ idempotencyKey }),
   setPaymentProvider: (paymentProvider) => {
     set({ paymentProvider });
     get().syncPersistence();
@@ -112,6 +116,7 @@ export const useCheckoutStore = create<CheckoutState>((set, get) => ({
       clientSecret: null,
       paymentIntentId: null,
       checkoutSessionId: null,
+      idempotencyKey: null,
       orderIds: [],
       preview: null,
       paymentSummary: null,

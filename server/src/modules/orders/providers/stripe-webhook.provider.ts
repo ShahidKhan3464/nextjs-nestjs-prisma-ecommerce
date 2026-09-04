@@ -1,16 +1,11 @@
 import { CompleteCheckoutProvider } from './complete-checkout.provider';
-import {
-  StripeService,
-  type StripeEvent,
-  type StripePaymentIntent,
-} from 'src/integrations/stripe';
+import { StripeService, type StripeEvent } from 'src/integrations/stripe';
+import { isPermanentCompletionFailure } from '../utils/stripe-webhook.util';
+import { HandlePaymentFailedProvider } from './handle-payment-failed.provider';
 import {
   Logger,
   Injectable,
-  HttpStatus,
   HttpException,
-  NotFoundException,
-  ForbiddenException,
   BadRequestException,
   ServiceUnavailableException,
 } from '@nestjs/common';
@@ -21,6 +16,7 @@ export class StripeWebhookProvider {
 
   constructor(
     private readonly completeCheckoutProvider: CompleteCheckoutProvider,
+    private readonly handlePaymentFailed: HandlePaymentFailedProvider,
     private readonly stripeService: StripeService,
   ) {}
 
@@ -54,7 +50,7 @@ export class StripeWebhookProvider {
           paymentIntent.id,
         );
       } catch (err) {
-        if (this.isPermanentCompletionFailure(err)) {
+        if (isPermanentCompletionFailure(err)) {
           const detail = err instanceof Error ? err.message : String(err);
           this.logger.warn(
             `Webhook checkout completion permanently failed for ${paymentIntent.id}: ${detail}`,
@@ -67,10 +63,7 @@ export class StripeWebhookProvider {
           `Webhook checkout completion transient failure for ${paymentIntent.id}: ${detail}`,
         );
 
-        if (
-          err instanceof HttpException &&
-          err.getStatus() >= HttpStatus.INTERNAL_SERVER_ERROR
-        ) {
+        if (err instanceof HttpException && err.getStatus() >= 500) {
           throw err;
         }
 
@@ -80,52 +73,21 @@ export class StripeWebhookProvider {
       }
     }
 
+    if (event.type === 'payment_intent.payment_failed') {
+      const paymentIntent = event.data.object;
+      try {
+        await this.handlePaymentFailed.handle(paymentIntent);
+      } catch (err) {
+        const detail = err instanceof Error ? err.message : String(err);
+        this.logger.error(
+          `Webhook payment_failed handling failed for ${paymentIntent.id}: ${detail}`,
+        );
+        throw new ServiceUnavailableException(
+          'Payment failure handling temporarily unavailable',
+        );
+      }
+    }
+
     return { received: true };
-  }
-
-  /**
-   * Only truly permanent client/data errors are acked to Stripe.
-   * Fulfillment failures after a successful charge must NOT be silently acked
-   * (Stripe will retry; ops can investigate / refund).
-   */
-  private isPermanentCompletionFailure(err: unknown): boolean {
-    if (err instanceof ForbiddenException || err instanceof NotFoundException) {
-      return true;
-    }
-
-    if (!(err instanceof HttpException)) {
-      return false;
-    }
-
-    const status = err.getStatus();
-    if (status < 400 || status >= 500) {
-      return false;
-    }
-
-    const message = this.exceptionMessage(err).toLowerCase();
-
-    // Paid but unfulfillable (e.g. legacy stock race) — keep retrying / alert.
-    if (message.includes('insufficient stock')) {
-      return false;
-    }
-
-    return (
-      message.includes('amount mismatch') ||
-      message.includes('invalid checkout') ||
-      message.includes('does not match') ||
-      message.includes('payment has not been completed') ||
-      message.includes('invalid checkout payment metadata')
-    );
-  }
-
-  private exceptionMessage(err: HttpException): string {
-    const response = err.getResponse();
-    if (typeof response === 'string') return response;
-    if (response && typeof response === 'object' && 'message' in response) {
-      const message = (response as { message?: unknown }).message;
-      if (typeof message === 'string') return message;
-      if (Array.isArray(message)) return message.map(String).join(', ');
-    }
-    return err.message;
   }
 }

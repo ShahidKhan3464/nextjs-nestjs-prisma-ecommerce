@@ -4,9 +4,11 @@ import { UserRole } from 'src/common/enums/user-role.enum';
 import { OrderStatus } from '../constants/order.constants';
 import { mapOrderToResponse } from '../utils/map-order.util';
 import { UsersService } from 'src/modules/users/users.service';
+import { AuditProvider } from 'src/common/audit/audit.provider';
 import { MailService } from 'src/integrations/mail/mail.service';
 import { OrderOwnershipProvider } from './order-ownership.provider';
 import { findOrderWithImages } from 'src/common/prisma/file-query.util';
+import { AuditAction, AuditEntityType } from 'src/common/audit/audit.constants';
 import { NotificationService } from 'src/modules/notifications/notification.service';
 import { NotificationType } from 'src/modules/notifications/constants/notification.constants';
 import {
@@ -14,17 +16,10 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
-
-/**
- * Allowed forward-only transitions for PATCH status.
- * PENDING → CANCELLED is handled by CancelOrderProvider.
- */
-export const ALLOWED_ORDER_STATUS_TRANSITIONS: Partial<
-  Record<OrderStatus, OrderStatus[]>
-> = {
-  [OrderStatus.PENDING]: [OrderStatus.SHIPPED],
-  [OrderStatus.SHIPPED]: [OrderStatus.DELIVERED],
-};
+import {
+  canTransitionOrderStatus,
+  assertOrderCanEnterShipped,
+} from '../utils/order-status-transitions.util';
 
 @Injectable()
 export class UpdateOrderStatusProvider {
@@ -32,8 +27,9 @@ export class UpdateOrderStatusProvider {
     private readonly prisma: PrismaService,
     private readonly mailService: MailService,
     private readonly usersService: UsersService,
-    private readonly orderOwnershipProvider: OrderOwnershipProvider,
+    private readonly auditProvider: AuditProvider,
     private readonly notificationService: NotificationService,
+    private readonly orderOwnershipProvider: OrderOwnershipProvider,
   ) {}
 
   async update(
@@ -54,11 +50,18 @@ export class UpdateOrderStatusProvider {
       roles,
     );
 
-    const allowed = ALLOWED_ORDER_STATUS_TRANSITIONS[order.status] ?? [];
-    if (!allowed.includes(status)) {
+    const allowed = canTransitionOrderStatus(order.status, status);
+    if (!allowed) {
       throw new BadRequestException(
         `Cannot transition order from ${order.status} to ${status}`,
       );
+    }
+
+    if (status === OrderStatus.SHIPPED) {
+      assertOrderCanEnterShipped({
+        paymentStatus: order.payment?.status,
+        paymentProvider: order.payment?.provider,
+      });
     }
 
     const previousStatus = order.status;
@@ -86,6 +89,14 @@ export class UpdateOrderStatusProvider {
     });
 
     if (previousStatus !== status) {
+      this.auditProvider.record({
+        action: AuditAction.ORDER_STATUS_UPDATED,
+        entityType: AuditEntityType.ORDER,
+        entityId: orderId,
+        before: { status: previousStatus },
+        after: { status },
+      });
+
       const customer = await this.usersService.findOneById(order.userId);
       if (customer?.email) {
         void this.mailService

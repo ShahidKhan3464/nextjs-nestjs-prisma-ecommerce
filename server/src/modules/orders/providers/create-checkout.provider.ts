@@ -7,6 +7,8 @@ import type { CheckoutSessionResponse } from '../types/order.types';
 import { lockProductVariants } from '../utils/lock-product-variants.util';
 import { StoreStatus } from 'src/modules/stores/constants/store.constants';
 import { findCartItemsWithImages } from 'src/common/prisma/file-query.util';
+import { normalizeIdempotencyKey } from '../utils/checkout-idempotency.util';
+import { CheckoutIdempotencyProvider } from './checkout-idempotency.provider';
 import { ProductStatus } from 'src/modules/products/constants/product.constants';
 import { validateAndGroupCheckoutCart } from '../utils/validate-checkout-cart.util';
 import { ExpireAbandonedCheckoutsProvider } from './expire-abandoned-checkouts.provider';
@@ -32,12 +34,53 @@ export class CreateCheckoutProvider {
   constructor(
     private readonly prisma: PrismaService,
     private readonly stripeService: StripeService,
+    private readonly checkoutIdempotency: CheckoutIdempotencyProvider,
     private readonly expireAbandonedCheckouts: ExpireAbandonedCheckoutsProvider,
   ) {}
 
   async create(
     userId: number,
     dto: CreateCheckoutDto,
+    idempotencyKeyHeader?: string,
+  ): Promise<CheckoutSessionResponse> {
+    const key = normalizeIdempotencyKey(
+      dto.idempotencyKey ?? idempotencyKeyHeader,
+    );
+
+    if (!key) {
+      return this.createOnce(userId, dto);
+    }
+
+    const requestHash = this.checkoutIdempotency.hashRequest(
+      dto.shippingAddress,
+    );
+    const existing = await this.checkoutIdempotency.begin(
+      userId,
+      key,
+      requestHash,
+    );
+    if (existing !== 'proceed') {
+      return existing;
+    }
+
+    try {
+      const response = await this.createOnce(userId, dto, key);
+      try {
+        await this.checkoutIdempotency.complete(userId, key, response);
+      } catch {
+        /* Checkout already exists; do not abort or a retry can create another. */
+      }
+      return response;
+    } catch (err) {
+      await this.checkoutIdempotency.abort(userId, key);
+      throw err;
+    }
+  }
+
+  private async createOnce(
+    userId: number,
+    dto: CreateCheckoutDto,
+    idempotencyKey?: string,
   ): Promise<CheckoutSessionResponse> {
     await this.expireAbandonedCheckouts.clearForUser(userId);
 
@@ -126,7 +169,6 @@ export class CreateCheckoutProvider {
           assertNotOwnStorePurchase(userId, product.store.sellerProfile.userId);
         }
 
-        // Reserve inventory at checkout create so concurrent checkouts cannot oversell.
         const stockLines: StockLine[] = allLines.map((line) => ({
           variantId: line.variantId,
           quantity: line.quantity,
@@ -169,6 +211,7 @@ export class CreateCheckoutProvider {
               status: OrderStatus.PENDING,
               subtotal: orderPricing.subtotal,
               totalAmount: orderPricing.total,
+              checkoutSessionId: createdSession.id,
               shippingAddress: shippingAddressJson,
               items: {
                 create: group.lines.map((line) => ({
@@ -204,18 +247,25 @@ export class CreateCheckoutProvider {
       },
     );
 
+    const stripeIdempotencyKey = idempotencyKey
+      ? `checkout:${userId}:${idempotencyKey}`
+      : `checkout-session:${sessionId}`;
+
     let paymentIntent: StripePaymentIntent;
     try {
-      paymentIntent = await this.stripeService.createPaymentIntent({
-        amount: amountCents,
-        currency: CHECKOUT_CURRENCY,
-        automatic_payment_methods: { enabled: false },
-        payment_method_types: ['card'],
-        metadata: {
-          checkoutSessionId: String(sessionId),
-          userId: String(userId),
+      paymentIntent = await this.stripeService.createPaymentIntent(
+        {
+          amount: amountCents,
+          currency: CHECKOUT_CURRENCY,
+          automatic_payment_methods: { enabled: false },
+          payment_method_types: ['card'],
+          metadata: {
+            checkoutSessionId: String(sessionId),
+            userId: String(userId),
+          },
         },
-      });
+        { idempotencyKey: stripeIdempotencyKey },
+      );
     } catch {
       await this.rollbackCheckout(sessionId, orderIds);
       throw new BadRequestException('Failed to initialize payment');

@@ -5,13 +5,14 @@ import { RetrievePaymentProvider } from './providers/retrieve-payment.provider';
 import { ConstructWebhookProvider } from './providers/construct-webhook.provider';
 import { CreatePaymentIntentProvider } from './providers/create-payment-intent.provider';
 import type {
-  CreatePaymentIntentParams,
+  StripeEvent,
+  StripeRefund,
   CreateRefundParams,
+  StripePaymentIntent,
+  CreatePaymentIntentParams,
   CreateRefundRequestOptions,
   RetrievePaymentIntentParams,
-  StripeEvent,
-  StripePaymentIntent,
-  StripeRefund,
+  CreatePaymentIntentRequestOptions,
 } from './types/stripe.types';
 
 /**
@@ -35,8 +36,9 @@ export class StripeService {
 
   createPaymentIntent(
     params: CreatePaymentIntentParams,
+    options?: CreatePaymentIntentRequestOptions,
   ): Promise<StripePaymentIntent> {
-    return this.createPaymentIntentProvider.execute(params);
+    return this.createPaymentIntentProvider.execute(params, options);
   }
 
   retrievePaymentIntent(

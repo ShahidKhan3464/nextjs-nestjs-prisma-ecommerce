@@ -1,6 +1,8 @@
 import { PrismaService } from 'src/prisma/prisma.service';
+import { AuditProvider } from 'src/common/audit/audit.provider';
 import { StoreStatus } from 'src/modules/stores/constants/store.constants';
 import { SuspendSellerProfileDto } from '../dto/suspend-seller-profile.dto';
+import { AuditAction, AuditEntityType } from 'src/common/audit/audit.constants';
 import {
   Injectable,
   NotFoundException,
@@ -17,13 +19,16 @@ import {
 
 @Injectable()
 export class SuspendSellerProfileProvider {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly auditProvider: AuditProvider,
+  ) {}
 
   public async suspend(
     id: number,
     dto: SuspendSellerProfileDto = {},
   ): Promise<SellerProfileMapped> {
-    return this.prisma.$transaction(async (tx) => {
+    const response = await this.prisma.$transaction(async (tx) => {
       const profile = await tx.sellerProfile.findFirst({
         where: { id, deletedAt: null },
         include: { store: true },
@@ -77,5 +82,13 @@ export class SuspendSellerProfileProvider {
 
       return mapSellerProfileToResponse(updated);
     });
+
+    this.auditProvider.record({
+      action: AuditAction.SELLER_SUSPENDED,
+      entityType: AuditEntityType.SELLER_PROFILE,
+      entityId: id,
+      after: { status: 'SUSPENDED' },
+    });
+    return response;
   }
 }
