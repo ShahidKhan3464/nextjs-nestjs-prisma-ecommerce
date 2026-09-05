@@ -169,22 +169,3 @@ export async function getStoreReviewStats(
     ),
   };
 }
-
-export async function findProductIdsByMinRating(
-  prisma: PrismaService,
-  minRating: number,
-  storeId?: number,
-): Promise<number[]> {
-  const rows = await prisma.review.groupBy({
-    by: ['productId'],
-    where: storeId !== undefined ? { product: { storeId } } : undefined,
-    _avg: { rating: true },
-    having: {
-      rating: {
-        _avg: { gte: minRating },
-      },
-    },
-  });
-
-  return rows.map((row) => row.productId);
-}

@@ -1,11 +1,7 @@
-import {
-  Injectable,
-  NotFoundException,
-  ForbiddenException,
-} from '@nestjs/common';
 import { Inject } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UserRole } from 'src/common/enums/user-role.enum';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { FileAssociationProvider } from './file-association.provider';
 import { FileAuthorizationProvider } from './file-authorization.provider';
 import {
@@ -135,105 +131,6 @@ export class DeleteFileProvider {
       fileId: entry.fileId,
       storageKey: entry.file.storageKey,
     });
-  }
-
-  /**
-   * Deletes by StoredFile id after verifying the actor owns at least one
-   * association. Prefer association-scoped delete endpoints when possible.
-   */
-  public async deleteByStoredFileId(
-    fileId: number,
-    userId: number,
-    roles: UserRole[],
-  ): Promise<DeleteFileResult> {
-    const stored = await this.prisma.storedFile.findUnique({
-      where: { id: fileId },
-      include: {
-        productFiles: true,
-        storeFiles: true,
-        userFiles: true,
-        sellerDocuments: true,
-      },
-    });
-
-    if (!stored) {
-      throw new NotFoundException('Stored file not found');
-    }
-
-    const authorized =
-      (await this.tryAuthorizeAnyAssociation(stored, userId, roles)) ?? false;
-
-    if (!authorized) {
-      throw new ForbiddenException('You cannot delete this file');
-    }
-
-    const storageKey = stored.storageKey;
-
-    const result = await this.prisma.$transaction(async (tx) => {
-      await tx.productFile.deleteMany({ where: { fileId } });
-      await tx.storeFile.deleteMany({ where: { fileId } });
-      await tx.userFile.deleteMany({ where: { fileId } });
-      await tx.sellerDocument.deleteMany({ where: { fileId } });
-      await tx.storedFile.delete({ where: { id: fileId } });
-
-      return {
-        deletedAssociationId: 0,
-        deletedStoredFile: true,
-        fileId,
-      };
-    });
-
-    await this.storage.deleteByStorageKey(storageKey);
-    return result;
-  }
-
-  private async tryAuthorizeAnyAssociation(
-    stored: {
-      productFiles: { productId: number }[];
-      storeFiles: { storeId: number }[];
-      userFiles: { userId: number }[];
-      sellerDocuments: { sellerProfileId: number }[];
-    },
-    userId: number,
-    roles: UserRole[],
-  ): Promise<boolean> {
-    try {
-      for (const entry of stored.productFiles) {
-        await this.authorization.assertCanManageProduct(
-          entry.productId,
-          userId,
-          roles,
-        );
-        return true;
-      }
-      for (const entry of stored.storeFiles) {
-        await this.authorization.assertCanManageStore(
-          entry.storeId,
-          userId,
-          roles,
-        );
-        return true;
-      }
-      for (const entry of stored.userFiles) {
-        await this.authorization.assertCanManageUser(
-          entry.userId,
-          userId,
-          roles,
-        );
-        return true;
-      }
-      for (const entry of stored.sellerDocuments) {
-        await this.authorization.assertCanManageSellerProfile(
-          entry.sellerProfileId,
-          userId,
-          roles,
-        );
-        return true;
-      }
-    } catch {
-      return false;
-    }
-    return false;
   }
 
   private async deleteAssociationAndMaybeStoredFile(params: {

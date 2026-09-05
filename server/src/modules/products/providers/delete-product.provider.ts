@@ -42,14 +42,4 @@ export class DeleteProductProvider {
       /* file may already be gone */
     }
   }
-
-  public async safeUnlinkPublicPath(urlPath: string): Promise<void> {
-    const relative = urlPath.replace(/^\//, '');
-    const abs = join(process.cwd(), relative);
-    try {
-      await unlink(abs);
-    } catch {
-      /* file may already be gone */
-    }
-  }
 }

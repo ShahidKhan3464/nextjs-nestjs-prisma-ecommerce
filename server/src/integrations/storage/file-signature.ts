@@ -107,10 +107,7 @@ export function assertDetectedFileKind(
   return detected;
 }
 
-export async function readFilePrefix(
-  filePath: string,
-  length = 16,
-): Promise<Buffer> {
+async function readFilePrefix(filePath: string, length = 16): Promise<Buffer> {
   const handle = await open(filePath, 'r');
   try {
     const buffer = Buffer.alloc(length);

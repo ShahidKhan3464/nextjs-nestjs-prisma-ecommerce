@@ -1,7 +1,6 @@
 import { Prisma } from 'src/generated/prisma/client';
 import { PaymentStatus } from '../constants/payment.constants';
 import { Injectable, BadRequestException } from '@nestjs/common';
-import { OrderStatus } from 'src/modules/orders/constants/order.constants';
 import { toCents, centsToDecimalString } from 'src/common/utils/money.util';
 import { assertPaymentStatusTransition } from '../utils/payment-status-transitions.util';
 
@@ -24,11 +23,6 @@ export type MarkSucceededInput = {
 export type MarkFailedInput = {
   paymentIds: number[];
   failureReason: string;
-};
-
-export type MarkCancelledInput = {
-  paymentIds: number[];
-  failureReason?: string;
 };
 
 export type ApplyRefundInput = {
@@ -103,95 +97,6 @@ export class PaymentLifecycleProvider {
     });
 
     return result.count;
-  }
-
-  async markCancelledMany(
-    tx: TxClient,
-    input: MarkCancelledInput,
-  ): Promise<number> {
-    if (input.paymentIds.length === 0) {
-      return 0;
-    }
-
-    const result = await tx.payment.updateMany({
-      where: {
-        id: { in: input.paymentIds },
-        status: {
-          in: [PaymentStatus.PENDING, PaymentStatus.PROCESSING],
-        },
-      },
-      data: {
-        status: PaymentStatus.CANCELLED,
-        failureReason: input.failureReason ?? null,
-      },
-    });
-
-    return result.count;
-  }
-
-  async markProcessingByTransactionId(
-    tx: TxClient,
-    transactionId: string,
-  ): Promise<number> {
-    const result = await tx.payment.updateMany({
-      where: {
-        transactionId,
-        status: PaymentStatus.PENDING,
-      },
-      data: { status: PaymentStatus.PROCESSING },
-    });
-
-    return result.count;
-  }
-
-  /**
-   * Idempotent provider-callback sync: already-succeeded payments are a no-op.
-   * Used by complete-checkout today and future webhook handlers.
-   */
-  async syncSucceededByTransactionId(
-    tx: TxClient,
-    transactionId: string,
-    input: { methodSummary: string; paidAt?: Date; userId?: number },
-  ): Promise<{ orderIds: number[]; updatedCount: number }> {
-    const existingSucceeded = await tx.payment.findMany({
-      where: {
-        transactionId,
-        status: PaymentStatus.SUCCEEDED,
-        ...(input.userId !== undefined
-          ? { order: { userId: input.userId } }
-          : {}),
-      },
-      select: { orderId: true },
-    });
-
-    if (existingSucceeded.length > 0) {
-      return {
-        orderIds: existingSucceeded.map((p) => p.orderId),
-        updatedCount: 0,
-      };
-    }
-
-    const pending = await tx.payment.findMany({
-      where: {
-        transactionId,
-        status: {
-          in: [PaymentStatus.PENDING, PaymentStatus.PROCESSING],
-        },
-        ...(input.userId !== undefined
-          ? { order: { userId: input.userId, status: OrderStatus.PENDING } }
-          : {}),
-      },
-      select: { orderId: true },
-    });
-
-    const orderIds = pending.map((p) => p.orderId);
-    const updatedCount = await this.markSucceededMany(tx, {
-      orderIds,
-      methodSummary: input.methodSummary,
-      paidAt: input.paidAt,
-    });
-
-    return { orderIds, updatedCount };
   }
 
   async applyRefund(tx: TxClient, input: ApplyRefundInput): Promise<void> {

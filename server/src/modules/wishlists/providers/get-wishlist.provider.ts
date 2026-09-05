@@ -66,14 +66,4 @@ export class GetWishlistProvider {
 
     return { productIds, items };
   }
-
-  /** Used by sync/toggle callers that still need only IDs. */
-  public async findProductIds(userId: number): Promise<number[]> {
-    const items = await this.prisma.wishlistItem.findMany({
-      where: { userId },
-      orderBy: { createdAt: 'desc' },
-      select: { productId: true },
-    });
-    return items.map((i) => i.productId);
-  }
 }
