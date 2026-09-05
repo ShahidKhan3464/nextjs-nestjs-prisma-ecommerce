@@ -37,14 +37,6 @@ export type ReviewSummary = {
   distribution: RatingDistribution;
 };
 
-export type StoreReputation = {
-  storeId: string;
-  averageRating: number;
-  totalReviews: number;
-  productsSold: number;
-  verified: boolean;
-};
-
 export type CreateReviewInput = {
   productId: string;
   rating: number;

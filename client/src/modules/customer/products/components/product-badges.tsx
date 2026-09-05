@@ -1,7 +1,11 @@
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { formatFilterLabel } from "@/lib/format-filter-label";
-import { getProductBadges, type Product, type ProductBadgeKind } from "../types";
+import {
+  getProductBadges,
+  type Product,
+  type ProductBadgeKind,
+} from "../types";
 
 const BADGE_LABEL: Record<ProductBadgeKind, string> = {
   new: "New",
@@ -41,11 +45,7 @@ export function ProductBadges({
         </Badge>
       ) : null}
       {kinds.map((kind) => (
-        <Badge
-          key={kind}
-          className="font-normal"
-          variant={BADGE_VARIANT[kind]}
-        >
+        <Badge key={kind} className="font-normal" variant={BADGE_VARIANT[kind]}>
           {BADGE_LABEL[kind]}
         </Badge>
       ))}

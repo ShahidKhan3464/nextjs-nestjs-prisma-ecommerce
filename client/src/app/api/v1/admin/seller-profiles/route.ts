@@ -24,12 +24,9 @@ export async function GET(req: Request) {
   const url = new URL(req.url);
   const backend = getBackendUrl();
   const qs = url.searchParams.toString();
-  const res = await fetch(
-    `${backend}/seller-profiles${qs ? `?${qs}` : ""}`,
-    {
-      headers: { ...forwardAuthorization(req) },
-    }
-  );
+  const res = await fetch(`${backend}/seller-profiles${qs ? `?${qs}` : ""}`, {
+    headers: { ...forwardAuthorization(req) },
+  });
 
   let raw: unknown = null;
   try {

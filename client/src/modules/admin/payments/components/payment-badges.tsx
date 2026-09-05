@@ -18,7 +18,9 @@ const providerLabel: Record<PaymentProvider, string> = {
 };
 
 export function PaymentStatusBadge({ status }: { status: PaymentStatus }) {
-  return <Badge variant={statusVariant[status]}>{status.replaceAll("_", " ")}</Badge>;
+  return (
+    <Badge variant={statusVariant[status]}>{status.replaceAll("_", " ")}</Badge>
+  );
 }
 
 export function PaymentProviderBadge({
@@ -29,10 +31,7 @@ export function PaymentProviderBadge({
   return <Badge variant="outline">{providerLabel[provider]}</Badge>;
 }
 
-export function formatPaymentAmount(
-  amount: number,
-  currency = "USD"
-): string {
+export function formatPaymentAmount(amount: number, currency = "USD"): string {
   try {
     return new Intl.NumberFormat(undefined, {
       style: "currency",

@@ -34,12 +34,12 @@ export function OrderSummary({ order, compact = false }: Props) {
         store={
           order.store
             ? {
-              name: order.store.name,
-              slug: order.store.slug,
-              verified: order.store.verified,
-              logoUrl: order.store.logoUrl,
-              sellerName: order.store.sellerName,
-            }
+                name: order.store.name,
+                slug: order.store.slug,
+                verified: order.store.verified,
+                logoUrl: order.store.logoUrl,
+                sellerName: order.store.sellerName,
+              }
             : null
         }
         compact={compact}
@@ -47,7 +47,10 @@ export function OrderSummary({ order, compact = false }: Props) {
 
       <ul className="space-y-3">
         {order.items.map((item) => (
-          <li key={`${order.id}-${item.variantId}`} className="flex gap-3 text-sm">
+          <li
+            key={`${order.id}-${item.variantId}`}
+            className="flex gap-3 text-sm"
+          >
             <span className="bg-muted relative size-12 shrink-0 overflow-hidden rounded-md border">
               {item.image ? (
                 <Image
@@ -60,7 +63,9 @@ export function OrderSummary({ order, compact = false }: Props) {
               ) : null}
             </span>
             <span className="min-w-0 flex-1">
-              <span className="line-clamp-2 font-medium">{item.productName}</span>
+              <span className="line-clamp-2 font-medium">
+                {item.productName}
+              </span>
               {item.variantLabel ? (
                 <span className="text-muted-foreground mt-0.5 block text-xs">
                   {item.variantLabel}

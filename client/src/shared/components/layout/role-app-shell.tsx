@@ -38,12 +38,11 @@ export function RoleAppShell({
     sidebarVisibleFrom === "lg" ? "hidden lg:flex" : "hidden md:flex";
   const mobileNavVisibility =
     sidebarVisibleFrom === "lg" ? "lg:hidden" : "md:hidden";
-  const mainBottomPad =
-    showMobileNav
-      ? sidebarVisibleFrom === "lg"
-        ? "pb-20 lg:pb-0"
-        : "pb-20 md:pb-0"
-      : undefined;
+  const mainBottomPad = showMobileNav
+    ? sidebarVisibleFrom === "lg"
+      ? "pb-20 lg:pb-0"
+      : "pb-20 md:pb-0"
+    : undefined;
 
   return (
     <div className="bg-background flex min-h-screen">

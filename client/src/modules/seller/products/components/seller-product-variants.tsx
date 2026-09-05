@@ -9,16 +9,8 @@ import { getApiErrorMessage } from "@/lib/api-error";
 import type { SellerVariantValues } from "../schemas";
 import { SellerVariantForm } from "./seller-variant-form";
 import { PencilIcon, PlusIcon, Trash2Icon } from "lucide-react";
-import type {
-  FormMode,
-  SellerProduct,
-  SellerProductVariant,
-} from "../types";
-import {
-  useQuery,
-  useMutation,
-  useQueryClient,
-} from "@tanstack/react-query";
+import type { FormMode, SellerProduct, SellerProductVariant } from "../types";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   createSellerVariant,
   deleteSellerVariant,
@@ -92,16 +84,16 @@ export function SellerProductVariants({
 }: Props) {
   const qc = useQueryClient();
   const [formMode, setFormMode] = useState<FormMode>({ type: "closed" });
-  const [deleteTarget, setDeleteTarget] =
-    useState<SellerProductVariant | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<SellerProductVariant | null>(
+    null
+  );
 
   const variantsKey = queryKeys.seller.variants.byProduct(productId);
   const productKey = queryKeys.seller.products.detail(productId);
 
   const { data, isPending, isError, error, refetch, isFetching } = useQuery({
     queryKey: variantsKey,
-    queryFn: () =>
-      fetchSellerVariants({ productId, page: 1, limit: 100 }),
+    queryFn: () => fetchSellerVariants({ productId, page: 1, limit: 100 }),
     placeholderData: initialVariants.length
       ? {
           variants: initialVariants,
@@ -117,9 +109,7 @@ export function SellerProductVariants({
 
   const variants = data?.variants ?? initialVariants;
   const lowestPrice =
-    variants.length > 0
-      ? Math.min(...variants.map((v) => v.price))
-      : null;
+    variants.length > 0 ? Math.min(...variants.map((v) => v.price)) : null;
   const totalStock = variants.reduce((sum, v) => sum + v.stock, 0);
 
   const patchCaches = (
@@ -224,13 +214,8 @@ export function SellerProductVariants({
   });
 
   const update = useMutation({
-    mutationFn: ({
-      id,
-      values,
-    }: {
-      id: string;
-      values: SellerVariantValues;
-    }) => updateSellerVariant(id, values),
+    mutationFn: ({ id, values }: { id: string; values: SellerVariantValues }) =>
+      updateSellerVariant(id, values),
     onMutate: async ({ id, values }) => {
       await qc.cancelQueries({ queryKey: variantsKey });
       await qc.cancelQueries({ queryKey: productKey });
@@ -311,8 +296,7 @@ export function SellerProductVariants({
   });
 
   const formPending = create.isPending || update.isPending;
-  const editingId =
-    formMode.type === "edit" ? formMode.variant.id : null;
+  const editingId = formMode.type === "edit" ? formMode.variant.id : null;
 
   return (
     <section className="space-y-3">
@@ -384,76 +368,74 @@ export function SellerProductVariants({
       ) : (
         <Table>
           <TableHeader>
+            <TableRow>
+              <TableHead>SKU</TableHead>
+              <TableHead>Size</TableHead>
+              <TableHead>Color</TableHead>
+              <TableHead>Price</TableHead>
+              <TableHead>Stock</TableHead>
+              {!readOnly ? (
+                <TableHead className="w-[1%] text-right">Actions</TableHead>
+              ) : null}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {variants.length === 0 ? (
               <TableRow>
-                <TableHead>SKU</TableHead>
-                <TableHead>Size</TableHead>
-                <TableHead>Color</TableHead>
-                <TableHead>Price</TableHead>
-                <TableHead>Stock</TableHead>
-                {!readOnly ? (
-                  <TableHead className="w-[1%] text-right">Actions</TableHead>
-                ) : null}
+                <TableCell
+                  colSpan={readOnly ? 5 : 6}
+                  className="text-muted-foreground py-8 text-center text-sm"
+                >
+                  No variants yet. Add one to sell this product.
+                </TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {variants.length === 0 ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={readOnly ? 5 : 6}
-                    className="text-muted-foreground py-8 text-center text-sm"
-                  >
-                    No variants yet. Add one to sell this product.
+            ) : (
+              variants.map((v) => (
+                <TableRow
+                  key={v.id}
+                  data-editing={editingId === v.id ? "" : undefined}
+                  className={editingId === v.id ? "bg-muted/40" : undefined}
+                >
+                  <TableCell className="font-medium whitespace-nowrap">
+                    {v.sku}
                   </TableCell>
+                  <TableCell>{v.size}</TableCell>
+                  <TableCell>{v.color}</TableCell>
+                  <TableCell className="tabular-nums whitespace-nowrap">
+                    {formatMoney(v.price)}
+                  </TableCell>
+                  <TableCell className="tabular-nums">{v.stock}</TableCell>
+                  {!readOnly ? (
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-1">
+                        <Button
+                          size="icon-sm"
+                          variant="ghost"
+                          aria-label={`Edit ${v.sku}`}
+                          disabled={formPending || formMode.type !== "closed"}
+                          onClick={() =>
+                            setFormMode({ type: "edit", variant: v })
+                          }
+                        >
+                          <PencilIcon className="size-4" />
+                        </Button>
+                        <Button
+                          size="icon-sm"
+                          variant="ghost"
+                          aria-label={`Delete ${v.sku}`}
+                          disabled={formPending || remove.isPending}
+                          onClick={() => setDeleteTarget(v)}
+                        >
+                          <Trash2Icon className="size-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  ) : null}
                 </TableRow>
-              ) : (
-                variants.map((v) => (
-                  <TableRow
-                    key={v.id}
-                    data-editing={editingId === v.id ? "" : undefined}
-                    className={
-                      editingId === v.id ? "bg-muted/40" : undefined
-                    }
-                  >
-                    <TableCell className="font-medium whitespace-nowrap">
-                      {v.sku}
-                    </TableCell>
-                    <TableCell>{v.size}</TableCell>
-                    <TableCell>{v.color}</TableCell>
-                    <TableCell className="tabular-nums whitespace-nowrap">
-                      {formatMoney(v.price)}
-                    </TableCell>
-                    <TableCell className="tabular-nums">{v.stock}</TableCell>
-                    {!readOnly ? (
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-1">
-                          <Button
-                            size="icon-sm"
-                            variant="ghost"
-                            aria-label={`Edit ${v.sku}`}
-                            disabled={formPending || formMode.type !== "closed"}
-                            onClick={() =>
-                              setFormMode({ type: "edit", variant: v })
-                            }
-                          >
-                            <PencilIcon className="size-4" />
-                          </Button>
-                          <Button
-                            size="icon-sm"
-                            variant="ghost"
-                            aria-label={`Delete ${v.sku}`}
-                            disabled={formPending || remove.isPending}
-                            onClick={() => setDeleteTarget(v)}
-                          >
-                            <Trash2Icon className="size-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    ) : null}
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+              ))
+            )}
+          </TableBody>
+        </Table>
       )}
 
       <AlertDialog

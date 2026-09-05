@@ -136,7 +136,8 @@ export function AdminOrdersList() {
   const total = data?.pagination.total ?? 0;
   const hasFilters = statusFilter !== "all" || paymentFilter !== "all";
   const isEmptyCatalog = total === 0 && !hasSearch && !hasFilters;
-  const showPagination = (data?.pagination.total ?? 0) > 0 || filtered.length > 0;
+  const showPagination =
+    (data?.pagination.total ?? 0) > 0 || filtered.length > 0;
 
   return (
     <div className="space-y-4">

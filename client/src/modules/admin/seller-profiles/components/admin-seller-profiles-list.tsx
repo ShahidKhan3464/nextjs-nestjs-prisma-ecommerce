@@ -131,7 +131,10 @@ export function AdminSellerProfilesList() {
               setStatusFilter((value ?? "ALL") as SellerProfileStatusFilter)
             }
           >
-            <SelectTrigger className="w-full!" disabled={isEmptyCatalog && statusFilter === "ALL"}>
+            <SelectTrigger
+              className="w-full!"
+              disabled={isEmptyCatalog && statusFilter === "ALL"}
+            >
               <SelectValue placeholder="Status">
                 {
                   SELLER_STATUS_FILTER_OPTIONS.find(

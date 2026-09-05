@@ -15,10 +15,7 @@ type Props = {
  * Capture forms are rendered per selected provider; only Stripe is live today.
  * Parent must wrap Stripe capture with StripeCheckoutProvider / Elements.
  */
-export function PaymentPanel({
-  selectedProvider,
-  onSelectProvider,
-}: Props) {
+export function PaymentPanel({ selectedProvider, onSelectProvider }: Props) {
   return (
     <div className="space-y-4">
       <div className="space-y-2">

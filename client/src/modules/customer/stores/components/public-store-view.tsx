@@ -49,7 +49,12 @@ function StoreHeaderSkeleton() {
 }
 
 export function PublicStoreView({ slug, initialStore }: Props) {
-  const { data: store, isPending, isError, refetch } = useQuery({
+  const {
+    data: store,
+    isPending,
+    isError,
+    refetch,
+  } = useQuery({
     queryKey: queryKeys.stores.bySlug(slug),
     queryFn: () => fetchStoreBySlug(slug),
     initialData: initialStore,

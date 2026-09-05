@@ -47,9 +47,7 @@ export async function fetchAdminPayments(
 }
 
 export async function fetchAdminPayment(id: string | number) {
-  const res = await api.get<{ data: Payment }>(
-    `/api/v1/admin/payments/${id}`
-  );
+  const res = await api.get<{ data: Payment }>(`/api/v1/admin/payments/${id}`);
   return res.data.data;
 }
 

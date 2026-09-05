@@ -58,9 +58,7 @@ export function OrderSuccessCard({ order }: Props) {
       </div>
       <p className="text-muted-foreground text-xs">
         Placed {formatOrderDate(order.createdAt)}
-        {order.paymentMethodSummary
-          ? ` · ${order.paymentMethodSummary}`
-          : null}
+        {order.paymentMethodSummary ? ` · ${order.paymentMethodSummary}` : null}
       </p>
       <OrderSummary order={order} />
     </div>

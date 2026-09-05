@@ -59,7 +59,12 @@ export function AddressesManager() {
   const [editingId, setEditingId] = React.useState<string | null>(null);
   const [showForm, setShowForm] = React.useState(false);
 
-  const { data: addresses = [], isPending, isError, refetch } = useQuery({
+  const {
+    data: addresses = [],
+    isPending,
+    isError,
+    refetch,
+  } = useQuery({
     queryKey: queryKeys.addresses.all,
     queryFn: fetchAddresses,
   });
@@ -113,13 +118,8 @@ export function AddressesManager() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({
-      id,
-      body,
-    }: {
-      id: string;
-      body: AddressFormValues;
-    }) => updateAddress(id, body),
+    mutationFn: ({ id, body }: { id: string; body: AddressFormValues }) =>
+      updateAddress(id, body),
     onSuccess: () => {
       toast.success("Address updated");
       setEditingId(null);
@@ -363,187 +363,189 @@ export function AddressesManager() {
                 addresses.length === 0 && "max-w-2xl"
               )}
             >
-            <h2 className="font-heading text-lg font-semibold">
-              {editingId ? "Edit address" : "New address"}
-            </h2>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <FormField
-                name="label"
-                control={form.control}
-                render={({ field }) => (
-                  <FormItem className="sm:col-span-2">
-                    <FormLabel>Label (optional)</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Home, Office…" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                name="fullName"
-                control={form.control}
-                render={({ field }) => (
-                  <FormItem className="sm:col-span-2">
-                    <FormLabel>Full name</FormLabel>
-                    <FormControl>
-                      <Input autoComplete="name" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                name="line1"
-                control={form.control}
-                render={({ field }) => (
-                  <FormItem className="sm:col-span-2">
-                    <FormLabel>Address line 1</FormLabel>
-                    <FormControl>
-                      <Input autoComplete="address-line1" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                name="line2"
-                control={form.control}
-                render={({ field }) => (
-                  <FormItem className="sm:col-span-2">
-                    <FormLabel>Address line 2</FormLabel>
-                    <FormControl>
-                      <Input autoComplete="address-line2" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                name="city"
-                control={form.control}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>City</FormLabel>
-                    <FormControl>
-                      <Input autoComplete="address-level2" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                name="region"
-                control={form.control}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>State / Region</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                name="postalCode"
-                control={form.control}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Postal code</FormLabel>
-                    <FormControl>
-                      <Input autoComplete="postal-code" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                name="country"
-                control={form.control}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Country</FormLabel>
-                    <FormControl>
-                      <Input autoComplete="country" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                name="phone"
-                control={form.control}
-                render={({ field }) => (
-                  <FormItem className="sm:col-span-2">
-                    <FormLabel>Phone</FormLabel>
-                    <FormControl>
-                      <Input autoComplete="tel" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                name="isDefaultShipping"
-                control={form.control}
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center gap-2 space-y-0">
-                    <FormControl>
-                      <input
-                        type="checkbox"
-                        className="size-4 accent-primary"
-                        checked={Boolean(field.value)}
-                        onChange={(e) => field.onChange(e.target.checked)}
-                      />
-                    </FormControl>
-                    <FormLabel className="font-normal">
-                      Default shipping
-                    </FormLabel>
-                  </FormItem>
-                )}
-              />
-              <FormField
-                name="isDefaultBilling"
-                control={form.control}
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center gap-2 space-y-0">
-                    <FormControl>
-                      <input
-                        type="checkbox"
-                        className="size-4 accent-primary"
-                        checked={Boolean(field.value)}
-                        onChange={(e) => field.onChange(e.target.checked)}
-                      />
-                    </FormControl>
-                    <FormLabel className="font-normal">
-                      Default billing
-                    </FormLabel>
-                  </FormItem>
-                )}
-              />
-            </div>
-            <div className="flex gap-2">
-              <Button
-                type="submit"
-                disabled={createMutation.isPending || updateMutation.isPending}
-              >
-                {editingId ? "Update" : "Save"}
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  setShowForm(false);
-                  setEditingId(null);
-                  form.reset(emptyForm);
-                }}
-              >
-                Cancel
-              </Button>
-            </div>
-          </form>
-        </Form>
+              <h2 className="font-heading text-lg font-semibold">
+                {editingId ? "Edit address" : "New address"}
+              </h2>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <FormField
+                  name="label"
+                  control={form.control}
+                  render={({ field }) => (
+                    <FormItem className="sm:col-span-2">
+                      <FormLabel>Label (optional)</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Home, Office…" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  name="fullName"
+                  control={form.control}
+                  render={({ field }) => (
+                    <FormItem className="sm:col-span-2">
+                      <FormLabel>Full name</FormLabel>
+                      <FormControl>
+                        <Input autoComplete="name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  name="line1"
+                  control={form.control}
+                  render={({ field }) => (
+                    <FormItem className="sm:col-span-2">
+                      <FormLabel>Address line 1</FormLabel>
+                      <FormControl>
+                        <Input autoComplete="address-line1" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  name="line2"
+                  control={form.control}
+                  render={({ field }) => (
+                    <FormItem className="sm:col-span-2">
+                      <FormLabel>Address line 2</FormLabel>
+                      <FormControl>
+                        <Input autoComplete="address-line2" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  name="city"
+                  control={form.control}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>City</FormLabel>
+                      <FormControl>
+                        <Input autoComplete="address-level2" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  name="region"
+                  control={form.control}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>State / Region</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  name="postalCode"
+                  control={form.control}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Postal code</FormLabel>
+                      <FormControl>
+                        <Input autoComplete="postal-code" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  name="country"
+                  control={form.control}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Country</FormLabel>
+                      <FormControl>
+                        <Input autoComplete="country" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  name="phone"
+                  control={form.control}
+                  render={({ field }) => (
+                    <FormItem className="sm:col-span-2">
+                      <FormLabel>Phone</FormLabel>
+                      <FormControl>
+                        <Input autoComplete="tel" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  name="isDefaultShipping"
+                  control={form.control}
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center gap-2 space-y-0">
+                      <FormControl>
+                        <input
+                          type="checkbox"
+                          className="size-4 accent-primary"
+                          checked={Boolean(field.value)}
+                          onChange={(e) => field.onChange(e.target.checked)}
+                        />
+                      </FormControl>
+                      <FormLabel className="font-normal">
+                        Default shipping
+                      </FormLabel>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  name="isDefaultBilling"
+                  control={form.control}
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center gap-2 space-y-0">
+                      <FormControl>
+                        <input
+                          type="checkbox"
+                          className="size-4 accent-primary"
+                          checked={Boolean(field.value)}
+                          onChange={(e) => field.onChange(e.target.checked)}
+                        />
+                      </FormControl>
+                      <FormLabel className="font-normal">
+                        Default billing
+                      </FormLabel>
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  type="submit"
+                  disabled={
+                    createMutation.isPending || updateMutation.isPending
+                  }
+                >
+                  {editingId ? "Update" : "Save"}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setShowForm(false);
+                    setEditingId(null);
+                    form.reset(emptyForm);
+                  }}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </form>
+          </Form>
         ) : null}
       </div>
     </div>

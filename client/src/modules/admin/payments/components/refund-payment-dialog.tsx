@@ -31,10 +31,7 @@ import {
   AlertDialogContent,
   AlertDialogDescription,
 } from "@/components/ui/alert-dialog";
-import {
-  recordRefundSchema,
-  type RecordRefundFormValues,
-} from "../schemas";
+import { recordRefundSchema, type RecordRefundFormValues } from "../schemas";
 
 type Props = {
   open: boolean;

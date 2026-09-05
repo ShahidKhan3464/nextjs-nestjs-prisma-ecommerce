@@ -31,18 +31,18 @@ Browser / SSR → axios /api/v1/... → Route Handler (BFF) → Nest (BACKEND_UR
 
 ## Key paths
 
-| Path | Role |
-|------|------|
-| `src/app/(marketing\|auth\|customer\|admin\|shared)/` | Route groups (parentheses not in URL) |
-| `src/app/api/v1/{auth\|admin\|customer\|seller}/` | BFF Route Handlers |
-| `src/modules/` | Feature components, services, schemas, types |
-| `src/components/ui/` | shadcn primitives only |
-| `src/shared/` | Shells, providers, marketing, marketplace UI, nav |
-| `src/store/` | Zustand stores |
-| `src/lib/` | Auth, BFF helpers, Nest mappers |
-| `src/services/api/client.ts` | Axios + refresh interceptor |
-| `src/constants/routes.ts`, `query-keys.ts` | Canonical routes / Query keys |
-| `src/middleware.ts` | JWT guards, role paths, legacy `/admin` redirects |
+| Path                                                  | Role                                              |
+| ----------------------------------------------------- | ------------------------------------------------- |
+| `src/app/(marketing\|auth\|customer\|admin\|shared)/` | Route groups (parentheses not in URL)             |
+| `src/app/api/v1/{auth\|admin\|customer\|seller}/`     | BFF Route Handlers                                |
+| `src/modules/`                                        | Feature components, services, schemas, types      |
+| `src/components/ui/`                                  | shadcn primitives only                            |
+| `src/shared/`                                         | Shells, providers, marketing, marketplace UI, nav |
+| `src/store/`                                          | Zustand stores                                    |
+| `src/lib/`                                            | Auth, BFF helpers, Nest mappers                   |
+| `src/services/api/client.ts`                          | Axios + refresh interceptor                       |
+| `src/constants/routes.ts`, `query-keys.ts`            | Canonical routes / Query keys                     |
+| `src/middleware.ts`                                   | JWT guards, role paths, legacy `/admin` redirects |
 
 ## Conventions
 
@@ -99,14 +99,14 @@ Typical pattern: guard → `getBackendUrl()` + `forwardAuthorization()` → Nest
 
 ## Walkthrough map (load only what you need)
 
-| Topic | Walkthrough section |
-|-------|---------------------|
-| Route groups / URLs | Route groups and page URLs |
-| Middleware / roles | Middleware; Auth / session |
-| BFF catalog | BFF API routes |
-| Modules | Feature modules |
-| Zustand / Query | Zustand stores; State and data flow |
-| Env | Environment |
+| Topic               | Walkthrough section                 |
+| ------------------- | ----------------------------------- |
+| Route groups / URLs | Route groups and page URLs          |
+| Middleware / roles  | Middleware; Auth / session          |
+| BFF catalog         | BFF API routes                      |
+| Modules             | Feature modules                     |
+| Zustand / Query     | Zustand stores; State and data flow |
+| Env                 | Environment                         |
 
 ## Do not
 

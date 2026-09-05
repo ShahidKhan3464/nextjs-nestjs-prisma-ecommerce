@@ -151,7 +151,9 @@ export function WishlistGrid() {
             {item.store ? (
               <div className="space-y-1">
                 <div className="flex min-w-0 items-center gap-1.5 text-xs">
-                  <span className="truncate font-medium">{item.store.name}</span>
+                  <span className="truncate font-medium">
+                    {item.store.name}
+                  </span>
                   {item.store.verified ? <VerifiedBadge compact /> : null}
                 </div>
                 <p className="text-muted-foreground truncate text-xs">

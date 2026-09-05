@@ -31,12 +31,10 @@ export function PlaceOrderButton({ onSuccess, onRetryReady }: Props) {
   const paymentFailure = useCheckoutStore((s) => s.paymentFailure);
   const paymentIntentId = useCheckoutStore((s) => s.paymentIntentId);
   const setPaymentStatus = useCheckoutStore((s) => s.setPaymentStatus);
-  const setPaymentSummary = useCheckoutStore((s) => s.setPaymentSummary);
   const attemptRef = React.useRef(false);
 
   async function finalizeOrders(piId: string) {
     setPaymentStatus("succeeded");
-    setPaymentSummary("Card");
     const orders = await completeCheckout({ paymentIntentId: piId });
     onSuccess(orders);
   }
@@ -149,7 +147,7 @@ export function PlaceOrderButton({ onSuccess, onRetryReady }: Props) {
 
   return (
     <Button
-    size="lg"
+      size="lg"
       type="button"
       className="w-full sm:w-auto"
       onClick={() => void handlePlaceOrder()}

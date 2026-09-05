@@ -31,7 +31,6 @@ import {
   AlertDialogDescription,
 } from "@/components/ui/alert-dialog";
 
-
 type Props = {
   orderId: string;
 };
@@ -102,170 +101,174 @@ export function OrderDetailView({ orderId }: Props) {
   return (
     <>
       <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_500px]">
-      <div className="space-y-6">
-        <div>
-          <p className="text-muted-foreground text-sm">Order</p>
-          <h1 className="font-heading text-3xl font-semibold tracking-tight">
-            {data.orderNumber}
-          </h1>
-          <p className="text-muted-foreground mt-2 text-sm">
-            Placed {formatOrderDate(data.createdAt)}
-          </p>
-        </div>
-
-        {data.status === "cancelled" && data.cancellationReason ? (
-          <p className="text-muted-foreground rounded-lg border px-4 py-3 text-sm">
-            Cancellation reason: {data.cancellationReason}
-          </p>
-        ) : null}
-
-        {data.store ? (
-          <section className="space-y-3 rounded-xl border p-4">
-            <h2 className="text-sm font-medium tracking-wide uppercase">
-              Store
-            </h2>
-            <StoreGroupHeader
-              store={{
-                name: data.store.name,
-                slug: data.store.slug,
-                verified: data.store.verified,
-                logoUrl: data.store.logoUrl,
-                sellerName: data.store.sellerName,
-              }}
-              trailing={data.store.verified ? <VerifiedBadge /> : null}
-            />
-          </section>
-        ) : null}
-
-        <section className="space-y-3">
-          <h2 className="text-sm font-medium tracking-wide uppercase">Items</h2>
-          <ul className="divide-y rounded-xl border">
-            {data.items.map((item) => (
-              <li
-                key={`${item.variantId}-${item.priceAtPurchase}`}
-                className="flex gap-4 p-4"
-              >
-                <div className="relative size-16 shrink-0 overflow-hidden rounded-md bg-muted">
-                  {item.image && (
-                    <Image
-                      fill
-                      alt=""
-                      sizes="64px"
-                      src={item.image}
-                      className="object-cover"
-                    />
-                  )}
-                </div>
-                <div className="min-w-0 flex-1 space-y-1">
-                  <p className="font-medium">{item.productName}</p>
-                  <p className="text-muted-foreground text-sm">
-                    {item.variantLabel} × {item.quantity}
-                  </p>
-                  <p className="text-muted-foreground text-xs">
-                    Price at purchase: ${item.priceAtPurchase.toFixed(2)} each
-                  </p>
-                </div>
-                <p className="tabular-nums">
-                  ${(item.priceAtPurchase * item.quantity).toFixed(2)}
-                </p>
-              </li>
-            ))}
-          </ul>
-        </section>
-      </div>
-
-      <aside className="bg-muted/40 border-border space-y-6 rounded-xl border p-4 lg:sticky lg:top-28">
-        <div className="space-y-3">
-          <div className="flex flex-wrap gap-2">
-            <OrderStatusBadge status={data.status} />
-            <PaymentStatusBadge status={data.paymentStatus} />
-          </div>
-          {canCancel ? (
-            <Button
-            size="sm"
-              variant="destructive"
-              onClick={() => setCancelOpen(true)}
-            >
-              Cancel order
-            </Button>
-          ) : null}
-        </div>
-
-        <section className="space-y-3">
-          <h2 className="text-sm font-medium tracking-wide uppercase">
-            Tracking
-          </h2>
-          <div className="text-muted-foreground space-y-1 text-sm">
-            <p>
-              Status:{" "}
-              <span className="text-foreground font-medium capitalize">
-                {data.status}
-              </span>
+        <div className="space-y-6">
+          <div>
+            <p className="text-muted-foreground text-sm">Order</p>
+            <h1 className="font-heading text-3xl font-semibold tracking-tight">
+              {data.orderNumber}
+            </h1>
+            <p className="text-muted-foreground mt-2 text-sm">
+              Placed {formatOrderDate(data.createdAt)}
             </p>
-            {data.shippedAt ? (
-              <p>Shipped {formatOrderDate(data.shippedAt)}</p>
-            ) : (
-              <p>Not shipped yet</p>
-            )}
-            {data.deliveredAt ? (
-              <p>Delivered {formatOrderDate(data.deliveredAt)}</p>
-            ) : null}
-            {data.cancelledAt ? (
-              <p>Cancelled {formatOrderDate(data.cancelledAt)}</p>
+          </div>
+
+          {data.status === "cancelled" && data.cancellationReason ? (
+            <p className="text-muted-foreground rounded-lg border px-4 py-3 text-sm">
+              Cancellation reason: {data.cancellationReason}
+            </p>
+          ) : null}
+
+          {data.store ? (
+            <section className="space-y-3 rounded-xl border p-4">
+              <h2 className="text-sm font-medium tracking-wide uppercase">
+                Store
+              </h2>
+              <StoreGroupHeader
+                store={{
+                  name: data.store.name,
+                  slug: data.store.slug,
+                  verified: data.store.verified,
+                  logoUrl: data.store.logoUrl,
+                  sellerName: data.store.sellerName,
+                }}
+                trailing={data.store.verified ? <VerifiedBadge /> : null}
+              />
+            </section>
+          ) : null}
+
+          <section className="space-y-3">
+            <h2 className="text-sm font-medium tracking-wide uppercase">
+              Items
+            </h2>
+            <ul className="divide-y rounded-xl border">
+              {data.items.map((item) => (
+                <li
+                  key={`${item.variantId}-${item.priceAtPurchase}`}
+                  className="flex gap-4 p-4"
+                >
+                  <div className="relative size-16 shrink-0 overflow-hidden rounded-md bg-muted">
+                    {item.image && (
+                      <Image
+                        fill
+                        alt=""
+                        sizes="64px"
+                        src={item.image}
+                        className="object-cover"
+                      />
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1 space-y-1">
+                    <p className="font-medium">{item.productName}</p>
+                    <p className="text-muted-foreground text-sm">
+                      {item.variantLabel} × {item.quantity}
+                    </p>
+                    <p className="text-muted-foreground text-xs">
+                      Price at purchase: ${item.priceAtPurchase.toFixed(2)} each
+                    </p>
+                  </div>
+                  <p className="tabular-nums">
+                    ${(item.priceAtPurchase * item.quantity).toFixed(2)}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          </section>
+        </div>
+
+        <aside className="bg-muted/40 border-border space-y-6 rounded-xl border p-4 lg:sticky lg:top-28">
+          <div className="space-y-3">
+            <div className="flex flex-wrap gap-2">
+              <OrderStatusBadge status={data.status} />
+              <PaymentStatusBadge status={data.paymentStatus} />
+            </div>
+            {canCancel ? (
+              <Button
+                size="sm"
+                variant="destructive"
+                onClick={() => setCancelOpen(true)}
+              >
+                Cancel order
+              </Button>
             ) : null}
           </div>
-        </section>
 
-        <Separator />
-
-        <section className="space-y-2 text-sm">
-          <h2 className="font-medium tracking-wide uppercase">Shipping</h2>
-          <p className="text-muted-foreground leading-relaxed">
-            {data.shippingAddress.fullName}
-            <br />
-            {data.shippingAddress.line1}
-            {data.shippingAddress.line2 && (
-              <>
-                <br />
-                {data.shippingAddress.line2}
-              </>
-            )}
-            <br />
-            {data.shippingAddress.city}, {data.shippingAddress.region}{" "}
-            {data.shippingAddress.postalCode}
-            <br />
-            {data.shippingAddress.country}
-          </p>
-        </section>
-
-        <Separator />
-
-        <section className="space-y-3 text-sm">
-          <h2 className="font-medium tracking-wide uppercase">Payment</h2>
-          <p className="text-muted-foreground">{data.paymentMethodSummary}</p>
-          <div className="space-y-1 border-t pt-3">
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Subtotal</span>
-              <span className="tabular-nums">${data.subtotal.toFixed(2)}</span>
+          <section className="space-y-3">
+            <h2 className="text-sm font-medium tracking-wide uppercase">
+              Tracking
+            </h2>
+            <div className="text-muted-foreground space-y-1 text-sm">
+              <p>
+                Status:{" "}
+                <span className="text-foreground font-medium capitalize">
+                  {data.status}
+                </span>
+              </p>
+              {data.shippedAt ? (
+                <p>Shipped {formatOrderDate(data.shippedAt)}</p>
+              ) : (
+                <p>Not shipped yet</p>
+              )}
+              {data.deliveredAt ? (
+                <p>Delivered {formatOrderDate(data.deliveredAt)}</p>
+              ) : null}
+              {data.cancelledAt ? (
+                <p>Cancelled {formatOrderDate(data.cancelledAt)}</p>
+              ) : null}
             </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Tax</span>
-              <span className="tabular-nums">${data.tax.toFixed(2)}</span>
-            </div>
-            <div className="flex justify-between pt-2 text-base font-semibold">
-              <span>Total</span>
-              <span className="tabular-nums">${data.total.toFixed(2)}</span>
-            </div>
-          </div>
-        </section>
+          </section>
 
-        <Link
-          href={ROUTES.orders}
-          className={cn(buttonVariants({ variant: "outline" }), "w-full")}
-        >
-          All orders
-        </Link>
-      </aside>
+          <Separator />
+
+          <section className="space-y-2 text-sm">
+            <h2 className="font-medium tracking-wide uppercase">Shipping</h2>
+            <p className="text-muted-foreground leading-relaxed">
+              {data.shippingAddress.fullName}
+              <br />
+              {data.shippingAddress.line1}
+              {data.shippingAddress.line2 && (
+                <>
+                  <br />
+                  {data.shippingAddress.line2}
+                </>
+              )}
+              <br />
+              {data.shippingAddress.city}, {data.shippingAddress.region}{" "}
+              {data.shippingAddress.postalCode}
+              <br />
+              {data.shippingAddress.country}
+            </p>
+          </section>
+
+          <Separator />
+
+          <section className="space-y-3 text-sm">
+            <h2 className="font-medium tracking-wide uppercase">Payment</h2>
+            <p className="text-muted-foreground">{data.paymentMethodSummary}</p>
+            <div className="space-y-1 border-t pt-3">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Subtotal</span>
+                <span className="tabular-nums">
+                  ${data.subtotal.toFixed(2)}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Tax</span>
+                <span className="tabular-nums">${data.tax.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between pt-2 text-base font-semibold">
+                <span>Total</span>
+                <span className="tabular-nums">${data.total.toFixed(2)}</span>
+              </div>
+            </div>
+          </section>
+
+          <Link
+            href={ROUTES.orders}
+            className={cn(buttonVariants({ variant: "outline" }), "w-full")}
+          >
+            All orders
+          </Link>
+        </aside>
       </div>
 
       <AlertDialog open={cancelOpen} onOpenChange={setCancelOpen}>

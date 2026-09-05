@@ -4,10 +4,7 @@ import { requireUser } from "@/lib/require-auth";
 import { getBackendUrl } from "@/lib/backend-url";
 import { jsonMessage, jsonOk } from "@/lib/api-response";
 import { mapNestSellerProfile } from "@/lib/nest-seller-profile-mapper";
-import {
-  nestErrorMessage,
-  forwardAuthorization,
-} from "@/lib/nest-http";
+import { nestErrorMessage, forwardAuthorization } from "@/lib/nest-http";
 
 const PHONE_REGEX = /^[+\d][\d\s()-]{6,29}$/;
 const ID_NUMBER_REGEX = /^[A-Za-z0-9\-./]+$/;

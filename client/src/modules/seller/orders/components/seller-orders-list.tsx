@@ -218,77 +218,77 @@ export function SellerOrdersList() {
       >
         <Table>
           <TableHeader>
+            <TableRow>
+              <TableHead>Order</TableHead>
+              <TableHead className="hidden md:table-cell">Customer</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="hidden sm:table-cell">Payment</TableHead>
+              <TableHead className="hidden lg:table-cell">Placed</TableHead>
+              <TableHead>Total</TableHead>
+              <TableHead className="w-20 text-center sm:w-36">
+                Actions
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {pageRows.length === 0 ? (
               <TableRow>
-                <TableHead>Order</TableHead>
-                <TableHead className="hidden md:table-cell">Customer</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="hidden sm:table-cell">Payment</TableHead>
-                <TableHead className="hidden lg:table-cell">Placed</TableHead>
-                <TableHead>Total</TableHead>
-                <TableHead className="w-20 text-center sm:w-36">
-                  Actions
-                </TableHead>
+                <TableCell
+                  colSpan={7}
+                  className="text-muted-foreground py-10 text-center text-sm"
+                >
+                  No orders match your search or filters.
+                </TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {pageRows.length === 0 ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={7}
-                    className="text-muted-foreground py-10 text-center text-sm"
-                  >
-                    No orders match your search or filters.
+            ) : (
+              pageRows.map((order) => (
+                <TableRow key={order.id}>
+                  <TableCell>
+                    <div className="space-y-0.5">
+                      <p className="font-mono text-sm">{order.orderNumber}</p>
+                      <p className="text-muted-foreground text-xs md:hidden">
+                        {order.buyer?.fullName ?? "Customer"}
+                      </p>
+                    </div>
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium">
+                        {order.buyer?.fullName ?? "—"}
+                      </p>
+                      <p className="text-muted-foreground truncate text-xs">
+                        {order.buyer?.email ?? ""}
+                      </p>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <OrderStatusBadge status={order.status} />
+                  </TableCell>
+                  <TableCell className="hidden sm:table-cell">
+                    <PaymentStatusBadge status={order.paymentStatus} />
+                  </TableCell>
+                  <TableCell className="text-muted-foreground hidden text-sm tabular-nums lg:table-cell">
+                    {formatOrderDate(order.createdAt)}
+                  </TableCell>
+                  <TableCell className="font-medium tabular-nums">
+                    ${order.total.toFixed(2)}
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <Link
+                      href={ROUTES.order(order.id)}
+                      className={cn(
+                        buttonVariants({ variant: "outline", size: "icon" })
+                      )}
+                      aria-label={`View order ${order.orderNumber}`}
+                    >
+                      <EyeIcon className="h-4 w-4" />
+                    </Link>
                   </TableCell>
                 </TableRow>
-              ) : (
-                pageRows.map((order) => (
-                  <TableRow key={order.id}>
-                    <TableCell>
-                      <div className="space-y-0.5">
-                        <p className="font-mono text-sm">{order.orderNumber}</p>
-                        <p className="text-muted-foreground text-xs md:hidden">
-                          {order.buyer?.fullName ?? "Customer"}
-                        </p>
-                      </div>
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-medium">
-                          {order.buyer?.fullName ?? "—"}
-                        </p>
-                        <p className="text-muted-foreground truncate text-xs">
-                          {order.buyer?.email ?? ""}
-                        </p>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <OrderStatusBadge status={order.status} />
-                    </TableCell>
-                    <TableCell className="hidden sm:table-cell">
-                      <PaymentStatusBadge status={order.paymentStatus} />
-                    </TableCell>
-                    <TableCell className="text-muted-foreground hidden text-sm tabular-nums lg:table-cell">
-                      {formatOrderDate(order.createdAt)}
-                    </TableCell>
-                    <TableCell className="font-medium tabular-nums">
-                      ${order.total.toFixed(2)}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <Link
-                        href={ROUTES.order(order.id)}
-                        className={cn(
-                          buttonVariants({ variant: "outline", size: "icon" })
-                        )}
-                        aria-label={`View order ${order.orderNumber}`}
-                      >
-                        <EyeIcon className="h-4 w-4" />
-                      </Link>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+              ))
+            )}
+          </TableBody>
+        </Table>
 
         {(data?.pagination.total ?? 0) > 0 || filtered.length > 0 ? (
           <Pagination

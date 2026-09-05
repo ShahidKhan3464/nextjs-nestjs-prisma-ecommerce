@@ -87,7 +87,11 @@ export function BecomeSellerView() {
         title="Could not load seller status"
         description={getApiErrorMessage(error, "Please try again.")}
         action={
-          <Button size="sm" onClick={() => void refetch()} disabled={isFetching}>
+          <Button
+            size="sm"
+            onClick={() => void refetch()}
+            disabled={isFetching}
+          >
             {isFetching ? "Retrying…" : "Retry"}
           </Button>
         }

@@ -34,7 +34,6 @@ import {
   type SuspendSellerProfileValues,
 } from "../schemas";
 
-
 type Props = {
   open: boolean;
   profile: SellerProfile | null;

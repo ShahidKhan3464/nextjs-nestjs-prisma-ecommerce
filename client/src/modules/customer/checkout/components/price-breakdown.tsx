@@ -29,9 +29,7 @@ export function PriceBreakdown({
         <span className="tabular-nums">{formatMoney(subtotal)}</span>
       </div>
       <div className="flex justify-between">
-        <span className="text-muted-foreground">
-          Shipping
-        </span>
+        <span className="text-muted-foreground">Shipping</span>
         <span className="text-muted-foreground text-xs tabular-nums">
           Calculated by store
         </span>

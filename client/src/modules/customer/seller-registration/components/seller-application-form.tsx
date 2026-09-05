@@ -46,9 +46,7 @@ function toPayload(values: SellerApplicationValues) {
     businessName: values.businessName.trim(),
     businessEmail: values.businessEmail.trim(),
     businessPhone: values.businessPhone.trim(),
-    ...(values.taxNumber?.trim()
-      ? { taxNumber: values.taxNumber.trim() }
-      : {}),
+    ...(values.taxNumber?.trim() ? { taxNumber: values.taxNumber.trim() } : {}),
     ...(values.registrationNumber?.trim()
       ? { registrationNumber: values.registrationNumber.trim() }
       : {}),

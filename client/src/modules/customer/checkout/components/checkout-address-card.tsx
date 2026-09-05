@@ -21,7 +21,9 @@ export function CheckoutAddressCard({
 }: Props) {
   if (!address?.fullName || !address.line1) {
     return (
-      <div className={cn("rounded-lg border border-dashed p-4 text-sm", className)}>
+      <div
+        className={cn("rounded-lg border border-dashed p-4 text-sm", className)}
+      >
         <p className="font-medium">{label}</p>
         <p className="text-muted-foreground mt-1">No address selected yet.</p>
         {showManageLink ? (

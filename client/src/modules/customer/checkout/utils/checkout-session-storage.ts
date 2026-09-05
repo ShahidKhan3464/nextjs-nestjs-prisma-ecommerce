@@ -52,7 +52,9 @@ export function clearPersistedCheckoutSession(): void {
   }
 }
 
-export function persistCheckoutSuccess(snapshot: CheckoutSuccessSnapshot): void {
+export function persistCheckoutSuccess(
+  snapshot: CheckoutSuccessSnapshot
+): void {
   if (!canUseStorage()) return;
   try {
     sessionStorage.setItem(SUCCESS_KEY, JSON.stringify(snapshot));

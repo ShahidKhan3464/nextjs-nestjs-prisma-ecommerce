@@ -12,12 +12,7 @@ type Props = {
   onRestart?: () => void;
 };
 
-export function PaymentStatus({
-  status,
-  failure,
-  onRetry,
-  onRestart,
-}: Props) {
+export function PaymentStatus({ status, failure, onRetry, onRestart }: Props) {
   if (status === "idle" || status === "validating") {
     return null;
   }
@@ -32,7 +27,8 @@ export function PaymentStatus({
         <div>
           <p className="font-medium">Processing payment</p>
           <p className="text-muted-foreground text-xs">
-            Please do not close this page. Confirming with your payment provider…
+            Please do not close this page. Confirming with your payment
+            provider…
           </p>
         </div>
       </div>
@@ -48,9 +44,7 @@ export function PaymentStatus({
         <CheckCircle2 className="size-4 shrink-0 text-emerald-600" />
         <div>
           <p className="font-medium">Payment successful</p>
-          <p className="text-muted-foreground text-xs">
-            Creating your orders…
-          </p>
+          <p className="text-muted-foreground text-xs">Creating your orders…</p>
         </div>
       </div>
     );
@@ -62,8 +56,7 @@ export function PaymentStatus({
       failure.kind === "network" ||
       failure.kind === "incomplete" ||
       failure.kind === "cancelled";
-    const needsRestart =
-      failure.kind === "expired" || failure.kind === "stale";
+    const needsRestart = failure.kind === "expired" || failure.kind === "stale";
 
     return (
       <div
@@ -93,7 +86,12 @@ export function PaymentStatus({
             </Button>
           ) : null}
           {needsRestart && onRestart ? (
-            <Button type="button" size="sm" variant="outline" onClick={onRestart}>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={onRestart}
+            >
               Restart checkout
             </Button>
           ) : null}

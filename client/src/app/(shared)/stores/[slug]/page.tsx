@@ -5,10 +5,7 @@ import { siteConfig } from "@/config/site";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getStoreFile } from "@/modules/seller/store/types";
 import { ProductFiltersSkeleton } from "@/modules/buyer/products/components/product-filters-skeleton";
-import {
-  PublicStoreView,
-  fetchStoreBySlug,
-} from "@/modules/buyer/stores";
+import { PublicStoreView, fetchStoreBySlug } from "@/modules/buyer/stores";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -19,8 +16,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   try {
     const store = await fetchStoreBySlug(slug);
     const description =
-      store.description?.slice(0, 160) ||
-      `${store.name} on ${siteConfig.name}`;
+      store.description?.slice(0, 160) || `${store.name} on ${siteConfig.name}`;
     const banner = getStoreFile(store, "BANNER");
     const logo = getStoreFile(store, "LOGO");
     const ogImage = banner?.file.urlPath ?? logo?.file.urlPath;

@@ -36,7 +36,7 @@ function normalizePersistedUser(raw: unknown): User | null {
       ? u.fullName
       : typeof u.name === "string"
         ? u.name
-        : u.email.split("@")[0] ?? "User";
+        : (u.email.split("@")[0] ?? "User");
 
   return {
     roles,
@@ -48,8 +48,7 @@ function normalizePersistedUser(raw: unknown): User | null {
       typeof u.createdAt === "string" ? u.createdAt : new Date(0).toISOString(),
     isBlocked: typeof u.isBlocked === "boolean" ? u.isBlocked : false,
     avatarUrl: typeof u.avatarUrl === "string" ? u.avatarUrl : undefined,
-    phoneNumber:
-      typeof u.phoneNumber === "string" ? u.phoneNumber : undefined,
+    phoneNumber: typeof u.phoneNumber === "string" ? u.phoneNumber : undefined,
   };
 }
 

@@ -23,10 +23,7 @@ import {
   SelectContent,
   SelectTrigger,
 } from "@/components/ui/select";
-import {
-  NOTIFICATION_TYPES,
-  NOTIFICATION_TYPE_LABELS,
-} from "../constants";
+import { NOTIFICATION_TYPES, NOTIFICATION_TYPE_LABELS } from "../constants";
 import type {
   ReadFilter,
   ListFilters,
@@ -51,9 +48,7 @@ function NotificationsSkeleton() {
   );
 }
 
-function flattenPages(
-  data: InfiniteData<NotificationListResult> | undefined
-) {
+function flattenPages(data: InfiniteData<NotificationListResult> | undefined) {
   return data?.pages.flatMap((p) => p.notifications) ?? [];
 }
 
@@ -174,9 +169,7 @@ export function NotificationsList({ compact = false }: { compact?: boolean }) {
       return { previous };
     },
     onSuccess: (count) => {
-      toast.success(
-        count > 0 ? `Marked ${count} as read` : "Nothing unread"
-      );
+      toast.success(count > 0 ? `Marked ${count} as read` : "Nothing unread");
     },
     onError: (error, _vars, ctx) => {
       if (ctx?.previous) {
@@ -236,9 +229,7 @@ export function NotificationsList({ compact = false }: { compact?: boolean }) {
                 <SelectValue placeholder="All">
                   {typeFilter !== "all"
                     ? formatFilterLabel(
-                        NOTIFICATION_TYPE_LABELS[
-                          typeFilter as NotificationType
-                        ]
+                        NOTIFICATION_TYPE_LABELS[typeFilter as NotificationType]
                       )
                     : undefined}
                 </SelectValue>
@@ -319,7 +310,7 @@ export function NotificationsList({ compact = false }: { compact?: boolean }) {
               <p className="text-muted-foreground text-sm">Loading more…</p>
             ) : hasNextPage ? (
               <Button
-              size="sm"
+                size="sm"
                 type="button"
                 variant="ghost"
                 onClick={() => void fetchNextPage()}

@@ -49,11 +49,7 @@ import {
   SelectTrigger,
 } from "@/components/ui/select";
 
-export function SellerProductEditForm({
-  initial,
-}: {
-  initial: SellerProduct;
-}) {
+export function SellerProductEditForm({ initial }: { initial: SellerProduct }) {
   const router = useRouter();
   const qc = useQueryClient();
   const [newFiles, setNewFiles] = useState<File[]>([]);
@@ -199,44 +195,44 @@ export function SellerProductEditForm({
           name="categoryId"
           control={form.control}
           render={({ field }) => (
-              <FormItem>
-                <FormLabel>Category</FormLabel>
-                <Select
-                  value={field.value || undefined}
-                  disabled={categoriesLoading || categoryOptions.length === 0}
-                  onValueChange={(value) => field.onChange(value ?? "")}
-                >
-                  <FormControl>
-                    <SelectTrigger className="w-full">
-                      <SelectValue
-                        placeholder={
-                          categoriesLoading
-                            ? "Loading categories…"
-                            : categoryOptions.length === 0
-                              ? "No categories available"
-                              : "Select category"
-                        }
-                      >
-                        {field.value
-                          ? formatFilterLabel(
-                              categoryOptions.find(
-                                (c) => String(c.id) === field.value
-                              )?.name
-                            )
-                          : undefined}
-                      </SelectValue>
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {categoryOptions.map((c) => (
-                      <SelectItem key={c.id} value={String(c.id)}>
-                        {formatFilterLabel(c.name)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
+            <FormItem>
+              <FormLabel>Category</FormLabel>
+              <Select
+                value={field.value || undefined}
+                disabled={categoriesLoading || categoryOptions.length === 0}
+                onValueChange={(value) => field.onChange(value ?? "")}
+              >
+                <FormControl>
+                  <SelectTrigger className="w-full">
+                    <SelectValue
+                      placeholder={
+                        categoriesLoading
+                          ? "Loading categories…"
+                          : categoryOptions.length === 0
+                            ? "No categories available"
+                            : "Select category"
+                      }
+                    >
+                      {field.value
+                        ? formatFilterLabel(
+                            categoryOptions.find(
+                              (c) => String(c.id) === field.value
+                            )?.name
+                          )
+                        : undefined}
+                    </SelectValue>
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {categoryOptions.map((c) => (
+                    <SelectItem key={c.id} value={String(c.id)}>
+                      {formatFilterLabel(c.name)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
           )}
         />
 

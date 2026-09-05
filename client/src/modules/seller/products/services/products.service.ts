@@ -81,14 +81,18 @@ export async function deleteSellerProduct(id: string): Promise<void> {
   await api.delete(`/api/v1/seller/products/${id}`);
 }
 
-export async function publishSellerProduct(id: string): Promise<SellerProduct | null> {
+export async function publishSellerProduct(
+  id: string
+): Promise<SellerProduct | null> {
   const res = await api.patch<{ data: { product?: SellerProduct } }>(
     `/api/v1/seller/products/${id}/publish`
   );
   return res.data.data.product ?? null;
 }
 
-export async function restoreSellerProduct(id: string): Promise<SellerProduct | null> {
+export async function restoreSellerProduct(
+  id: string
+): Promise<SellerProduct | null> {
   const res = await api.patch<{ data: { product?: SellerProduct } }>(
     `/api/v1/seller/products/${id}/restore`
   );

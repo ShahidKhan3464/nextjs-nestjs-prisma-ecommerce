@@ -80,16 +80,14 @@ function normalizeLineItem(item: NestOrderLineItemPayload): OrderLineItem {
   };
 }
 
-function normalizeStore(
-  store?: NestOrderStorePayload
-): OrderStore | undefined {
+function normalizeStore(store?: NestOrderStorePayload): OrderStore | undefined {
   if (!store) return undefined;
   return {
     id: String(store.id),
     name: store.name,
     slug: store.slug,
     verified: Boolean(store.verified),
-    logoUrl: store.logoUrl ? normalizeImage(store.logoUrl) ?? null : null,
+    logoUrl: store.logoUrl ? (normalizeImage(store.logoUrl) ?? null) : null,
     sellerName: store.sellerName ?? store.name,
   };
 }

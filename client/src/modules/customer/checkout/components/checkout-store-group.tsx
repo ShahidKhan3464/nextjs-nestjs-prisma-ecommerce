@@ -2,10 +2,7 @@
 
 import Image from "next/image";
 import { formatMoney } from "../utils/format-money";
-import {
-  StoreGroupHeader,
-  type StoreCartGroup,
-} from "@/modules/buyer/shared";
+import { StoreGroupHeader, type StoreCartGroup } from "@/modules/buyer/shared";
 
 type Props = {
   group: StoreCartGroup;

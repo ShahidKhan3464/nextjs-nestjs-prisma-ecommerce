@@ -1,7 +1,4 @@
-import type {
-  PaymentProviderFilter,
-  PaymentStatusFilter,
-} from "../types";
+import type { PaymentProviderFilter, PaymentStatusFilter } from "../types";
 
 export const PAYMENT_STATUS_FILTER_OPTIONS: {
   value: PaymentStatusFilter;

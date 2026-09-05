@@ -53,7 +53,9 @@ export function CheckoutSuccessView() {
               </Link>
               <Link
                 href={ROUTES.products}
-                className={cn(buttonVariants({ variant: "outline", size: "lg" }))}
+                className={cn(
+                  buttonVariants({ variant: "outline", size: "lg" })
+                )}
               >
                 Continue shopping
               </Link>
@@ -84,8 +86,8 @@ export function CheckoutSuccessView() {
           transition={{ delay: 0.18 }}
           className="text-muted-foreground mt-2 max-w-md text-sm leading-relaxed"
         >
-          You placed {orders.length} order{orders.length === 1 ? "" : "s"} across{" "}
-          {storeCount} store{storeCount === 1 ? "" : "s"}. Total charged{" "}
+          You placed {orders.length} order{orders.length === 1 ? "" : "s"}{" "}
+          across {storeCount} store{storeCount === 1 ? "" : "s"}. Total charged{" "}
           {formatMoney(grandTotal)}.
         </motion.p>
       </div>

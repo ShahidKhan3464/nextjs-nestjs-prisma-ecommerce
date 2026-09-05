@@ -1,11 +1,7 @@
 import { ROUTES } from "@/constants/routes";
 import type { LucideIcon } from "lucide-react";
 import type { UserRole } from "@/modules/auth";
-import {
-  isBuyer,
-  isSeller,
-  isSuperAdmin,
-} from "@/modules/auth/utils/roles";
+import { isBuyer, isSeller, isSuperAdmin } from "@/modules/auth/utils/roles";
 import {
   Heart,
   Star,

@@ -2,10 +2,7 @@
 
 import type { UserRole } from "@/modules/auth";
 import { RoleAppShell } from "@/shared/components/layout/role-app-shell";
-import {
-  getNavForRoles,
-  shopChromeTitle,
-} from "@/shared/navigation/app-nav";
+import { getNavForRoles, shopChromeTitle } from "@/shared/navigation/app-nav";
 
 type Props = {
   roles: UserRole[];

@@ -90,7 +90,7 @@ export function RatingStars({
       className={cn(
         "inline-flex items-center gap-0.5",
         interactive &&
-        "rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+          "rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
         className
       )}
     >

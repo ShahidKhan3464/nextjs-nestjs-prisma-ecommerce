@@ -18,10 +18,7 @@ import { ApproveSellerProfileDialog } from "./approve-seller-profile-dialog";
 import { fetchAdminSellerProfile } from "../services/seller-profiles.service";
 import { UnsuspendSellerProfileDialog } from "./unsuspend-seller-profile-dialog";
 import { SellerStatusBadge } from "@/modules/buyer/seller-registration/components/seller-status-badge";
-import {
-  DOCUMENT_TYPE_LABELS,
-  sellerDocumentDownloadUrl,
-} from "../constants";
+import { DOCUMENT_TYPE_LABELS, sellerDocumentDownloadUrl } from "../constants";
 
 type Props = {
   profileId: string;

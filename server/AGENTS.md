@@ -37,15 +37,15 @@ Do **not** introduce a repository layer, CQRS, or hexagonal ports/adapters unles
 
 ## Key paths
 
-| Path | Role |
-|------|------|
-| `src/modules/` | Domain modules (auth, users, sellers, stores, products, …) |
-| `src/common/` | Guards, filters, pagination, crypto, swagger, utils |
-| `src/integrations/` | Mail, Stripe, storage |
-| `src/config/` | Env namespaces + Joi validation |
-| `src/prisma/` | PrismaModule / PrismaService |
-| `prisma/schema.prisma` | Schema + migrations under `prisma/migrations/` |
-| `src/generated/prisma/` | Generated client — **do not edit** |
+| Path                    | Role                                                       |
+| ----------------------- | ---------------------------------------------------------- |
+| `src/modules/`          | Domain modules (auth, users, sellers, stores, products, …) |
+| `src/common/`           | Guards, filters, pagination, crypto, swagger, utils        |
+| `src/integrations/`     | Mail, Stripe, storage                                      |
+| `src/config/`           | Env namespaces + Joi validation                            |
+| `src/prisma/`           | PrismaModule / PrismaService                               |
+| `prisma/schema.prisma`  | Schema + migrations under `prisma/migrations/`             |
+| `src/generated/prisma/` | Generated client — **do not edit**                         |
 
 ## Conventions
 
@@ -141,14 +141,14 @@ Do **not** introduce a repository layer, CQRS, or hexagonal ports/adapters unles
 
 ## Walkthrough map (load only what you need)
 
-| Topic | Walkthrough section |
-|-------|---------------------|
-| Module catalog | Domain modules |
+| Topic                  | Walkthrough section  |
+| ---------------------- | -------------------- |
+| Module catalog         | Domain modules       |
 | Auth / tokens / guards | Auth & authorization |
-| Endpoint list | API endpoints |
-| Prisma models | Database (Prisma) |
-| Provider/DTO style | DTOs & providers |
-| Env | Environment |
+| Endpoint list          | API endpoints        |
+| Prisma models          | Database (Prisma)    |
+| Provider/DTO style     | DTOs & providers     |
+| Env                    | Environment          |
 
 ## Do not
 

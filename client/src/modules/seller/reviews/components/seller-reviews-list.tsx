@@ -29,10 +29,7 @@ export function SellerReviewsList() {
     setPage(1);
   }, [perPage]);
 
-  const listParams = useMemo(
-    () => ({ page, limit: perPage }),
-    [page, perPage]
-  );
+  const listParams = useMemo(() => ({ page, limit: perPage }), [page, perPage]);
 
   const { data, isPending, isFetching, isPlaceholderData, isError, refetch } =
     useQuery({
@@ -96,54 +93,54 @@ export function SellerReviewsList() {
       >
         <Table>
           <TableHeader>
-              <TableRow>
-                <TableHead>Product</TableHead>
-                <TableHead>Buyer</TableHead>
-                <TableHead>Rating</TableHead>
-                <TableHead>Review</TableHead>
-                <TableHead>Date</TableHead>
+            <TableRow>
+              <TableHead>Product</TableHead>
+              <TableHead>Buyer</TableHead>
+              <TableHead>Rating</TableHead>
+              <TableHead>Review</TableHead>
+              <TableHead>Date</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {reviews.map((review) => (
+              <TableRow key={review.id}>
+                <TableCell>
+                  {review.product ? (
+                    <Link
+                      href={ROUTES.product(review.product.slug)}
+                      className="font-medium hover:underline"
+                    >
+                      {review.product.name}
+                    </Link>
+                  ) : (
+                    <span className="text-muted-foreground">—</span>
+                  )}
+                </TableCell>
+                <TableCell>{review.buyer.displayName}</TableCell>
+                <TableCell>
+                  <RatingStars readOnly value={review.rating} size="sm" />
+                </TableCell>
+                <TableCell className="max-w-xs">
+                  {review.title ? (
+                    <p className="truncate text-sm font-medium">
+                      {review.title}
+                    </p>
+                  ) : null}
+                  {review.comment ? (
+                    <p className="text-muted-foreground truncate text-xs">
+                      {review.comment}
+                    </p>
+                  ) : (
+                    <span className="text-muted-foreground text-xs">—</span>
+                  )}
+                </TableCell>
+                <TableCell className="text-muted-foreground text-xs whitespace-nowrap">
+                  {formatOrderDate(review.createdAt)}
+                </TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {reviews.map((review) => (
-                <TableRow key={review.id}>
-                  <TableCell>
-                    {review.product ? (
-                      <Link
-                        href={ROUTES.product(review.product.slug)}
-                        className="font-medium hover:underline"
-                      >
-                        {review.product.name}
-                      </Link>
-                    ) : (
-                      <span className="text-muted-foreground">—</span>
-                    )}
-                  </TableCell>
-                  <TableCell>{review.buyer.displayName}</TableCell>
-                  <TableCell>
-                    <RatingStars readOnly value={review.rating} size="sm" />
-                  </TableCell>
-                  <TableCell className="max-w-xs">
-                    {review.title ? (
-                      <p className="truncate text-sm font-medium">
-                        {review.title}
-                      </p>
-                    ) : null}
-                    {review.comment ? (
-                      <p className="text-muted-foreground truncate text-xs">
-                        {review.comment}
-                      </p>
-                    ) : (
-                      <span className="text-muted-foreground text-xs">—</span>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-muted-foreground text-xs whitespace-nowrap">
-                    {formatOrderDate(review.createdAt)}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+            ))}
+          </TableBody>
+        </Table>
       </div>
 
       <Pagination

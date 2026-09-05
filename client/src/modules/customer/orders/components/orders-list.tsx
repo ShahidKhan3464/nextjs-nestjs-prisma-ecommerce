@@ -199,7 +199,7 @@ export function OrdersList() {
         <Table>
           <TableHeader>
             <TableRow>
-                  <TableHead>Order</TableHead>
+              <TableHead>Order</TableHead>
               <TableHead>Store</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Payment</TableHead>
@@ -230,7 +230,9 @@ export function OrdersList() {
                   <TableCell className="min-w-36 whitespace-normal">
                     {order.store ? (
                       <div className="space-y-0.5">
-                        <p className="text-sm font-medium">{order.store.name}</p>
+                        <p className="text-sm font-medium">
+                          {order.store.name}
+                        </p>
                         <p className="text-muted-foreground text-xs">
                           {order.store.sellerName}
                           {order.store.verified ? " · Verified" : ""}

@@ -3,12 +3,7 @@
 import { ProfileForm } from "./profile-form";
 import { AddressesManager } from "@/modules/buyer/addresses";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import {
-  Tabs,
-  TabsList,
-  TabsTrigger,
-  TabsContent,
-} from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 export function ProfileView() {
   const router = useRouter();

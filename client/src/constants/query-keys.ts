@@ -3,8 +3,6 @@ export const queryKeys = {
     all: ["products"] as const,
     list: (filters: Record<string, unknown>) =>
       [...queryKeys.products.all, "list", filters] as const,
-    bySlug: (slug: string) =>
-      [...queryKeys.products.all, "slug", slug] as const,
     categories: ["products", "categories"] as const,
   },
   stores: {

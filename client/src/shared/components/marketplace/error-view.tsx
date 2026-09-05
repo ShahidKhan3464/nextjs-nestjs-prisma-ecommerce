@@ -25,10 +25,7 @@ export function ErrorView({
         className
       )}
     >
-      <AlertCircle
-        className="text-muted-foreground mb-3 size-8"
-        aria-hidden
-      />
+      <AlertCircle className="text-muted-foreground mb-3 size-8" aria-hidden />
       <p className="font-medium">{title}</p>
       {message ? (
         <p className="text-muted-foreground mt-2 max-w-md text-sm">{message}</p>

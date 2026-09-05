@@ -2,7 +2,6 @@ import type {
   Review,
   ReviewBuyer,
   ReviewSummary,
-  StoreReputation,
   RatingDistribution,
   ReviewProductSummary,
 } from "@/modules/buyer/reviews/types";
@@ -42,14 +41,6 @@ export type NestReviewSummaryPayload = {
     4?: number;
     5?: number;
   };
-};
-
-export type NestStoreReputationPayload = {
-  storeId: string | number;
-  averageRating: number;
-  totalReviews: number;
-  productsSold: number;
-  verified: boolean;
 };
 
 function mapBuyer(buyer: NestReviewBuyer): ReviewBuyer {
@@ -101,17 +92,5 @@ export function normalizeNestReviewSummaryPayload(
     averageRating: Number(row.averageRating ?? 0),
     totalReviews: Number(row.totalReviews ?? 0),
     distribution,
-  };
-}
-
-export function normalizeNestStoreReputationPayload(
-  row: NestStoreReputationPayload
-): StoreReputation {
-  return {
-    storeId: String(row.storeId),
-    averageRating: Number(row.averageRating ?? 0),
-    totalReviews: Number(row.totalReviews ?? 0),
-    productsSold: Number(row.productsSold ?? 0),
-    verified: Boolean(row.verified),
   };
 }

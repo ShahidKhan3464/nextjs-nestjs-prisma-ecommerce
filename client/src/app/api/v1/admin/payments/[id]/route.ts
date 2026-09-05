@@ -4,10 +4,7 @@ import { getBackendUrl } from "@/lib/backend-url";
 import { jsonMessage, jsonOk } from "@/lib/api-response";
 import { mapNestPayment } from "@/lib/nest-payment-mapper";
 import type { Payment } from "@/modules/admin/payments/types";
-import {
-  nestErrorMessage,
-  forwardAuthorization,
-} from "@/lib/nest-http";
+import { nestErrorMessage, forwardAuthorization } from "@/lib/nest-http";
 
 type Props = { params: Promise<{ id: string }> };
 

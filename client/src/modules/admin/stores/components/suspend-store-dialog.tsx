@@ -28,10 +28,7 @@ import {
   AlertDialogContent,
   AlertDialogDescription,
 } from "@/components/ui/alert-dialog";
-import {
-  suspendStoreSchema,
-  type SuspendStoreFormValues,
-} from "../schemas";
+import { suspendStoreSchema, type SuspendStoreFormValues } from "../schemas";
 
 type Props = {
   open: boolean;

@@ -64,7 +64,12 @@ function mapDocument(raw: unknown): SellerDocument | null {
   const id = asNumber(o.id);
   const type = o.type;
   const fileRaw = o.file;
-  if (id == null || typeof type !== "string" || !fileRaw || typeof fileRaw !== "object") {
+  if (
+    id == null ||
+    typeof type !== "string" ||
+    !fileRaw ||
+    typeof fileRaw !== "object"
+  ) {
     return null;
   }
   const f = fileRaw as Record<string, unknown>;
@@ -109,9 +114,7 @@ export function mapNestSellerProfile(raw: unknown): SellerProfile | null {
   }
 
   const documents = Array.isArray(o.documents)
-    ? o.documents
-        .map(mapDocument)
-        .filter((d): d is SellerDocument => d != null)
+    ? o.documents.map(mapDocument).filter((d): d is SellerDocument => d != null)
     : [];
 
   return {
