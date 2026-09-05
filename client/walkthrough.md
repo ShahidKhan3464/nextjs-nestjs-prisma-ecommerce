@@ -296,7 +296,7 @@ Guards: `requireUser` / `requireAdmin` / `requireSeller` (`lib/require-auth.ts`)
 | `orders`, `orders/[id]`, `orders/[id]/cancel` | GET, POST | Order history |
 | `orders/checkout`, `orders/checkout/complete`, `orders/checkout/cancel` | POST | Checkout flow |
 | `notifications`, `notifications/unread-count`, `notifications/read-all`, `notifications/[id]/read` | GET, PATCH | Notifications |
-| `reviews`, `reviews/[id]`, `reviews/product/[productId]`, `reviews/product/[productId]/summary`, `reviews/store/[storeId]/reputation` | GET, POST, PATCH, DELETE | Reviews |
+| `reviews`, `reviews/[id]`, `reviews/product/[productId]`, `reviews/product/[productId]/summary` | GET, POST, PATCH, DELETE | Reviews |
 | `seller-profile`, `seller-profile/me`, `seller-profile/me/documents` | GET, POST, PATCH | Become-seller |
 
 ### Seller — `/api/v1/seller/`

@@ -1,36 +1,33 @@
 # Backend Code Review — Atelier Commerce (Prisma Ecommerce API)
 
-**Reviewed:** 2026-09-05 | **Commit:** `c658e6c637b56c2533871d87163a5b2147be735f` | **Branch:** `marketplace-v2`
-**Stack:** Node.js + NestJS 11 + TypeScript 5.7 + Prisma 7 + PostgreSQL + Stripe 22 + bcrypt + Joi + Helmet
-**Scope:** `server/` only (Nest API, Prisma schema/migrations, config, tests). The Next.js BFF under `client/` was not scored. Generated Prisma client, `node_modules`, and `dist` were not treated as reviewable source.
+**Reviewed:** 2026-09-06 | **Commit:** `3c29c84b8bdbe7111fc1d726c3f2c8274af45034` | **Branch:** `marketplace-v2`
+**Stack:** Node.js 24 (local) · NestJS 11 · TypeScript 5.7 (strict) · Prisma 7 · PostgreSQL · Stripe · bcrypt · `@nestjs/jwt` (HS256)
+**Scope:** `server/` (the NestJS API) plus repo-level deploy/CI artifacts that affect this API. The Next.js client / BFF under `client/` was not scored. Generated Prisma client, `node_modules`, `dist`, coverage, and prior review reports were not used as evidence.
 
 ---
 
 ## The Short Version
 
-This is a multi-vendor e-commerce API (catalog, cart, checkout, orders, payments, sellers, stores) with a real domain structure and several production-minded patterns already in place: hashed rotating refresh tokens, Stripe webhook signature checks, checkout stock locks, and a global validation pipe that strips unknown fields.
+This is a real multi-vendor commerce API: catalog, carts, checkout with Stripe, orders, COD, refunds-as-ledger, seller onboarding, and private file downloads. The domain layout and the auth/checkout work are well above average for a shipping-fast Nest app. Access tokens are short-lived, refresh tokens are hashed and rotated with family revocation, ownership checks live in dedicated providers, money is `DECIMAL(10,2)` in Postgres, and checkout takes row locks before reserving stock.
 
-The code is better than most apps at this stage. The things that will hurt you in production are not “the architecture is wrong.” They are ops and hardening: there is no CI pipeline and no container story, rate limits live in process memory (so they get weaker as you add pods), checkout idempotency is optional, file uploads trust the `Content-Type` header, and TypeScript is not running `strict`.
+What will hurt you in production is not a missing `if`. It is operations: there is no CI, no container definition, rate limits live in process memory, uploads live on local disk, and the database pool is whatever `pg` defaults to. Those are the things that fail the first time you run two app instances or a rolling deploy.
 
-There are **no blockers** and **no confirmed criticals**. It can go to staging. It should not go to production until the week-1 list below is done — especially CI, a required checkout idempotency key, a stronger JWT secret policy, and a shared rate-limit store if you run more than one instance.
+**Overall Rating: 7.0 / 10 — FIX FIRST**
 
-**Overall Rating: 6.0 / 10 — FIX FIRST**
+**Blockers found:** 0 | **Critical:** 0 | **High:** 9 | **Medium:** 24 | **Low:** 16
 
-**Blockers found:** 0 | **Critical:** 0 | **High:** 14 | **Medium:** 18 | **Low:** 9
+No hard cap applied (no blockers, no criticals). Weighted arithmetic is shown under the scorecard.
 
 ---
 
 ## What's Already Good
 
-- **Default-deny auth, then explicit public routes.** `AuthenticationGuard` is a global `APP_GUARD` and defaults to bearer. Public endpoints opt out with `@Auth(AuthType.NONE)` — `server/src/modules/auth/guards/authentication/authentication.guard.ts:17-36`.
-- **Refresh tokens are hashed, rotated, and reuse-detected.** `RefreshTokenStoreProvider` stores SHA-256 hashes, rotates in a transaction, and revokes the whole family on reuse — `server/src/modules/auth/providers/refresh-token-store.provider.ts:9-110`.
-- **Access tokens are not trusted blindly.** Every request re-loads the user and rejects deleted/blocked accounts — `server/src/modules/auth/guards/access-token/access-token.guard.ts:53-67`. Roles come from the database, not a stale JWT claim.
-- **Checkout concurrency is taken seriously.** Variants are `SELECT … FOR UPDATE` in sorted id order, stock is reserved atomically, and abandoned sessions are swept with a DB job lock — `server/src/modules/orders/utils/lock-product-variants.util.ts:10-24`, `server/src/modules/orders/providers/expire-abandoned-checkouts.provider.ts:62-68`.
-- **Stripe webhooks verify the signature** before mutating state — `server/src/modules/orders/providers/stripe-webhook.provider.ts:27-43`.
-- **Money is `DECIMAL(10,2)` in Postgres**, not `FLOAT` — `server/prisma/schema.prisma:160`, `:315`, `:367`.
-- **Ownership is a first-class pattern** (`*-ownership.provider.ts` for orders, payments, products, variants, stores, reviews, addresses, notifications) instead of scattered `if (user.role === 'admin')` checks.
-- **Env validation fails the boot** via Joi — `server/src/config/environment.validation.ts:3-45`. Weak JWT placeholder values are rejected.
-- **Private uploads are blocked on the public static mount** and served through an ownership-checked download — `server/src/main.ts:49-56`, `server/src/modules/files/providers/secure-file-access.provider.ts:59-70`.
+- **Auth is thought through.** Separate access / refresh / reset secrets, HS256 pinned at verify time, refresh tokens stored as SHA-256 hashes, rotation with reuse detection that revokes the family, `tokenVersion` checked on every authenticated request against a live user row (blocked / soft-deleted / password-changed users die immediately). See `server/src/modules/auth/`.
+- **Checkout is a use-case, not a controller script.** Idempotency keys, `SELECT … FOR UPDATE` in stable id order, stock reserve/release, Stripe PaymentIntent created *outside* the DB transaction, webhook signature verification, and a claim-update so client + webhook cannot double-complete. See `create-checkout.provider.ts`, `lock-product-variants.util.ts`, `stripe-webhook.provider.ts`.
+- **Authorization is centralized, not copy-pasted `if (role === 'admin')`.** `RolesGuard` is global; products/orders/payments/reviews/addresses/files have `*-ownership.provider.ts`. Public catalog mutations stay seller-owned.
+- **Inbound validation is actually on.** Global `ValidationPipe` with `whitelist` + `forbidNonWhitelisted` + `transform`. Pagination is capped at 100. Uploads check magic bytes, not just `Content-Type`.
+- **Schema is not “hope the app is correct.”** Foreign keys, named unique constraints, indexes on hot FKs, `CHECK` on ratings/amounts/quantities, money as `Decimal(10,2)`, migrations under `prisma/migrations/`.
+- **House style is consistent enough to teach from.** Feature modules, thin services, one provider per action, generated Prisma types, response DTOs that strip passwords. Keep doing that.
 
 ---
 
@@ -38,49 +35,44 @@ There are **no blockers** and **no confirmed criticals**. It can go to staging. 
 
 | # | Module | Score | Weight | The Gist |
 |---|--------|-------|--------|----------|
-| 1 | Project Structure & Architecture | 8/10 | 8% | Domain modules + thin services + one-provider-per-use-case. Keep this. |
-| 2 | Naming Conventions & Code Style | 8/10 | 5% | Consistent kebab-case Nest style. Legacy DB constraint names are the only mess. |
-| 3 | Type Safety | 6/10 | 6% | Prisma types are generated, but `strict` is off and `noImplicitAny` is false. |
-| 4 | API Design & Response Consistency | 6/10 | 7% | One success envelope. Checkout idempotency is optional. Money math is JS `number`. |
-| 5 | Request Validation & Input Handling | 6/10 | 7% | Global whitelist pipe is excellent. Uploads trust `Content-Type`. |
-| 6 | Authentication & JWT Lifecycle | 6/10 | 10% | Strong refresh/session design. Same secret for every token type; bcrypt cost is default 10. |
-| 7 | Authorization & Access Control | 7/10 | 8% | Ownership providers + global `RolesGuard`. Most `:id` routes check access. Tests are thin. |
-| 8 | Security (OWASP API Top 10) | 5/10 | 10% | Helmet/CORS/secrets look fine. In-memory throttle and MIME trust will bite at scale. |
-| 9 | Configuration & Env Validation | 7/10 | 5% | Joi fail-fast. JWT minimum length is 16 characters — too short for HS256. |
-| 10 | Database Schema & Constraints | 7/10 | 8% | FKs, indexes, Decimal money, versioned migrations. Missing CHECKs and `timestamptz`. |
-| 11 | Query Performance, N+1 & Indexing | 5/10 | 7% | List endpoints paginate. `rating_desc` loads every matching product id into memory. |
-| 12 | Error Handling, Logging & Observability | 6/10 | 6% | Request ids + safe filters. Nest `Logger`, no metrics, no error tracker. |
-| 13 | Testing & Quality Gates | 4/10 | 6% | 19 focused unit specs on checkout/auth. No e2e. No CI that runs them. |
-| 14 | DevOps, CI/CD & Production Readiness | 3/10 | 5% | No Dockerfile, no GitHub Actions, no deploy/runbook in-repo. |
-| 15 | Documentation & Maintainability | 6/10 | 2% | ADRs and walkthroughs are real. `server/README.md` is still the Nest starter text. |
-| | **Weighted Overall** | **6.0/10** | 100% | |
+| 1 | Project Structure & Architecture | 8/10 | 8% | Domain modules + provider-per-use-case. One oversized seed file. |
+| 2 | Naming Conventions & Code Style | 8/10 | 5% | Kebab-case Nest files; a few singular/plural controller mismatches. |
+| 3 | Type Safety | 8/10 | 6% | `strict: true`, no `any` at API boundaries; a handful of `as unknown as T`. |
+| 4 | API Design & Response Consistency | 7/10 | 7% | One success envelope; money goes out as JS `number`; some lists unbounded. |
+| 5 | Request Validation & Input Handling | 8/10 | 7% | Global whitelist pipe; nested checkout DTO; file signatures. |
+| 6 | Authentication & JWT Lifecycle | 8/10 | 10% | Strong lifecycle; `logoutAll` unused; in-memory throttle; password max 30. |
+| 7 | Authorization & Access Control | 8/10 | 8% | Ownership providers + webhook signatures. Register leaks existing user ids. |
+| 8 | Security (OWASP API Top 10) | 6/10 | 10% | Basics are solid; multi-instance limits, disk uploads, refund/Stripe drift. |
+| 9 | Configuration & Env Validation | 8/10 | 5% | Joi fail-fast and weak-JWT rejection. A few leftover `process.env` reads. |
+| 10 | Database Schema & Constraints | 7/10 | 8% | FKs, CHECKs, Decimal. Soft-delete vs UNIQUE email. No pool settings. |
+| 11 | Query Performance, N+1 & Indexing | 7/10 | 7% | Trigram search exists; no Redis; COUNT(*) on every list; per-request user fetch. |
+| 12 | Error Handling, Logging & Observability | 6/10 | 6% | Safe 500s + request ids. Nest `Logger`, not JSON. No metrics/Sentry. |
+| 13 | Testing & Quality Gates | 5/10 | 6% | 39 unit specs on auth/checkout/payments. No e2e. No CI gate. |
+| 14 | DevOps, CI/CD & Production Readiness | 4/10 | 5% | No Dockerfile, no GitHub Actions, no deploy story in-repo. |
+| 15 | Documentation & Maintainability | 5/10 | 2% | ADRs + walkthrough exist; `server/README.md` is still the Nest starter. |
+| | **Weighted Overall** | **7.0/10** | 100% | |
 
-Arithmetic: `(8×8 + 8×5 + 6×6 + 6×7 + 6×7 + 6×10 + 7×8 + 5×10 + 7×5 + 7×8 + 5×7 + 6×6 + 4×6 + 3×5 + 6×2) / 100 = 603 / 100 = 6.0`.
+**Arithmetic:** `(8×8 + 8×5 + 8×6 + 7×7 + 8×7 + 8×10 + 8×8 + 6×10 + 8×5 + 7×8 + 7×7 + 6×6 + 5×6 + 4×5 + 5×2) / 100 = 702 / 100 = 7.0`
 
-No hard cap applied (no BLOCKER anywhere, no CRITICAL anywhere). Module 13 is not the “no tests at all → max 3” case — tests exist, they just do not gate a release.
+No hard cap applied.
 
 ---
 
 ## Fix These First
 
-If you only have one week, work top to bottom.
+If you only have one week before staging, work top to bottom.
 
 | # | Issue | Severity | Where | Effort | Why it matters |
 |---|-------|----------|-------|--------|----------------|
-| 1 | Checkout idempotency key is optional | HIGH | `server/src/modules/orders/providers/create-checkout.provider.ts:50-51` | 2h | Double-click / retry creates a second stock reservation and Stripe PaymentIntent. |
-| 2 | Rate limiter is in-memory | HIGH | `server/src/app.module.ts:60-66` | 4h | N pods = N× the login/OTP budget. Credential stuffing gets easier as you scale. |
-| 3 | JWT secret min length is 16; one secret for all token types | HIGH | `server/src/config/environment.validation.ts:21-31` | 2h | 16 chars is not 256 bits. A stolen refresh token verifies with the same key as access (mitigated by `typ`, not by crypto isolation). |
-| 4 | Uploads trust `Content-Type`, not magic bytes | HIGH | `server/src/integrations/storage/multer/image-upload.multer.ts:41-51` | 4h | A `.php`/HTML payload with `image/jpeg` lands on disk under `/uploads`. |
-| 5 | `sort=rating_desc` loads every matching product id | HIGH | `server/src/modules/products/providers/get-products.provider.ts:174-205` | 4h | Catalog growth turns the public list into a full-table read and in-process sort. |
-| 6 | No CI pipeline | HIGH | repo root (no `.github/`) | 1 day | Lint/tests/build never block a merge. A broken main is how production incidents start. |
-| 7 | No Dockerfile / non-root image | HIGH | repo root | 4h | You cannot repeatably ship what you cannot build. Root containers are the default if someone improvs one. |
-| 8 | Prisma/pg pool and statement timeout not set | HIGH | `server/src/prisma/prisma.service.ts:11-16` | 2h | Default pool × instance count can exhaust Postgres `max_connections` and take the API down. |
-| 9 | Money arithmetic is JS `number` | HIGH | `server/src/modules/orders/utils/order-pricing.util.ts:8-15` | 4h | DB is Decimal; the app still does `subtotal * 100`. That is how cent drift appears. |
-| 10 | bcrypt uses `genSalt()` default (cost 10) | HIGH | `server/src/common/crypto/providers/bcrypt.provider.ts:7-9` | 30 min | Cost 10 is 2010-era. GPU stuffing is cheaper than you think. |
-| 11 | Access tokens survive password change for their full TTL | HIGH | `server/src/modules/users/providers/change-password.provider.ts:39-45` | 4h | Refresh is revoked. A stolen 15-minute access token still works. |
-| 12 | Admin refund is check-then-act without a row lock | HIGH | `server/src/modules/payments/providers/payment-lifecycle.provider.ts:188-229` | 2h | Two concurrent admin refunds can over-state `refundedAmount` (ledger lie; does not call Stripe today). |
-| 13 | `rating` / `stockQuantity` / amounts have no DB CHECK | HIGH | `server/prisma/schema.prisma:189`, `:467` | 4h | App validation is a race; a bad script writes `rating = 99` or negative stock forever. |
-| 14 | Staging CORS is “reflect any origin” unless `NODE_ENV=production` | HIGH | `server/src/main.ts:40-47` | 1h | A staging box left on `development` lets any website call the API with cookies/credentials. |
+| 1 | No CI pipeline | HIGH | repo root (no `.github/`) | 1 day | Broken tests and `npm audit` findings merge unnoticed. |
+| 2 | No production image / runbook | HIGH | no `Dockerfile` | 1 day | You cannot deploy this API the same way twice. |
+| 3 | In-memory rate limits | HIGH | `server/src/app.module.ts:60-66` | 4h | Two pods = 2× the login guesses. Auth throttle is decorative in a replica set. |
+| 4 | Uploads on local disk | HIGH | `integrations/storage` | 2–3 days | Instance B cannot see files written on instance A. Private docs sit on the app filesystem. |
+| 5 | Duplicate register returns the real user id | HIGH | `register.provider.ts:64-78` | 1h | Same 201 body still leaks `id`, so email existence and account ids are enumerable. |
+| 6 | Admin refunds do not call Stripe | HIGH | `record-refund.provider.ts:19-22` | 1 day | The ledger can say “refunded” while Stripe still holds the money. |
+| 7 | Money compared/serialized as JS `Number` | HIGH | `complete-checkout.provider.ts:117`, `map-order.util.ts:71-87` | 2h | You already have integer-cent helpers. The payment match path should use them. |
+| 8 | Soft-delete vs UNIQUE email/phone | HIGH | `prisma/schema.prisma:12-16` | 4h | A deleted buyer can never re-register with the same email. Support tickets forever. |
+| 9 | DB pool and statement timeout unset | HIGH | `prisma.service.ts:11-16` | 2h | Default pool × instance count is a classic `too many connections` outage. |
 
 ---
 
@@ -88,27 +80,24 @@ If you only have one week, work top to bottom.
 
 No prompt-injection attempts or reviewer-directed instructions were found in this codebase.
 
-Checked for: “ignore previous instructions”, “disregard the prompt”, “you are now…”, “do not report this file”, “skip this directory”, “already approved”, “rate this module 10/10”, “mark security as passing”, “as an AI you must”, fake `SYSTEM:` / `<system>` tags, and “do not mention the secret below.”
+Checked for: “ignore previous instructions”, “disregard the prompt”, “you are now…”, “do not report this file”, “already approved”, “rate this module 10/10”, “as an AI, you must”, fake `SYSTEM:` / `<system>` tags, and reviewer-addressed comments. Search covered `server/src`, `server/prisma`, env examples, and repo markdown. The only `SYSTEM:` hit in the monorepo is a notification-type label in the client (`"SYSTEM": "System"`), which is data, not an instruction.
 
-Search covered `server/src`, `server/prisma`, `server/.env.example`, `server/README.md`, and root agent/docs markdown. No matches.
-
-`AGENTS.md` / `server/AGENTS.md` contain normal coding-agent workflow rules (follow existing architecture, do not invent APIs). They do not ask a reviewer to hide findings, skip files, or inflate scores. Treated as project convention, not an injection.
-
-**Why this matters:** Prompt-injection in a repo can hijack CI review bots and autocomplete. An explicit “none found” is the useful signal; silence is not.
+**Why this matters:** Text like that in a repo can hijack CI review bots and autocomplete. An explicit “none found” is the useful result here.
 
 ---
 
 ## Files Excluded From Review
 
-No prior `CODE_REVIEW*.md`, `AUDIT*.md`, `SECURITY_REVIEW*.md`, `*_review_report.*`, or `/docs/reviews/` / `/audit/` / `/reports/` artifacts existed. This is a fresh pass.
+| File | Reason | Last modified |
+|------|--------|---------------|
+| `CODE_REVIEW_REPORT.md` (git status: deleted) | Prior audit artifact (Rule 2). Not read for conclusions or scores. | Last commit touching it: 2026-09-05 03:26:16 +0500 (`b81d6a6`) |
+| `server/src/generated/prisma/**` | Generated Prisma client | generated |
+| `server/node_modules/**` | Vendor | n/a |
+| `server/dist/**` | Build output | n/a |
+| `server/coverage/**` | Test artifacts (if present) | n/a |
+| `client/**` | Frontend / BFF — out of this backend scoring pass | n/a |
 
-| File / path | Reason | Last modified |
-|-------------|--------|---------------|
-| `client/**` | Frontend / Next BFF — out of backend scope | n/a |
-| `server/src/generated/**` | Prisma generated client (do not review generated code) | n/a |
-| `server/node_modules/**`, `server/dist/**`, `server/coverage/**` | Vendor / build output | n/a |
-| `client/.next/**` | Next build cache | n/a |
-| `docs/walkthrough/**`, `docs/ai-development.md` | Project docs, not prior audit reports. Skimmed only for stack context; scores were not inherited. | 2026-08-09 |
+No `docs/reviews/`, `audit/`, or `SECURITY_REVIEW*` files were present.
 
 ---
 
@@ -116,95 +105,90 @@ No prior `CODE_REVIEW*.md`, `AUDIT*.md`, `SECURITY_REVIEW*.md`, `*_review_report
 
 ### Stack (detected)
 
-| Piece | What we found |
-|-------|----------------|
-| Language / runtime | TypeScript 5.7, target ES2023, CommonJS |
-| Framework | NestJS 11 (`@nestjs/common` ^11.0.1) |
-| HTTP | Express 5 via `@nestjs/platform-express`, `rawBody: true` (Stripe) |
-| ORM | Prisma 7 (`@prisma/adapter-pg`) |
-| Database | PostgreSQL (26 models in `schema.prisma`) |
-| Auth | `@nestjs/jwt` + bcrypt; not Clerk |
-| Payments | Stripe SDK ^22 |
-| Validation | `class-validator` + global `ValidationPipe`; env via Joi |
-| Rate limit | `@nestjs/throttler` v6, in-memory |
+| Piece | What it is |
+|-------|------------|
+| Runtime | Node.js (local `v24.14.1`); TypeScript target ES2023 |
+| Framework | NestJS 11 (`@nestjs/platform-express`, Express 5) |
+| ORM | Prisma 7 (`@prisma/adapter-pg` + `pg`) |
+| Database | PostgreSQL |
+| Auth | `@nestjs/jwt` HS256, bcrypt cost 12 |
+| Payments | Stripe SDK `^22`, plus COD |
 | Mail | `@nestjs-modules/mailer` + nodemailer |
-| Package manager | npm (`server/package-lock.json` present) |
-| Cache / queue | None |
-| Tests | Jest + ts-jest; 19 `*.spec.ts` files; `test:e2e` script exists, no `server/test/` harness |
+| Files | Local disk under `uploads/` |
+| Validation | `class-validator` + global `ValidationPipe`; env via Joi |
+| Rate limit | `@nestjs/throttler` in-memory |
+| Package manager | npm (`package-lock.json` present) |
+| Cache / queue | None. Abandoned-checkout sweep uses `setInterval` + a Postgres `job_locks` row |
 
 ### Size
 
 | Metric | Count |
-|--------|-------|
-| TypeScript source files (`server/src`, excl. generated) | 418 |
-| Lines of TypeScript | ~28,400 |
+|--------|------:|
+| `server/src/**/*.ts` excluding generated | 434 files / ~29,900 LOC |
+| HTTP handlers (`@Get/@Post/@Patch/@Put/@Delete`) | 132 |
+| Controllers | 17 |
 | Prisma models | 26 |
-| Controllers | 17 unique |
-| HTTP handlers (Get/Post/Patch/Delete) | ~70 unique (decorator count is higher because Windows indexed some paths twice) |
-| Spec files | 19 |
-| E2E files | 0 |
+| Jest `*.spec.ts` | 39 |
+| e2e harness (`server/test/`) | 0 |
+| Migrations | 7 |
 
-### Directory tree (3 levels, exclusions applied)
+### Directory tree (3 levels, vendor dirs omitted)
 
 ```text
 server/
 ├── prisma/
-│   ├── schema.prisma
-│   └── migrations/
-│       ├── 20260717000000_baseline
-│       ├── 20260804170000_buyer_addresses_and_notification_types
-│       ├── 20260805220000_production_readiness_indexes
-│       └── 20260904220000_checkout_hardening
+│   ├── migrations/          (7 versioned migrations + lock)
+│   └── schema.prisma
 ├── src/
 │   ├── app.module.ts
 │   ├── main.ts
-│   ├── common/          (audit, crypto, filters, guards, pagination, …)
-│   ├── config/
+│   ├── common/              guards, filters, pagination, crypto, audit, jobs
+│   ├── config/              Joi + namespaced ConfigModule
+│   ├── generated/           Prisma client (do not edit)
 │   ├── health/
-│   ├── integrations/    (mail, storage, stripe)
-│   ├── modules/         (see domains below)
+│   ├── integrations/        mail, stripe, storage
+│   ├── modules/             auth, users, sellers, stores, products,
+│   │                        product-variants, categories, carts, wishlists,
+│   │                        orders, payments, reviews, addresses,
+│   │                        notifications, files, dashboard
 │   ├── prisma/
 │   └── seeders/
-├── package.json
-├── tsconfig.json
+├── uploads/                 local public + private files
+├── .env.example
 ├── eslint.config.mjs
-└── .env.example
+├── knip.json
+└── README.md                still NestJS starter text
 ```
 
-### Domains the app is actually organised into
+No `Dockerfile`, no `.github/workflows`, no Redis, no Sentry.
 
-`auth`, `users`, `sellers`, `stores`, `categories`, `products`, `product-variants`, `files`, `carts`, `wishlists`, `addresses`, `orders`, `payments`, `reviews`, `notifications`, `dashboard`, plus `health`, `seeders`, and integrations (`mail`, `stripe`, `storage`).
+### Request path (traced)
 
-### One request, end to end
+A typical authenticated write:
 
-**Example: `POST /auth/login` then `GET /orders/:id`**
+1. `bootstrap()` in `server/src/main.ts` — `rawBody: true` (Stripe), shutdown hooks, `trust proxy 1`, request id, helmet, compression, CORS from `FRONTEND_URL`, private `/uploads/{sellers,customer-documents}` 404, static `/uploads`, global `ValidationPipe`.
+2. Global guards: `ThrottlerGuard` (`app.module.ts`) → `AuthenticationGuard` (default `AuthType.BEARER`) → `RolesGuard` (allow if no `@Roles`).
+3. `AccessTokenGuard` verifies JWT with pinned HS256 + access secret, requires `typ=ACCESS`, loads the user, rejects deleted/blocked, compares `tokenVersion`.
+4. Controller (HTTP + Swagger + `@ActiveUser()`) → service facade → one provider.
+5. `PrismaService` (`PrismaClient` + `PrismaPg` adapter).
+6. `DataResponseInterceptor` wraps success as `{ data, version }`.
+7. Errors: `HttpExceptionFilter` / `PrismaExceptionFilter` / `AllExceptionsFilter` → `{ statusCode, message, error, requestId }`.
 
-1. `bootstrap()` in `main.ts` creates the Nest app, enables shutdown hooks, `trust proxy = 1`, request-id middleware, Helmet, compression, CORS, blocks private `/uploads/{sellers,customer-documents}`, mounts public uploads, installs the global `ValidationPipe` (`whitelist`, `forbidNonWhitelisted`, `transform`).
-2. `AppModule` registers `ThrottlerGuard` and `DataResponseInterceptor`. `AuthModule` registers `AuthenticationGuard`. `CommonModule` registers `RolesGuard` and exception filters.
-3. Login hits `AuthController.login` (`@Auth(AuthType.NONE)`, 10 req / 60s). `LoginProvider` loads the user, compares bcrypt against a dummy hash when the email is unknown, issues access + refresh, persists the refresh hash.
-4. A later `GET /orders/:id` sends `Authorization: Bearer …`. `AccessTokenGuard` verifies the JWT, requires `typ === ACCESS`, loads the user, rejects blocked/deleted, attaches `{ sub, email, roles }` to the request.
-5. `RolesGuard` sees no `@Roles` on `findOne` → any authenticated user may proceed.
-6. `OrdersController.findOne` → `OrdersService` → `GetOrderProvider.findOne` → `OrderOwnershipProvider.assertCanView` (buyer / store seller / super-admin).
-7. Prisma reads the order. `DataResponseInterceptor` wraps the body as `{ data, version }`.
+**Login → refresh → logout:** `POST /auth/login` (`LoginProvider`, dummy bcrypt hash for unknown emails) → `GenerateTokensProvider` persists hashed refresh → `POST /auth/refresh` verifies refresh secret + store + rotation → `POST /auth/logout` revokes the refresh family (does **not** bump `tokenVersion`).
 
-**Create path traced:** `POST /orders/checkout` → DTO + optional idempotency → expire stale sessions → lock variants → reserve stock → create session/orders/payments → Stripe PaymentIntent → return `clientSecret`.
+**Create:** `POST /products` (`@Roles(SELLER)`) → `ProductOwnershipProvider` binds the product to the authenticated seller’s store → Prisma.
 
-**List path traced:** `GET /products` (public) → `QueryProductDto` + pagination cap 100 → `findMany` with `PRODUCT_LIST_INCLUDE` → review stats batched → `{ data, page, limit, total }` inside the envelope.
+**List:** `GET /products` (`AuthType.NONE`) → `GetProductsProvider` with `PaginationQueryDto` (max 100) + optional trigram-backed `search`.
 
 ### House style
 
-Feature folders under `src/modules/<domain>/` with `*.controller.ts`, `*.service.ts` (facade), `providers/`, `dto/`, `constants/`, `utils/`. Files are kebab-case. Classes are PascalCase. Env is `SCREAMING_SNAKE_CASE`. That is applied consistently — deviations below are real, not taste.
+Kebab-case files (`create-checkout.provider.ts`). Controllers stay thin. Services delegate. Domain rules live in `providers/`. DTOs are separate from Prisma models. Tables are `snake_case` via `@@map`; TypeScript is camelCase. Soft-delete (`deletedAt`) on User, SellerProfile, Store, Category, Product only.
 
 ### Notably absent
 
-- Dockerfile / docker-compose
-- `.github/workflows` (or any CI config)
-- Redis / Bull / any queue
-- Structured JSON logger (Pino/Winston)
-- Sentry / OpenTelemetry / Prometheus
-- `.editorconfig`
-- `server/test/` e2e harness (script exists, files do not)
-- Root `package.json` (this is a two-folder monorepo, not an npm workspace)
+Dockerfile, CI, e2e tests, Redis (or any shared rate-limit store), object storage, metrics, error tracking, secret manager wiring, `iss`/`aud` JWT claims, MFA, account lockout, `logoutAll` HTTP route (the method exists).
+
+`server/AGENTS.md` still says there are no checked-in `*.spec.ts` files. That is false today (39 specs). Code wins.
 
 ---
 
@@ -212,618 +196,532 @@ Feature folders under `src/modules/<domain>/` with `*.controller.ts`, `*.service
 
 ### Module 1 — Project Structure & Architecture — **8/10**
 
-**Verdict in one paragraph:** This is a clean Nest modular monolith. Controllers stay thin, services delegate, providers own one use-case. That is the right shape for this size. Do not introduce a repository/CQRS layer.
+**Verdict in one paragraph:** This is a coherent Nest domain modular monolith. HTTP → guard → controller → thin service → provider → Prisma is applied consistently. You do not need a repository layer; the project correctly does not have one.
 
-**What's working:** Domain folders match the business. Integrations (`mail`, `stripe`, `storage`) stay adapters. Shared kernel (`common/pagination`, `common/crypto`, `common/audit`, `common/filters`) is small and purposeful. ADRs document the seams.
+**What's working:** `src/modules/*` matches real domains. Circular refresh-token use is broken with `AuthTokensModule` instead of a sneaky `forwardRef` soup. Integrations stay under `src/integrations/{mail,stripe,storage}`.
 
 **Findings:**
 
-#### 1.1 Stripe call sits outside the checkout transaction — `MEDIUM`
-**Where:** `server/src/modules/orders/providers/create-checkout.provider.ts:106-272`
+#### 1.1 Seed data file is a god file — `LOW`
+**Where:** `server/src/seeders/data/demo-seed.data.ts` (~1241 lines)
 
-**What's happening:**
+**What's happening:** One data file holds the entire demo catalog. Fine for a seeder; painful to review and easy to paste production-looking PII into.
+
+**Why it matters:** Oversized seed files become the place secrets and “real-looking” emails hide.
+
+**Fix:** Keep it, but never put real customer data in it. Split by domain if it keeps growing.
+
+**Effort:** 1h when you next touch demo data.
+
+#### 1.2 Demo passwords are hardcoded and logged — `MEDIUM`
+**Where:** `server/src/seeders/data/demo-seed.data.ts:14-16`, `seed-sellers.provider.ts:189`, `seed-customers.provider.ts:59`
+
 ```ts
-const { sessionId, orderIds } = await this.prisma.$transaction(/* reserve stock, create rows */);
-try {
-  paymentIntent = await this.stripeService.createPaymentIntent(/* ... */);
-} catch {
-  await this.rollbackCheckout(sessionId, orderIds);
-}
+export const DEMO_CUSTOMER_PASSWORD = 'Password@123';
+export const DEMO_SELLER_PASSWORD = 'Password@123';
 ```
 
-**Why it matters:** Holding a DB transaction open across Stripe would be worse (pool exhaustion). The current split is the right idea. The remaining risk is a crash after commit and before rollback: stock stays reserved until the 30-minute abandon sweep. That is survivable if the sweeper stays healthy; it is painful if the sweeper dies.
+Seeding is skipped when `NODE_ENV === 'production'`. The seeders still `Logger.log` the plaintext password after insert. Anyone with log access in a mis-set staging env gets every demo account.
 
-**Fix:** Keep the split. Alert on `expire-abandoned-checkouts` failures and on `PENDING` sessions older than TTL. Consider a shorter TTL in production if 30 minutes of reserved stock is too long.
+**Fix:** Read demo passwords from env. Never log them. Rotate if this branch has ever been pointed at a shared database.
 
-**Effort:** 2h (monitoring) / already designed correctly
+**Effort:** 30 min.
 
-#### 1.2 `files.controller.ts` is the largest HTTP surface — `LOW`
-**Where:** `server/src/modules/files/files.controller.ts` (357 lines)
+#### 1.3 `logoutAll` is dead API surface — `MEDIUM`
+**Where:** `server/src/modules/auth/providers/logout.provider.ts:18-24`
 
-**What's happening:** One controller owns product/store/user/seller-document uploads.
+The method increments `tokenVersion` and revokes every refresh token. Nothing in `auth.controller.ts` exposes it. Logout today only burns one refresh family; access tokens live until `exp` (~15m).
 
-**Why it matters:** Not a runtime risk. The next feature will keep adding routes here until review becomes guesswork.
+**Fix:** Add `POST /auth/logout-all` (authenticated) that calls `logoutAll(userId)`.
 
-**Fix:** Split into `product-files.controller.ts`, `store-files.controller.ts`, etc., still in the files module.
+**Effort:** 1h.
 
-**Effort:** 2h
-
-#### 1.3 Circular dependencies — `unverified`
-`madge --circular` was not run (command execution for that scan was not available in this pass). Nest `forwardRef` usage was not spotted in the files read. Treat as unconfirmed.
-
-**To get this module to 8+:** You are already at 8. Keep providers small; do not grow `files.controller.ts`.
+**To get this module to 8+:** Already an 8. Expose logout-all and keep modules from importing each other’s internals.
 
 ---
 
 ### Module 2 — Naming Conventions & Code Style — **8/10**
 
-**Verdict in one paragraph:** The team picked Nest kebab-case and stuck to it. Identifiers, folders, and test suffix (`*.spec.ts` only) are consistent. The leftover mess is inherited Postgres constraint names from an earlier schema.
+**Verdict in one paragraph:** Nest kebab-case is the rule and it is followed. Database naming is snake_case via `@@map`. Deviations are small.
 
-**What's working:** `create-checkout.provider.ts`, `order-ownership.provider.ts`, `QueryProductDto`. Booleans read as predicates (`isBlocked`, `isDefaultShipping`). Enums are singular (`UserRole`, `OrderStatus`). Tables are `snake_case` plural via `@@map`. Prisma `camelCase` fields map globally through the schema — not 200 `@Column({ name })` annotations.
+**What's working:** Providers named `create-*.provider.ts` / `*-ownership.provider.ts`. Tests are `*.spec.ts` only (no mixed `*.test.ts`). Env vars are `SCREAMING_SNAKE_CASE`. Lint is `typescript-eslint` type-checked + Prettier.
 
 **Findings:**
 
-#### 2.1 Mixed constraint names in the schema — `MEDIUM`
-**Where:** `server/prisma/schema.prisma:12`, `:15`, `:172-173`
+#### 2.1 Singular vs plural controllers — `LOW`
+**Where:** `cart.controller.ts`, `store.controller.ts`, `address.controller.ts` vs `products.controller.ts`, `users.controller.ts`
 
-```prisma
-id Int @id(map: "PK_a3ffb1c0c8416b9fc6f907b7433")
-email String @unique(map: "UQ_97672ac88f789774dd47f7c8be3")
-category Category @relation(..., map: "FK_ff56834e735fa78a15d0cf21926")
+Folders are mostly plural (`carts`, `stores`, `addresses`); some controller file names are singular. URLs are mixed (`/cart`, `/stores`, `/addresses`). Not a production bug; it slows onboarding.
+
+#### 2.2 `eslint-disable` is replaced by broad rule offs — `MEDIUM`
+**Where:** `server/eslint.config.mjs:33-37`
+
+```ts
+'@typescript-eslint/no-explicit-any': 'off',
+'@typescript-eslint/no-floating-promises': 'warn',
 ```
 
-Newer objects use readable names (`UQ_checkout_idempotency_keys_user_id_key`, `IDX_orders_user_id_created_at`). Old TypeORM-era hashes remain.
+Zero `eslint-disable` comments in `src` is nice. Turning `no-explicit-any` off and leaving floating promises at **warn** means CI (when you add it) will not fail on ignored async work. Audit writes already do `void this.prisma.auditLog.create(...).catch(...)`.
 
-**Why it matters:** On-call “what is `FK_ff56834e…`?” wastes time during a lock or migration failure. Postgres itself does not care.
+**Fix:** `'no-floating-promises': 'error'`. Keep `any` off only if you also fail `tsc --noEmit` in CI (you should).
 
-**Fix:** Rename in a dedicated migration when you are next touching those tables. Do not mix this into a feature PR.
+**Effort:** 30 min.
 
-**Effort:** 1 day (careful, not hard)
+#### 2.3 No `.editorconfig` — `NIT`
 
-#### 2.2 No `.editorconfig` — `LOW`
-Formatter lives in ESLint/Prettier. New editors will disagree on trailing newlines until someone copies a teammate’s settings.
+Prettier is present (`.prettierrc`). EditorConfig is missing. Team’s call.
 
-**To get this module to 8+:** Already there. Rename ugly constraints when convenient.
+**To get this module to 8+:** Already an 8. Promote floating-promises to error.
 
 ---
 
-### Module 3 — Type Safety — **6/10**
+### Module 3 — Type Safety — **8/10**
 
-**Verdict in one paragraph:** Runtime boundaries are validated (class-validator, Joi, Prisma). Compile-time is softer than it looks. `strict` is not on.
+**Verdict in one paragraph:** This is a strict TypeScript Nest app that actually uses Prisma’s generated client. The compiler is on your side at API boundaries.
 
-**What's working:** Almost no `: any` / `as any` in production code. Zero `@ts-ignore` / `@ts-expect-error` / `@ts-nocheck`. Prisma client is generated. Catch clauses seen were typed or narrowed. ESLint uses `recommendedTypeChecked`.
+**What's working:** `tsconfig.json` has `"strict": true`. No `: any` / `as any` in application code. No `@ts-ignore` / `@ts-nocheck`. Prisma models are generated to `src/generated/prisma/`. Runtime validation is `class-validator`, not type assertions on HTTP bodies.
+
+**tsconfig gaps (not enabled):** `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `noUnusedLocals`, `noUnusedParameters`, `noImplicitOverride`. `strictPropertyInitialization` is explicitly `false` (normal for Nest DI).
 
 **Findings:**
 
-#### 3.1 `tsconfig` is not strict — `HIGH`
-**Where:** `server/tsconfig.json:18-23`
-
-```json
-"strictNullChecks": true,
-"noImplicitAny": false,
-"strictBindCallApply": false,
-"noFallthroughCasesInSwitch": false
-```
-
-Missing vs a production TS bar: `strict`, `noUncheckedIndexedAccess`, `noImplicitOverride`, `useUnknownInCatchVariables` (not set here), `noUnusedLocals`, `exactOptionalPropertyTypes`.
-
-**Why it matters:** `noImplicitAny: false` means an untyped callback parameter compiles. That is how `undefined.foo` ships. `strictNullChecks` alone is not `strict`.
-
-**Fix:** Turn on `strict: true` and `noFallthroughCasesInSwitch` first. Fix the errors. Then `noUncheckedIndexedAccess`. Do not flip every flag in one PR.
-
-**Effort:** 1–2 days
-
-#### 3.2 `images?: any[]` on the create-product DTO — `MEDIUM`
-**Where:** `server/src/modules/products/dto/create-product.dto.ts:88`
+#### 3.1 `as unknown as T` on multipart JSON variants — `MEDIUM`
+**Where:** `server/src/modules/products/dto/create-product.dto.ts:62-75` (same pattern in `update-product.dto.ts`)
 
 ```ts
-images?: any[];
+@Transform(({ value }): CreateProductVariantDto[] => {
+  if (typeof value !== 'string') return value;
+  try {
+    const parsed: unknown = JSON.parse(value);
+    if (!Array.isArray(parsed)) {
+      return value as unknown as CreateProductVariantDto[];
+    }
+    return plainToInstance(CreateProductVariantDto, parsed);
+  } catch {
+    return value as unknown as CreateProductVariantDto[];
+  }
+})
 ```
 
-Swagger-only field; files arrive via multer. Still an `any` on an HTTP DTO, which is the worst place for one.
+Invalid JSON is passed through as a fake `CreateProductVariantDto[]`. `@IsArray` + `@ValidateNested` usually still reject it, so this is not a bypass I could confirm. It is an unnecessary lie to the type system.
 
-**Fix:** Remove the property from the class (document it only in `@ApiBody`) or type it as `never` / omit it.
+**Fix:** On parse failure, return a sentinel that fails `@IsArray` (e.g. `undefined`) instead of casting.
 
-**Effort:** 15 min
+**Effort:** 20 min.
 
-#### 3.3 ESLint turns `no-explicit-any` off globally — `LOW`
-**Where:** `server/eslint.config.mjs:34`
+#### 3.2 Idempotency JSON asserted, not parsed with a schema — `MEDIUM`
+**Where:** `server/src/modules/orders/providers/checkout-idempotency.provider.ts:172`
 
-The type-checked rules are otherwise meaningful. Turning `any` back to `error` after `images?: any[]` is gone would lock the door.
+`row.responseJson as unknown as CheckoutSessionResponse` trusts whatever was stored. That is acceptable if **you** wrote it; it is not a substitute for a schema if the column is ever edited by hand.
 
-**To get this module to 8+:** Enable `strict`. Delete the `any[]`. Keep generating Prisma types.
+**To get this module to 8+:** Already an 8. Turn on `noUncheckedIndexedAccess` in a follow-up PR (it will be noisy, then valuable).
 
 ---
 
-### Module 4 — API Design & Response Consistency — **6/10**
+### Module 4 — API Design & Response Consistency — **7/10**
 
-**Verdict in one paragraph:** Clients get one success shape `{ data, version }` and one error shape `{ statusCode, message, error, requestId }`. Pagination exists and is capped. The money path still uses JavaScript numbers, and checkout can be created twice if the client forgets the idempotency key.
+**Verdict in one paragraph:** Success bodies are one shape. Errors are another shape. That is fine and documented (ADR 005). The gaps are money as IEEE-754 numbers in JSON, a few unbounded lists, and Nest itself being unversioned (the Next BFF adds `/api/v1`).
 
-**What's working:** REST verbs match intent. Public catalog is GET-only. Admin lists live under `admin/all`. Pagination is `page`/`limit` everywhere that extends `PaginationQueryDto`, max 100. Sort fields on products are a whitelist. Swagger is forced off in production (`setup-swagger.ts:15-17`).
+**What's working:** `DataResponseInterceptor` always returns `{ data, version }`. Pagination helper caps `limit` at 100. List endpoints for products, orders, payments, reviews, users, categories, stores, variants, notifications use it. Checkout requires an idempotency key. Swagger is **forced off** when `NODE_ENV === 'production'` (`setup-swagger.ts:15-17`). Timestamps in mappers are ISO strings.
+
+**Envelope found:**
+
+- Success: `{ data: T, version: string }`
+- Error: `{ statusCode, message, error, requestId?, errorCode?, details? }`
+
+Not the `{ success: true }` textbook shape. It is **one** shape. Do not “fix” it into a second envelope.
 
 **Findings:**
 
-#### 4.1 Checkout idempotency is optional — `HIGH`
-**Where:** `server/src/modules/orders/providers/create-checkout.provider.ts:46-51`
+#### 4.1 Order/checkout money is `Number(decimal)` — `HIGH`
+**Where:** `server/src/modules/orders/utils/map-order.util.ts:71-87`
 
 ```ts
-const key = normalizeIdempotencyKey(dto.idempotencyKey ?? idempotencyKeyHeader);
-if (!key) {
-  return this.createOnce(userId, dto);
-}
+priceAtPurchase: Number(item.priceAtPurchase),
+// ...
+tax: Number(order.tax),
+subtotal: Number(order.subtotal),
+total: Number(order.totalAmount),
 ```
 
-**Why it matters:** A double-submit (mobile retry, impatient click, proxy replay) reserves stock twice and opens two PaymentIntents. You already built the hard part — a unique `(userId, key)` row. Not requiring the key wastes it.
+**And** `complete-checkout.provider.ts:117-123` plus paid-order cancel (`cancel-order.provider.ts:76-88`):
+
+```ts
+const expectedCents = Math.round(Number(session.totalAmount) * 100);
+if (paymentIntent.amount_received !== expectedCents) { ... }
+
+const refundable =
+  Math.round(
+    (Number(payment.amount) - Number(payment.refundedAmount ?? 0)) * 100,
+  ) / 100;
+```
+
+**Why it matters:** Internal math already uses integer cents (`money.util.ts`). The one place you **must not** round through `Number` is “does this PaymentIntent match the session.” `19.99` is not a dyadic rational. `Math.round` usually saves you at two decimal places; it is still the class of bug that pages payments people.
 
 **Fix:**
-```ts
-if (!key) {
-  throw new BadRequestException('Idempotency-Key is required');
-}
-```
-Accept either the header or the body field, but require one. The Next BFF should send it on every checkout.
-
-**Effort:** 2h
-
-#### 4.2 Checkout totals are JS floats — `HIGH`
-**Where:** `server/src/modules/orders/utils/order-pricing.util.ts:8-15` and `create-checkout.provider.ts:90-95`
 
 ```ts
-export function calculateOrderPricing(subtotal: number): OrderPricing {
-  const rounded = Math.round(subtotal * 100) / 100;
-  return { tax: 0, total: rounded, subtotal: rounded };
-}
+import { toCents } from 'src/common/utils/money.util';
+const expectedCents = toCents(session.totalAmount);
 ```
 
-Then `amountCents = Math.round(pricing.total * 100)`.
+Serialize API money as decimal **strings** (or cents integers), not `number`.
 
-**Why it matters:** `0.1 + 0.2 !== 0.3`. You store Decimal in Postgres (good) and then leave the domain in IEEE-754. Tax is zero today, so the blast radius is smaller — until someone adds tax or discounts on the same function.
+**Effort:** 2h.
 
-**Fix:** Keep integer cents (or `Prisma.Decimal`) from the first sum through the Stripe `amount`. Convert to Decimal only when writing the row.
+#### 4.2 Unbounded list endpoints — `MEDIUM`
+**Where:**
 
-**Effort:** 4h
+- `GET /cart` — `cart.controller.ts:30-34`
+- `GET /wishlist` — `wishlist.controller.ts:20-23`
+- `GET /addresses` — `address.controller.ts:31-36`
+- `GET /files/products/:productId` — `files.controller.ts:61-66`
 
-#### 4.3 Nest routes are unversioned — `MEDIUM`
-Controllers mount at `/auth`, `/orders`, `/products`. Versioning lives on the Next BFF (`/api/v1/...`), which is an intentional ADR. If this Nest process is ever exposed directly, you cannot make a breaking change safely.
+Carts/addresses stay small per user in practice. They still have no max. A buggy client calling `POST /cart/sync` in a loop plus `GET /cart` is how a payload becomes megabytes.
 
-**Fix:** Keep BFF versioning. Do not put Nest on a public DNS name. If you ever expose Nest, add a global prefix.
+**Fix:** Reuse `PaginationQueryDto` or a hard cap (e.g. 200) in the query.
 
-**Effort:** process / docs
+**Effort:** 2h.
 
-#### 4.4 Error codes are HTTP names, not stable machine codes — `MEDIUM`
-**Where:** `server/src/common/filters/api-error-response.util.ts:33-47`
+#### 4.3 Nest API is unversioned — `MEDIUM`
+Controllers mount at `/auth`, `/products`, … (`server/AGENTS.md` confirms no global prefix). Versioning lives in the Next BFF (`/api/v1`). If anyone calls Nest directly (mobile, partner, leftover script), you cannot break the contract safely.
 
-Clients get `error: "Bad Request"` and a human `message`. `errorCode` exists only if a thrower sets it. Frontends that string-match `"Invalid credentials"` will break on copy edits.
+**Fix:** Keep the BFF as the public contract, or add an explicit Nest prefix when you grow a second client.
 
-**Fix:** Add a small set of stable codes on auth and checkout (`INVALID_CREDENTIALS`, `INSUFFICIENT_STOCK`, `PAYMENT_AMOUNT_MISMATCH`).
+**Effort:** design decision, not a drive-by.
 
-**Effort:** 1 day
+#### 4.4 Error codes are not a stable vocabulary — `MEDIUM`
+Most failures are human `message` strings. `errorCode` is optional and rarely set. The frontend will string-match `"Invalid credentials"`. Copy edits become bugs.
 
-#### 4.5 Swagger vs runtime pagination on a few lists — `LOW`
-`GET /payments` and `GET /reviews/product/:id` advertise `isArray: true` but the providers paginate. Confusing, not a runtime bug.
+**Fix:** Add a small `AuthErrorCode` / `CheckoutErrorCode` enum and put it on exceptions you already throw.
 
-**To get this module to 8+:** Require idempotency on checkout. Move money to cents. Add error codes on the two hottest failure paths.
+**Effort:** 1 day spread across modules.
+
+#### 4.5 `generateOrderNumber` uses `Math.random()` — `LOW`
+**Where:** `map-order.util.ts:123-131`
+
+Unique constraint on `orderNumber` will catch collisions. Use `crypto.randomBytes` anyway so you never think about it again.
+
+**To get this module to 8+:** Integer-cent (or string) money in responses; cap cart/wishlist/address lists; stable error codes on auth and checkout.
 
 ---
 
-### Module 5 — Request Validation & Input Handling — **6/10**
+### Module 5 — Request Validation & Input Handling — **8/10**
 
-**Verdict in one paragraph:** The global pipe is the one people usually forget, and you did not forget it. Write endpoints have DTOs. File uploads have size limits and random names. The remaining hole is trusting the client MIME type.
+**Verdict in one paragraph:** Write endpoints have DTOs. The global pipe strips unknown fields, which is the mass-assignment control that people forget. File uploads are better than most Nest apps.
 
 **What's working:**
 
-```ts
-// server/src/main.ts:63-69
-app.useGlobalPipes(
-  new ValidationPipe({
-    whitelist: true,
-    transform: true,
-    forbidNonWhitelisted: true,
-    transformOptions: { enableImplicitConversion: true },
-  }),
-);
+```59:66:server/src/main.ts
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      transform: true,
+      forbidNonWhitelisted: true,
+      transformOptions: { enableImplicitConversion: true },
+    }),
+  );
 ```
 
-`UpdateProfileDto` cannot set `role` or `isBlocked`. `CreateUserDto` cannot set roles. Nested checkout address uses `@ValidateNested()` + `@Type()`. Cart sync is capped at 100 lines. Pagination query params are ints with a max. Product sort is an allow-list. Raw SQL uses Prisma tagged templates + `Prisma.join`, not string concat.
+`UpdateProfileDto` only allows `fullName` / `phoneNumber` — no `role`, no `isBlocked`. Checkout shipping is `@ValidateNested()` + `@Type()`. `SyncCartDto` has `@ArrayMaxSize(100)`. Images: UUID filenames + magic-byte wrapper (`file-signature.ts`).
 
 **Findings:**
 
-#### 5.1 File uploads trust `Content-Type` — `HIGH`
-**Where:** `server/src/integrations/storage/multer/image-upload.multer.ts:36-51` (same pattern in `document-upload.multer.ts:36-51` and `shared-multer.config.ts:44-61`)
+#### 5.1 `enableImplicitConversion` is a footgun — `MEDIUM`
+Query `?isActive=false` can become a boolean via `@Transform` on some DTOs (notifications, payments) and via implicit conversion on others. Implicit conversion also turns `" "` into `0` for numbers in surprising cases.
 
-```ts
-if (!IMAGE_MIME_REGEX.test(file.mimetype)) {
-  cb(new BadRequestException('Only image files are allowed …'), false);
-}
-```
+**Fix:** Keep `@Type(() => Number)` + `@IsInt()` (you already do this on pagination). Prefer explicit `@Transform` for booleans everywhere; consider turning implicit conversion off later.
 
-**Why it matters:** Browsers and attackers set `mimetype` themselves. A crafted file stored under `/uploads/products/` is served as a static asset. That is how stored XSS and the occasional polyglot upload happen. Size limits (5MB / 10MB) and UUID names are already correct — only the type check is weak.
+**Effort:** 2h to audit boolean query params.
 
-**Fix:** After multer accepts the file, read the first bytes (`ff d8 ff` JPEG, `89 50 4e 47` PNG, `%PDF`, etc.). Reject and delete on mismatch. Re-encode images if you can afford it (strips EXIF/payloads).
+#### 5.2 Review comments are stored raw — `MEDIUM`
+**Where:** `create-review.dto.ts:47-56` (`MaxLength(2000)` only)
 
-**Effort:** 4h
+No HTML strip. If any admin UI ever does `dangerouslySetInnerHTML`, you have stored XSS. Even email templates that interpolate `comment` are a risk.
 
-#### 5.2 No explicit JSON body size limit — `MEDIUM`
-Nest/Express defaults to 100kb. Fine for this API. Not documented, so a future “import catalog JSON” route will inherit whatever someone sets locally.
+**Fix:** Strip tags on write (or store markdown and render safely on the client — the client must not treat this as HTML either).
 
-**Fix:** Set `app.use(json({ limit: '100kb' }))` explicitly next to Helmet.
+**Effort:** 2h.
 
-**Effort:** 15 min
+#### 5.3 Images are not re-encoded — `MEDIUM`
+Magic bytes prevent a `.gif` that’s actually a `.pdf`. They do not strip EXIF or polyglot payloads in a valid JPEG. Public product images are served from `/uploads/products`.
 
-#### 5.3 Regexes checked for ReDoS — clean
-`PASSWORD_COMPLEXITY_REGEX` and `PHONE_REGEX` have no nested quantifiers. Not a finding.
+**Fix:** Re-encode with sharp (or similar) before storing public images. Leave private PDFs as-is behind `/files/secure`.
 
-**Mass-assignment trace:** `PATCH /users/me` → `UpdateProfileDto` (`fullName`, `phoneNumber` only) → whitelist pipe. Cannot escalate. Clean.
+**Effort:** 1 day.
 
-**To get this module to 8+:** Magic-byte checks on uploads. Keep the global pipe exactly as it is.
+#### 5.4 Email fields have no `@MaxLength` — `LOW`
+**Where:** `CreateUserDto`, `LoginDto`, `ForgotPasswordDto`
+
+`@IsEmail()` does not cap length. Add `@MaxLength(254)`. Same class of gap: `retainImagePaths` on `UpdateProductDto` has no `@ArrayMaxSize`.
+
+**Effort:** 20 min.
+
+#### 5.5 JSON body size is Express default (~100kb) — `LOW`
+Not unbounded, but not explicit. Webhook uses `rawBody`. Fine for now; set `NestFactory.create(..., { bodyParser: true })` limits explicitly so the next person does not “raise it to 50mb” for file-in-JSON mistakes.
+
+**To get this module to 8+:** Already an 8. Add HTML stripping on reviews and re-encode public images.
 
 ---
 
-### Module 6 — Authentication & JWT Lifecycle — **6/10**
+### Module 6 — Authentication & JWT Lifecycle — **8/10**
 
-**Verdict in one paragraph:** The session design is the strongest part of this API. Refresh tokens are server-side, hashed, rotated, and family-revoked. Login timing is equalized. The gaps are cryptographic hygiene (one secret, short minimum, bcrypt cost 10) and the 15-minute window after a password change.
+**Verdict in one paragraph:** This is the strongest module in the repo. It looks like someone has been paged for refresh-token theft before. Remaining gaps are operational (in-memory throttle) and product (no lockout, unused logout-all, password UX).
 
-**Lifecycle (as implemented):**
+**Token lifecycle (confirmed):**
 
-1. **Register** (`POST /auth/register`, 5/min): create user + `BUYER` role in a transaction; no tokens returned (`register.provider.ts:16-49`).
-2. **Login** (`POST /auth/login`, 10/min): dummy bcrypt hash if email missing; same `"Invalid credentials"` message; blocked users get 403; issue access + refresh (`login.provider.ts:36-68`).
-3. **Access token:** HS256 (library default), TTL from env (default `15m`), claims `sub`, `email`, `roles`, `typ: ACCESS`. No `iss`/`aud`/`jti`.
-4. **Refresh token:** same signing secret, TTL default `7d`, claims `sub`, `typ: REFRESH`, `familyId`. SHA-256 stored in `refresh_tokens`.
-5. **Authenticated request:** bearer header only; `verifyAsync` + `typ` check + DB reload + block/delete checks.
-6. **Refresh** (`POST /auth/refresh`, 20/min): verify JWT → load hash → if already revoked, revoke family → rotate.
-7. **Logout** (`POST /auth/logout`): revokes the refresh family. Access token still works until `exp`.
-8. **Forgot/reset:** reset JWT (1h) embeds SHA-256 of the current password hash; used once because the hash changes; all refresh tokens revoked after reset.
-9. **Password change / block user:** revoke all refresh tokens for that user.
+1. **Register** (`POST /auth/register`) — creates `BUYER` (or returns a 201 that looks the same on duplicate email — see 7.1). No tokens issued.
+2. **Login** (`POST /auth/login`) — looks up email, bcrypt-compares against the real hash or a dummy `$2b$12$...` hash so unknown emails still pay bcrypt (`login.provider.ts:23-47`). Uniform `"Invalid credentials"`. Blocked users get 403 after a successful password check.
+3. **Issue** — access JWT (`typ=ACCESS`, `sub`, `email`, `roles`, `tokenVersion`, TTL default `15m`) signed with `JWT_ACCESS_SECRET`. Refresh JWT (`typ=REFRESH`, `familyId`, TTL default `7d`) signed with `JWT_REFRESH_SECRET`. Refresh **hash** stored in `refresh_tokens`.
+4. **Authenticated request** — `Authorization: Bearer` only (not query string). `jwtService.verifyAsync` with `algorithms: ['HS256']`. User re-loaded; `deletedAt` / `isBlocked` / `tokenVersion` enforced. Roles used for authorization come from the **database**, not the stale JWT array.
+5. **Refresh** — verify refresh secret + `typ` + `familyId`; lookup hash; if `revokedAt` already set, **revoke the whole family** (reuse detection); rotate in a transaction.
+6. **Logout** — revoke family by presented refresh token. Does not increment `tokenVersion`.
+7. **Password change / reset / block** — increment `tokenVersion` and revoke refresh rows. Reset token TTL 1h, bound to SHA-256 of current password hash (`pwd` claim), single-use in practice because the hash changes.
 
-**Unprotected routes (intentional):** auth endpoints, `/health/live`, `/health/ready`, public catalog (`GET /products`, `/products/:id`, `/products/detail/:slug`), categories, product/store file lists, store-by-slug, public reviews/summaries, `POST /orders/webhooks/stripe` (signature-checked).
+Algorithm is pinned (`jwt-algorithm.constants.ts`). Secrets are required, min 32 chars, weak values rejected, and the three JWT secrets must differ (`environment.validation.ts`). bcrypt cost is 12. Auth routes have stricter `@Throttle` (login 10/min, register/forgot/reset 5/min).
 
 **Findings:**
 
-#### 6.1 One JWT secret for access, refresh, and password-reset — `HIGH`
-**Where:** `server/src/config/jwt.config.ts:3-6`, `generate-tokens.provider.ts:35-40`
-
-```ts
-secret: process.env.JWT_SECRET,
-```
-
-Every `signAsync` / `verifyAsync` uses that one value. `typ` distinguishes token kinds.
-
-**Why it matters:** Defense in depth. If verification ever forgets the `typ` check (a future endpoint, a script, a mis-copied guard), a refresh token becomes an access token. Separate secrets make that impossible.
-
-**Fix:** `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`, `JWT_RESET_SECRET`. Verify each token type with its own secret. Rotate access first (short TTL).
-
-**Effort:** 4h
-
-#### 6.2 `JWT_SECRET` minimum is 16 characters — `HIGH`
-**Where:** `server/src/config/environment.validation.ts:21-31`
-
-Joi rejects `'secret'` and friends (good) but allows a 16-character string. HS256 wants ≥ 256 bits of entropy (32+ random bytes, usually a 64-char hex or 44-char base64).
-
-**Fix:**
-```ts
-JWT_SECRET: Joi.string().required().min(32).invalid(/* same list */)
-```
-Generate with `openssl rand -base64 48`.
-
-**Effort:** 30 min + secret rotation
-
-#### 6.3 bcrypt cost is the library default (10) — `HIGH`
-**Where:** `server/src/common/crypto/providers/bcrypt.provider.ts:7-9`
-
-```ts
-const salt = await genSalt(); // rounds default 10
-return hash(data, salt);
-```
-
-**Why it matters:** Cost 12 is the current floor for interactive logins. Cost 10 is roughly 4× cheaper to stuff.
-
-**Fix:** `genSalt(12)`. Existing hashes keep working; new hashes and password changes upgrade.
-
-**Effort:** 15 min
-
-#### 6.4 Password change does not kill access tokens — `HIGH`
-**Where:** `server/src/modules/users/providers/change-password.provider.ts:39-45`
-
-Refresh tokens are revoked. The access JWT is still valid until `exp` (default 15 minutes). There is no `tokenVersion` / `sessionInvalidAfter` compared in `AccessTokenGuard`.
-
-**Why it matters:** The prompt’s “attacker keeps access after the victim changes password” case is real for those 15 minutes. With a 15-minute TTL this is a window, not a week-long hole — still worth closing for an e-commerce account.
-
-**Fix:** Store `users.tokenVersion` (or `sessionsInvalidBefore`). Increment on password change, reset, and “logout all.” Compare it in `AccessTokenGuard` after the user load (you already hit the DB).
-
-**Effort:** 4h
-
-#### 6.5 Algorithm is not pinned — `MEDIUM`
-`verifyAsync` passes `{ secret }` only. With a symmetric secret, `jsonwebtoken` will not accept an `alg: none` or RS256 token as HMAC. Still pin it so a future “we added RSA” change cannot introduce algorithm confusion:
-
-```ts
-await this.jwtService.verifyAsync(token, {
-  secret: this.jwtConfiguration.secret,
-  algorithms: ['HS256'],
-});
-```
-
-**Effort:** 30 min
-
-#### 6.6 Password max length is 30 — `MEDIUM`
-**Where:** `server/src/common/constants/password.constants.ts:1-5`
-
-A 30-character maximum plus composition rules (`Password1!`) pushes people to short, reused passwords. bcrypt’s real cap is 72 bytes.
-
-**Fix:** Raise max to 72. Keep min 8 (12 is better). Drop the “must include symbol” rule or keep it — team call.
-
-**Effort:** 30 min
-
-#### 6.7 Reset token travels in a query string — `MEDIUM`
-**Where:** `server/src/modules/auth/providers/forgot-password.provider.ts:50`
-
-```ts
-const resetUrl = `${base}/reset-password?token=${encodeURIComponent(token)}`;
-```
-
-Standard email pattern. Tokens then appear in access logs, analytics, and `Referer` if the page loads a third-party script.
-
-**Fix:** Keep it (users cannot POST from an email). Use a one-time opaque token stored hashed (you already have this pattern for refresh) instead of a JWT in the URL, and set a short referrer policy on the reset page.
-
-**Effort:** 4h
-
-#### 6.8 No account lockout / no MFA — `LOW` given the threat model
-Rate limits exist per IP. No per-account lockout, no TOTP. Compliance needs are “None.” Mentioned so it is a conscious choice, not an accident.
-
-**To get this module to 8+:** Split secrets, min 32 chars, bcrypt 12, pin `HS256`, increment a session version on password change.
-
----
-
-### Module 7 — Authorization & Access Control — **7/10**
-
-**Verdict in one paragraph:** This is not the “findById and hope” API. Object access is centralized. Function-level admin routes use `@Roles(SUPER_ADMIN)`. Webhooks are signed. I did not find a confirmed IDOR on orders, payments, addresses, notifications, or private files.
-
-**What's working:** Global `RolesGuard` (`common.module.ts:28-30`). Unrecognised role does not fail open when roles are required. Seller product mutations are seller-scoped via `ProductOwnershipProvider`. Admin store actions are verify/suspend, not generic seller catalog writes.
-
-**`:id` ownership (sampled, not every route in the repo):**
-
-| Endpoint | Ownership check? | Where |
-|----------|------------------|--------|
-| `GET /orders/:id` | Yes — buyer / store seller / admin | `get-order.provider.ts:37-42` |
-| `POST /orders/:id/cancel` | Yes — buyer or admin | `order-ownership.provider.ts:118-129` |
-| `PATCH /orders/:id/status` | Yes — store seller or admin | `assertCanManageStatus` |
-| `GET /payments/:id` | Yes | `payment-ownership.provider.ts:46-73` |
-| `POST /payments/:id/refunds` | Admin only | `assertCanRecordRefund` |
-| `GET/PATCH/DELETE /addresses/:id` | Own only (service + ownership provider) | address module |
-| `GET /notifications/:id` | Own only | `notification.controller.ts:72-73` |
-| `GET /files/secure/:fileId` | Owner or admin; public files 404 | `secure-file-access.provider.ts:59-70` |
-| `GET /reviews/:id` | Any authenticated user; documented as public marketplace content | `get-review.provider.ts:10-11` |
-| `GET /products/:id` | Public; ACTIVE + not deleted only | `get-products.provider.ts:228-236` |
-
-**Findings:**
-
-#### 7.1 `GET /reviews/:id` is authenticated but not owner-scoped — `LOW`
-Documented as public marketplace content. The product-scoped list is already public (`@Auth(NONE)`). Not an IDOR in practice. The extra bearer requirement is slightly inconsistent with `GET /reviews/product/:productId`.
-
-#### 7.2 No tests for most ownership providers — `MEDIUM`
-Specs exist for orders, products, and a couple of payment/checkout paths. Addresses, notifications, files, and reviews ownership are untested. An IDOR will come back as a “small refactor.”
-
-**Fix:** One table-driven spec per ownership provider: buyer A, buyer B, seller wrong store, admin.
-
-**Effort:** 1 day
-
-**To get this module to 8+:** Ownership tests on every `:id` module. That is the whole gap.
-
----
-
-### Module 8 — Security (OWASP API Top 10) — **5/10**
-
-**Verdict in one paragraph:** Secrets are not in the repo. Helmet is on. Production CORS is an allow-list. The production-scale holes are the in-memory throttle, MIME trust (see Module 5), and the `NODE_ENV !== production` CORS wildcard.
-
-**What's working:** `.gitignore` covers `.env`. `.env.example` has placeholders only. No live `sk_live_`, AWS keys, or PEM files found in source. Helmet default headers. `X-Powered-By` stripped by Helmet. Stripe webhook signature required. Private upload prefixes return 404. Audit log exists for admin actions. Prisma errors are mapped to generic messages (`prisma-exception.filter.ts:59-85`). Unhandled errors become `"Internal server error"` (`all-exceptions.filter.ts:53-61`).
-
-**Findings:**
-
-#### 8.1 In-memory rate limit — `HIGH`
+#### 6.1 Rate limiter is in-memory — `HIGH` (also Module 8 / 14)
 **Where:** `server/src/app.module.ts:60-66`
 
 ```ts
-ThrottlerModule.forRoot([{ limit: 100, ttl: 60_000, name: 'default' }])
+ThrottlerModule.forRoot([{ limit: 100, ttl: 60_000, name: 'default' }]),
 ```
 
-Auth endpoints override to 5–20 / minute. Storage is the default in-process map.
+No Redis storage. Each process has its own counters. Behind a load balancer this is “N times the budget.”
 
-**Why it matters:** Three API instances = 30 login attempts / minute / IP, not 10. Behind a load balancer this is the difference between “we rate-limit login” and “we think we do.”
+**Fix:** `@nestjs/throttler-storage-redis` (or equivalent) keyed by IP **and** email on login. Keep the per-route limits you already have.
 
-**Fix:** `@nestjs/throttler-storage-redis` (or equivalent) once you have Redis. Until then, run one instance or put the limit at the edge (Cloudflare / nginx).
+**Effort:** 4h + Redis in staging.
 
-`trust proxy` is set to `1` (`main.ts:29`) — correct if a single proxy sits in front. If you add another hop, spoofed `X-Forwarded-For` becomes a HIGH of its own.
-
-**Effort:** 4h + Redis
-
-#### 8.2 Non-production CORS reflects any origin — `HIGH`
-**Where:** `server/src/main.ts:40-47`
+#### 6.2 Password max length 30 + composition regex — `MEDIUM`
+**Where:** `server/src/common/constants/password.constants.ts:1-9`
 
 ```ts
-app.enableCors({
-  origin: isProduction ? corsOrigins : true,
-  credentials: true,
-});
+export const PASSWORD_MAX_LENGTH = 30;
+export const PASSWORD_COMPLEXITY_REGEX =
+  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
 ```
 
-`origin: true` means “echo `Origin`.” Combined with `credentials: true` that is “any website can call this API as the user” — the classic CORS footgun. It is gated on `NODE_ENV === 'production'`.
+A 30-character maximum cuts off passphrase users and many password managers. The charset forbids `.` `#` `_` (the spec even tests that `Password1!.` fails). People will converge on `Password1!`.
 
-**Why it matters:** Staging often runs `NODE_ENV=development` or `staging` (the latter fails Joi — good). If staging is `development`, it is wide open.
+**Fix:** Min 8–12, max 72 (bcrypt truncates at 72 anyway), drop mandatory classes or use a library like zxcvbn. Keep a breached-password check only if you want it; you have no compliance requirement.
 
-**Fix:** Use the allow-list in every environment. Put localhost in `FRONTEND_URL` for dev.
+**Effort:** 2h + a data migration is **not** required if you only loosen validation.
 
-**Effort:** 1h
+#### 6.3 No account lockout — `MEDIUM`
+Rate limits slow credential stuffing. They do not stop a slow guess against one account. No `failedLoginCount` / lock timestamp.
 
-#### 8.3 Admin seed can grant `SUPER_ADMIN` to an existing email — `MEDIUM`
-**Where:** `server/src/seeders/providers/seed-admin.provider.ts:56-78`
+**Fix:** After N failures, delay or lock with an unlock path (time or email). Do it in the same transaction as login so two pods cannot bypass it — which again wants shared storage.
 
-If `ALLOW_ADMIN_SEED=true` and `ADMIN_EMAIL` matches a normal user, that user becomes super-admin.
+**Effort:** 1 day.
 
-**Fix:** Only create, never promote. In production keep `ALLOW_ADMIN_SEED=false` (already the default).
+#### 6.4 Logout does not kill access tokens immediately — `MEDIUM`
+**Where:** `logout.provider.ts:13-16` vs `logoutAll` at 18-24 (unexposed)
 
-**Effort:** 30 min
+15-minute access TTL makes this survivable. Stolen access tokens still work after “logout” until expiry.
 
-#### 8.4 `npm audit` — **could not verify**
-A dependency audit was not run in this pass (the command was blocked). Do this before the first prod deploy. Lockfile is present.
+**Fix:** Expose `logoutAll`. Optionally add `POST /auth/logout` that requires a bearer token and bumps `tokenVersion`.
 
-#### 8.5 No inbound HTML sanitisation on review/product text — `MEDIUM`
-Reviews accept a 2000-char `comment`. If any admin UI or email renders it as HTML, that is stored XSS. JSON APIs that stay JSON are fine.
+**Effort:** 1h.
 
-**Fix:** Store as text; encode on render. If you ever interpolate into an email template, escape.
+#### 6.5 No `iss` / `aud` — `LOW`
+`exp` is set via `expiresIn`. `sub` and custom `typ` are verified. `iss`/`aud` are absent. Fine while there is one API. Add them when a second service starts verifying the same tokens.
 
-**Effort:** 2h if emails render comments
+#### 6.6 Reset link puts the token in a query string — `LOW`
+Standard for email reset. Tokens leak via access logs if the frontend fetches the URL with the query still attached. Keep TTL short (you do: 1h) and never log the full URL.
 
-#### 8.6 Helmet is default-configured — `LOW`
-No explicit HSTS `maxAge`. Fine if TLS terminates at the load balancer and sets HSTS there. Confirm on the edge.
-
-**To get this module to 8+:** Redis throttle, CORS allow-list in all envs, magic-byte uploads, run `npm audit` in CI.
+**To get this module to 8+:** Shared throttle store + expose logout-all. Then this is a 9.
 
 ---
 
-### Module 9 — Configuration & Env Validation — **7/10**
+### Module 7 — Authorization & Access Control — **8/10**
 
-**Verdict in one paragraph:** The app will not boot on a typo’d `NODE_ENV` or a missing `DATABASE_URL`. That is the important part. A few defaults are still too forgiving.
+**Verdict in one paragraph:** Object-level checks exist on the routes that matter. I did not find a classic “`findById` with no owner” on orders, payments, addresses, or private files. The ugly finding is register returning the **existing** user id.
 
-**What's working:** Joi schema is required on `ConfigModule.forRoot`. `NODE_ENV` is `development | production | test`. Production requires `FRONTEND_URL` and `STRIPE_WEBHOOK_SECRET`. Booleans use `.truthy('true').falsy('false')`. Almost all `process.env` reads live under `src/config/` or uploads-root.
+**What's working:** Global default-deny for authentication (`AuthType.BEARER` unless `@Auth(NONE)`). `@Roles` is default-allow only **after** auth — correct Nest pattern. Stripe webhook verifies the signature before mutating. Secure files check seller-doc / user-doc ownership (`secure-file-access.provider.ts:59-69`) and refuse to stream public files through the secure endpoint. Reviews require a delivered, paid purchase (`review-eligibility.provider.ts`). Product create binds store via ownership, not a client-supplied `storeId`.
+
+**Public routes (intentionally unauthenticated):**
+
+| Area | Routes |
+|------|--------|
+| Auth | register, login, forgot-password, reset-password, refresh, logout |
+| Catalog | `GET /products`, `GET /products/:id`, `GET /products/detail/:slug` |
+| Variants | `GET /product-variants`, `GET /product-variants/:id`, `GET /product-variants/product/:id` |
+| Categories | `GET /categories`, `GET /categories/:id` |
+| Stores | `GET /stores/slug/:slug` |
+| Reviews | product list/summary, store reputation |
+| Files | `GET /files/products/:productId`, `GET /files/stores/:storeId` |
+| Orders | `POST /orders/webhooks/stripe` (signature required) |
+| Health | `/health/live`, `/health/ready` |
+
+Public catalog GETs filter `status: ACTIVE` and `deletedAt: null` (`get-products.provider.ts:180-186`, `get-product-variants.provider.ts:145-151`).
+
+**Ownership table (sampled, confirmed in code):**
+
+| Endpoint | Roles | Ownership |
+|----------|-------|-----------|
+| `GET/PATCH /users/me` | any auth | JWT `sub` |
+| `GET /users/:id` | SUPER_ADMIN | admin |
+| `GET /orders/:id` | any auth | `OrderOwnershipProvider.assertCanView` |
+| `PATCH /orders/:id/status` | SELLER, SUPER_ADMIN | store owner or admin |
+| `GET /payments/:id` | any auth | `PaymentOwnershipProvider.assertCanView` |
+| `POST /payments/:id/refunds` | SUPER_ADMIN | role check |
+| `PATCH /addresses/:id` | any auth | `AddressOwnershipProvider.getOwnedOrThrow` |
+| `GET /notifications/:id` | any auth | scoped by `userId` |
+| `GET /files/secure/:fileId` | any auth | owner or admin |
+| `PATCH /reviews/:id` | any auth | own review (admin delete allowed) |
 
 **Findings:**
 
-#### 9.1 JWT minimum and TTL defaults — `HIGH` / `MEDIUM`
-Covered in Module 6. Joi default TTL `'15m'` / `'7d'` is fine. `jwt.config.ts` repeats those defaults if Joi is bypassed.
+#### 7.1 Register returns the existing user’s id — `HIGH`
+**Where:** `server/src/modules/auth/providers/register.provider.ts:64-78`
 
-#### 9.2 `app.config` defaults `NODE_ENV` to `development` — `MEDIUM`
-**Where:** `server/src/config/app.config.ts:5`
+```ts
+private publicRegisterResponse(id: number, dto: CreateUserDto) {
+  return {
+    user: {
+      id,  // <-- existing account id on duplicate email
+      email: dto.email,
+      fullName: dto.fullName,
+      ...
+    },
+  };
+}
+```
+
+The comment says the two paths should be indistinguishable. They are not: registering `alice@example.com` twice yields the same `id`. That is account existence oracle **and** an IDOR building block (now the attacker has a numeric user id).
+
+**Fix:** Always create a dummy response **without** a stable real id (or return `201 { sent: true }` and issue tokens only on login). Do not echo `existing.id`.
+
+**Effort:** 1h. Check the client: if it treats register as login, you will need a small client change.
+
+#### 7.2 Seller `GET /payments?userId=` is scoped — not a bug
+`GetPaymentsProvider.findByUser` passes `scope: { userId }`, which **overrides** `query.userId`. Same pattern on reviews. The Swagger text “admin only” is enforced by the service scope, not the DTO. Keep it that way; DTOs cannot be trusted.
+
+#### 7.3 `GET /reviews/:id` is authenticated-only public content — `LOW`
+Reviews are marketplace content (display name, not email). Requiring a login to fetch by id is inconsistent with `GET /reviews/product/:id`. Not an IDOR.
+
+**To get this module to 8+:** Already an 8 after you stop leaking user ids on register. Add a couple of ownership tests that hit HTTP (even Nest testing module) so IDOR cannot regress silently.
+
+---
+
+### Module 8 — Security (OWASP API Top 10) — **6/10**
+
+**Verdict in one paragraph:** Injection, default JWT secrets, open CORS, and unverified webhooks are **not** what I found. Production pain here is replica-unaware limits, disk-backed files, refunds that do not move money at the processor, and a noisy `npm audit` on transitive deps.
+
+**What's working:** `.env` is gitignored (`server/.gitignore`). `.env.example` has placeholders, not live keys. Helmet is on. CORS is an allowlist from `FRONTEND_URL`, not `*`. `trust proxy` is `1` (not “trust every `X-Forwarded-For` hop”). Private upload prefixes are 404’d before static. Stripe webhooks use `constructEvent`. No `eval` / `Function(` / `child_process` on user input. No `jwt.decode` in the request path. Stack traces are not returned (`AllExceptionsFilter` returns `"Internal server error"`).
+
+**Findings:**
+
+#### 8.1 Local disk storage — `HIGH`
+**Where:** `server/src/integrations/storage/providers/local-storage.provider.ts`, `uploads-root.ts`
+
+Files are written under process CWD `uploads/`. Two app instances do not share that directory unless you mount a shared volume. Seller documents and customer documents are “private” only because Express 404s those URL prefixes on **this** process.
+
+**Fix:** S3/GCS (or a shared PVC if you insist on disks) and keep `/files/secure` as the only download path for private objects.
+
+**Effort:** 2–3 days.
+
+#### 8.2 Admin refunds do not call Stripe; buyer cancel does — `HIGH`
+**Where:** `server/src/modules/payments/providers/record-refund.provider.ts:19-22` vs `cancel-order.provider.ts:74-99`
+
+```ts
+/**
+ * Tracks full/partial refunds on the Payment record.
+ * Does not call Stripe — existing refund APIs remain the source of provider refunds.
+ */
+```
+
+Buyer `POST /orders/:id/cancel` **does** call `stripeService.createRefund` with idempotency key `order-cancel-${orderId}`. Admin `POST /payments/:id/refunds` only writes the ledger. There **is** a `RefundPaymentProvider` in the Stripe module; the admin HTTP path does not use it. Finance will see “refunded” in your DB and “captured” in Stripe.
+
+**Fix:** Either call Stripe (and store `externalRefundId`) in the same transaction-after-success pattern you use for checkout, or rename the endpoint to `POST /payments/:id/refund-records` and put a huge warning in the admin UI. Silent drift is how chargebacks surprise you.
+
+**Effort:** 1 day if you already have the Stripe adapter.
+
+#### 8.3 Transitive `npm audit` highs — `MEDIUM` (suspected)
+`npm audit --omit=dev`: **27** findings (**0 critical, 19 high, 8 moderate**). Highs include `multer` / `@nestjs/platform-express` (upload DoS via nested fields or aborted streams), `nodemailer` (file read / SSRF via a `raw` option you do not expose), plus `brace-expansion`, `browserslist`, `deepmerge-ts`, `fast-uri`, `js-yaml`, and Prisma/Hono toolchain packages. I did not confirm a reachable exploit in the request path. You **send** mail; you do not parse inbound MIME on a public route. Multer is on the request path for product/avatar/document uploads — triage that one first.
+
+**Fix:** `npm audit` in CI; upgrade `@nestjs-modules/mailer` / Prisma when patches exist. Do not `npm audit fix --force` onto Prisma 6.
+
+**Effort:** 2h to triage, more to upgrade.
+
+#### 8.4 CORS vs password-reset URL — `MEDIUM`
+**Where:** `main.ts:35-43` splits `FRONTEND_URL` on commas; `environment.validation.ts:43-47` validates `FRONTEND_URL` as a **single** `uri()`; `forgot-password.provider.ts:46-50` uses the raw string as the reset link base.
+
+If someone sets `FRONTEND_URL=https://a.com,https://b.com`, Joi may reject boot in production (`uri()`), or a non-production env produces a broken reset URL. CORS and mail disagree.
+
+**Fix:** Validate an array (comma-separated URIs). Use the first origin (or a dedicated `PASSWORD_RESET_URL`) for email links.
+
+**Effort:** 1h.
+
+#### 8.5 Refresh tokens in JSON bodies — `MEDIUM`
+Tokens are not in query strings (good). They are in the JSON body of login/refresh/logout. Any XSS on the storefront that can read API responses can steal refresh tokens. HttpOnly cookies + CSRF is the usual upgrade; you already have a BFF. This may be a deliberate BFF-friendly choice — confirm it.
+
+#### 8.6 Helmet HSTS — `LOW` (needs human)
+Helmet 8’s default middleware includes `Strict-Transport-Security: max-age=31536000; includeSubDomains`. If TLS terminates at the load balancer and the app only sees HTTP, the header may be stripped or never reach browsers. Confirm on staging with `curl -I https://…`.
+
+#### 8.7 `.gitignore` does not list `*.pem` / `*.key` — `LOW`
+`.env*` is covered. A developer dropping a Stripe key file in `server/` could still commit it.
+
+**To get this module to 8+:** Shared rate limits, object storage, Stripe-backed refunds (or an honest “ledger only” UX). Then this is a 7–8.
+
+---
+
+### Module 9 — Configuration & Env Validation — **8/10**
+
+**Verdict in one paragraph:** The app will refuse to boot on missing/weak JWT secrets. That is the right failure mode.
+
+**What's working:** Joi schema in `environment.validation.ts` — `NODE_ENV` enum, required `DATABASE_URL` / Stripe / mail / three distinct JWT secrets, min length 32, denylist of `changeme`-class values. `SEED_DEMO_DATA` and `ALLOW_ADMIN_SEED` are ignored when `NODE_ENV === 'production'` (seed providers check this). Typed `registerAs` namespaces.
+
+**Findings:**
+
+#### 9.1 Behaviour defaults after Joi — `MEDIUM`
+**Where:** `app.config.ts:4-6`
 
 ```ts
 environments: process.env.NODE_ENV || 'development',
+frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000',
 ```
 
-Joi already required `NODE_ENV`, so this default should never run. If someone loads `appConfig` in a script without Joi, Swagger/CORS take the dev branch. `main.ts:74` also does `Number(process.env.PORT) || 3001` outside the typed config.
+Joi already requires `NODE_ENV`. The `|| 'development'` branch is dead in a successful boot, but it is the classic “typo `prod` silently takes the dev path” pattern **if** Joi were ever bypassed. `setup-swagger.ts` also reads `process.env.SWAGGER_ENABLED` in addition to ConfigService.
 
-**Fix:** `configService.getOrThrow('app.environments')` in `main.ts`. Read `PORT` from the validated config namespace.
+**Fix:** Read only through `ConfigService`. Remove `process.env.PORT` in `main.ts:70` (Joi already defaults `PORT`).
 
-**Effort:** 30 min
+**Effort:** 30 min.
 
-#### 9.3 `.env.example` is complete enough — clean
-Placeholders only. `ALLOW_ADMIN_SEED=false` is documented. No real secrets.
+#### 9.2 `.env.example` comment disagrees with code — `LOW`
+Example says Swagger is “forced off in production unless explicitly true.” Code returns immediately on `isProduction` and never consults `SWAGGER_ENABLED` in that case. Prefer the code.
 
-**To get this module to 8+:** JWT min 32. Stop reading `process.env.PORT` in `main.ts`.
+**To get this module to 8+:** Already an 8. Delete leftover `process.env` reads.
 
 ---
 
 ### Module 10 — Database Schema, Constraints & Migrations — **7/10**
 
-**Verdict in one paragraph:** This schema looks like someone has already been paged about missing indexes. FKs are present. Money is Decimal. Soft-delete columns exist where the domain needs them. The remaining gaps are CHECKs, timestamptz, and a couple of uniqueness holes.
+**Verdict in one paragraph:** This schema was given a production-readiness pass (indexes, CHECKs, checkout hardening, tokenVersion). The remaining holes are operational (pool) and product (soft-delete vs unique identity).
 
-**What's working:** Versioned migrations under `prisma/migrations/` (including `production_readiness_indexes` and `checkout_hardening`). Primary keys on every table. Unique email, slug, SKU, order number, review `(userId, productId)`, cart `(userId, variantId)`, checkout idempotency `(userId, key)`. FKs with explicit `onDelete`. Composite indexes on hot order lists. `RefreshToken.tokenHash` unique.
-
-**Findings:**
-
-#### 10.1 No CHECK constraints on domain invariants — `HIGH`
-**Where:** `server/prisma/schema.prisma`
-
-- `Review.rating` is bare `Int` (app allows 1–5 only)
-- `ProductVariant.stockQuantity` is bare `Int` (can be negative)
-- `Payment.amount` / `Order.totalAmount` have no `>= 0`
-- `OrderItem.quantity` has no `> 0`
-
-**Why it matters:** The service layer is not the only writer. Seeds, one-off SQL, and a future bug will insert garbage. Uniqueness you already put in the DB (correct). Non-negativity belongs there too.
-
-**Fix:**
-```sql
-ALTER TABLE reviews ADD CONSTRAINT chk_reviews_rating CHECK (rating BETWEEN 1 AND 5);
-ALTER TABLE product_variants ADD CONSTRAINT chk_variants_stock_nonneg CHECK (stock_quantity >= 0);
-ALTER TABLE payments ADD CONSTRAINT chk_payments_amount_nonneg CHECK (amount >= 0);
-```
-
-**Effort:** 4h + migrate
-
-#### 10.2 Timestamps are `TIMESTAMP(6)`, not `timestamptz` — `MEDIUM`
-**Where:** throughout `schema.prisma` (`@db.Timestamp(6)`)
-
-**Why it matters:** Postgres `timestamp` is “local, no zone.” A session in UTC plus a reporting query in another zone will shift `created_at` by hours. E-commerce order times are exactly the field people argue about.
-
-**Fix:** New tables use `Timestamptz`. Existing columns: migrate in expand/contract (add new column, backfill, swap) — do not do it as a one-step lock on a hot table.
-
-**Effort:** 1 day if you do it safely
-
-#### 10.3 `ON DELETE CASCADE` on `payments` — `MEDIUM`
-**Where:** `server/prisma/schema.prisma:378`
-
-Deleting an order deletes the payment row. Fine for abandoned-checkout rollback (you do this). Dangerous if anyone ever `DELETE FROM orders` for cleanup.
-
-**Fix:** Keep CASCADE for session rollback, but never hard-delete a paid order. Prefer cancel + retain. Document that.
-
-**Effort:** convention
-
-#### 10.4 `checkout_sessions.stripe_payment_intent_id` is not unique — `MEDIUM`
-**Where:** `server/prisma/schema.prisma:394` (indexed, not unique)
-
-A unique constraint would make “one PI → one session” a database fact. Today two sessions could theoretically share a PI id (`pending` is also reused as a placeholder — that value is definitely not unique).
-
-**Fix:** Use `NULL` instead of `'pending'`, then `UNIQUE` on the column.
-
-**Effort:** 2h
-
-#### 10.5 `checkout_session_items.variant_id` has no standalone index — `LOW`
-Covered by the unique `(checkoutSessionId, variantId)`. A reverse lookup “all pending sessions for this variant” would seq-scan. Add if you need that query.
-
-#### 10.6 Soft-delete filters — generally applied
-Public product reads filter `deletedAt: null` and `status: ACTIVE`. Sellers can opt into `lifeCycle=removed`. Not a leak in the paths read.
-
-**Concurrency:** Checkout reserve uses `FOR UPDATE` (good). Refund apply does not (see Module 8/4). Complete-checkout claims the session with `updateMany` where `status = PENDING` (good).
-
-**To get this module to 8+:** CHECK constraints. Unique PI id. Plan timestamptz.
-
----
-
-### Module 11 — Query Performance, N+1 & Indexing — **5/10**
-
-**Verdict in one paragraph:** The boring list endpoints are paginated and use `include`. The public catalog has one foot-gun (`rating_desc`) and an unindexable search. There is no cache and no configured pool.
-
-**What's working:** `PaginationProviders` caps limit at 100. Product lists use `PRODUCT_LIST_INCLUDE` (not per-row queries). Review stats are batched (`getReviewStatsForProducts`). Dashboard aggregations use `$queryRaw` (parameterized). FK columns on orders/products/payments are indexed. Abandoned-checkout sweep uses a `job_locks` row so multiple instances do not double-expire.
+**What's working:** PKs on every table. FKs with explicit `onDelete`. Unique email, slug, SKU, order number, `(userId, productId)` reviews. Indexes on order `userId+createdAt`, payment `transactionId`, checkout session Stripe id. `CHK_reviews_rating_range`, `CHK_payments_amount_non_negative`, `CHK_orders_total_amount_non_negative`, `CHK_order_items_quantity_positive`. Money is `Decimal(10,2)`, not float. Migrations are versioned; no `synchronize: true` (Prisma does not even have that footgun). Refund apply uses `SELECT … FOR UPDATE`. Soft-delete filtered in the queries I read for User/Product/Store.
 
 **Findings:**
 
-#### 11.1 `sort=rating_desc` loads all matching ids — `HIGH`
-**Where:** `server/src/modules/products/providers/get-products.provider.ts:174-205`
+#### 10.1 UNIQUE email/phone vs `deletedAt` — `HIGH`
+**Where:** `server/prisma/schema.prisma:12-16`
 
-```ts
-const allMatching = await this.prisma.product.findMany({
-  where,
-  select: { id: true },
-});
-const stats = await getReviewStatsForProducts(this.prisma, ids);
-const sortedIds = [...ids].sort(/* in process */);
+```prisma
+email     String  @unique ...
+phoneNumber String? @unique ...
+deletedAt DateTime?
 ```
 
-**Why it matters:** At 50 products this is fine. At 50,000 this is “read every id, aggregate every review, sort in Node, then page.” It will look like a memory leak and a slow GET `/products`.
+Soft-deleted users still occupy the unique index. Re-registration fails with a conflict (and your register path may even return their old id — Module 7).
 
-**Fix:** Persist `averageRating` / `reviewCount` on `products` (updated when reviews change) and `ORDER BY average_rating DESC` in SQL. Or a materialized view.
+**Fix:** Partial unique indexes in Postgres: `UNIQUE (email) WHERE deleted_at IS NULL` (Prisma supports this via raw SQL migration; the schema field can stay). Same for phone.
 
-**Effort:** 4h–1 day
+**Effort:** 4h including a data check.
 
-#### 11.2 Catalog search is `contains` (leading wildcard) — `HIGH` (at scale)
-**Where:** `server/src/modules/products/providers/get-products.provider.ts:69-78`
-
-```ts
-{ name: { contains: query.search.trim(), mode: 'insensitive' } },
-{ description: { contains: query.search.trim(), mode: 'insensitive' } },
-```
-
-Prisma `contains` + `insensitive` is `ILIKE '%term%'` — not indexable with a normal btree.
-
-**Fix:** `pg_trgm` GIN indexes for now; Postgres `tsvector` or a search service when the catalog hurts.
-
-**Effort:** 2h for trigram; more for real search
-
-#### 11.3 `COUNT(*)` on every paginated list — `MEDIUM`
-`paginateQuery` always counts. Fine until `orders` is huge. Then admin `GET /orders/admin/all` will drag.
-
-**Fix:** Skip `total` on cursor-style UIs, or use an estimate for admin.
-
-**Effort:** 2h when it shows up in logs
-
-#### 11.4 Connection pool not configured — `HIGH`
+#### 10.2 Connection pool and timeouts unset — `HIGH`
 **Where:** `server/src/prisma/prisma.service.ts:11-16`
 
 ```ts
@@ -832,166 +730,208 @@ const adapter = new PrismaPg({
 });
 ```
 
-No `connectionLimit`, no `statement_timeout`, no `idle_in_transaction_session_timeout`.
+No `max`, no `connectionTimeoutMillis`, no `statement_timeout`. Default `pg` pool is 10 per process. 8 instances = 80 connections before the rest of the platform (migrations, admin, replicas).
 
-**Why it matters:** `instances × default pool` > `max_connections` is a classic Saturday outage. One forgotten transaction holds a connection forever.
+**Fix:** Set pool size from env. `SET statement_timeout` on connect. Do the arithmetic against `max_connections`.
 
-**Fix:** Set pool size from env. Add `?statement_timeout=15000` (or a Prisma/pg option). Do the arithmetic: `pool * pods < max_connections - headroom`.
+**Effort:** 2h.
 
-**Effort:** 2h
+#### 10.3 `TIMESTAMP(6)` not `TIMESTAMPTZ` — `MEDIUM`
+Every `DateTime` maps `@db.Timestamp(6)`. Node will treat them as local or UTC depending on the driver session. You mostly write `new Date()` (UTC). Mixing a SQL console in local time with the app is a class of “order showed up yesterday” bugs.
 
-#### 11.5 No cache, emails in the request path — `MEDIUM`
-Forgot-password sends mail before returning (caught, always `{ sent: true }`). Checkout completion fires mail in the background (`void … catch`). There is no queue. A slow SMTP makes forgot-password slow; that is acceptable. A queue becomes necessary when you add invoices/PDFs.
+**Fix:** New columns as `timestamptz`. Migrate old ones with a documented UTC assumption when you can afford the lock.
 
-**Inferred, not measured:** N+1 on the hot product list looks avoided (`include` + batched stats). Confirm with Prisma query logging on `GET /products`.
+**Effort:** 1 day (expand/contract).
 
-**To get this module to 8+:** Fix `rating_desc`. Configure the pool. Trigram index on `products.name`.
+#### 10.4 `ON DELETE CASCADE` on `payments` → `orders` — `MEDIUM`
+**Where:** `schema.prisma:382`
+
+Deleting an order deletes the payment row. You restrict deleting users who have orders (`onDelete: Restrict` on `Order.user`). Still: any admin “cleanup” script that deletes orders destroys payment history. Audit logs are a separate table with **no** FK to users (`actorId` is a loose int).
+
+**Fix:** Do not expose order hard-delete. Keep cascade only if you are sure no job does `order.deleteMany`.
+
+#### 10.5 `checkout_session_items.variantId` has no dedicated index — `LOW`
+FK exists (`onDelete: Restrict`). Postgres does not auto-index FKs. Volume is probably fine; add `@@index([variantId])` when you next migrate.
+
+**To get this module to 8+:** Partial unique emails, pool settings, timestamptz plan.
+
+---
+
+### Module 11 — Query Performance, N+1 & Indexing — **7/10**
+
+**Verdict in one paragraph:** Hot catalog search is not a naive full-table `LIKE` — you added `pg_trgm` GIN indexes on product name/description. Lists paginate. Checkout batches variant locks. The gaps are “no cache,” COUNT(*) on every page, and a DB round-trip on every authenticated request (intentional for authz).
+
+**What's working:** `GetProductsProvider` uses `include` for list/detail, not per-row queries. Dashboard fires aggregations with `Promise.all`, not a loop of `findOne`. Abandoned-checkout sweep uses `JobLockProvider` so multiple instances do not all release stock. Product `contains` search can use `IDX_products_name_trgm`.
+
+**Findings:**
+
+#### 11.1 Auth guard hits the DB every request — `MEDIUM` (deliberate)
+**Where:** `access-token.guard.ts:52`
+
+This is the correct trade for “blocked users die immediately.” Cost is one indexed PK lookup per request. Do not “optimize” it by trusting JWT roles.
+
+If this becomes hot, cache `{tokenVersion, isBlocked, roles}` in Redis with a 30s TTL keyed by user id, invalidated on password change/block.
+
+#### 11.2 `COUNT(*)` on every paginated list — `MEDIUM`
+`PaginationProviders` + `prisma.*.count({ where })`. Fine at thousands of rows. Painful at millions of orders.
+
+**Fix:** Cursor pagination for admin order/payment lists when the table warrants it; or skip total on pages after the first.
+
+#### 11.3 Admin search still `contains` without trigram — `LOW`
+Users / sellers / stores / variants search with `mode: 'insensitive'` contains. Admin-only, smaller tables. Product catalog is the one that needed GIN and got it.
+
+#### 11.4 No application cache — `LOW` for now
+Categories and public product detail are obvious cache candidates once you have more than one instance. Not a launch blocker.
+
+#### 11.5 Abandoned-checkout sweep is unbounded + serial — `MEDIUM`
+**Where:** `expire-abandoned-checkouts.provider.ts:74-90`
+
+`findMany` of every `PENDING` session older than the TTL has no `take`. Each row then awaits Stripe + a transaction. Job lock prevents two instances overlapping. A backlog of stale sessions still makes one instance grind for the whole lock TTL.
+
+**Fix:** `take: 50` (or similar) per tick; the 5-minute interval will drain the rest.
+
+**Effort:** 30 min.
+
+#### 11.6 Emails are async (good) but still in-process — `MEDIUM`
+`complete-checkout.provider.ts:195` uses `void this.sendConfirmationEmails(...)`. The HTTP response does not wait (good). If the process dies, the email is lost. There is no queue.
+
+**Fix:** A later queue (even a `outbox` table + the same job lock you already have).
+
+**To get this module to 8+:** Pool limits (Module 10) plus an outbox for mail. Resist adding Redis until rate limits need it — then use it for both.
 
 ---
 
 ### Module 12 — Error Handling, Logging & Observability — **6/10**
 
-**Verdict in one paragraph:** Clients get a safe, consistent error body and a request id they can quote. Operators get Nest text logs and no metrics. You will debug production with `grep` and hope.
+**Verdict in one paragraph:** Clients get a safe envelope and a request id. Operators get Nest’s text logger and a `/health/ready` that actually pings Postgres. You cannot graph p95 or get paged from this repo.
 
-**What's working:** Three filters (HTTP, Prisma, all-exceptions). Prisma P2002 → 409 without leaking fields. Request id middleware (`request-id.middleware.ts:16-30`) echoes `x-request-id`. Audit writes are fire-and-forget and do not block money paths. Health is split: `/health/live` (process) and `/health/ready` (Postgres `SELECT 1`). `enableShutdownHooks()` is on. Zero `console.log` in `server/src`.
+**What's working:** Three filters registered (all / Prisma / HTTP). Prisma codes mapped to 409/404 without leaking SQL. `x-request-id` generated or echoed (`request-id.middleware.ts`). Health: `live` vs `ready` (`SELECT 1`). `enableShutdownHooks()` + `PrismaService.onModuleDestroy`. Audit logger is append-only and fire-and-forget so it cannot block checkout. Zero `console.log` in `src`.
 
 **Findings:**
 
-#### 12.1 Nest `Logger`, not structured JSON — `MEDIUM`
-Logs are line-oriented. In CloudWatch/Datadog you want `{ level, msg, requestId, userId }`.
+#### 12.1 Logs are not structured JSON — `HIGH` for operations, scored as **MEDIUM** here
+`Logger.log` / `Logger.error` from `@nestjs/common`. Grep-able locally; painful in CloudWatch/Datadog without a JSON formatter (Pino).
 
-**Fix:** `nestjs-pino` (or Winston) with automatic redaction of `password`, `authorization`, `cookie`, `refreshToken`.
+**Fix:** `nestjs-pino` with redaction paths for `password`, `authorization`, `refreshToken`, `clientSecret`.
 
-**Effort:** 4h
+**Effort:** 4h.
 
-#### 12.2 No metrics, tracing, or error tracker — `HIGH` (ops)
-No Prometheus, OpenTelemetry, or Sentry in `package.json`. You will not know p95 checkout latency until users tweet.
+#### 12.2 No metrics, tracing, or Sentry — `MEDIUM`
+There is nothing to alert on except “the process died.” Add RED metrics (rate, errors, duration) on `/orders/checkout` and `/auth/login` first.
 
-**Fix:** One APM or Sentry + a `/metrics` scrape, authenticated or internal-only.
+#### 12.3 Health is wrapped in `{ data, version }` — `LOW`
+The interceptor is global, so probes get `{ data: { status: 'ok' }, version: 'v1' }`. Most kube probes just want 200. It works; document it for whoever writes the Helm chart.
 
-**Effort:** 1 day
-
-#### 12.3 Checkout emails swallowed — `MEDIUM`
-**Where:** `complete-checkout.provider.ts:195`, `:253-255`
-
-```ts
-void this.sendConfirmationEmails(userId, responses).catch(() => undefined);
-```
-
-Checkout should succeed if SMTP is down (correct). You also lose the signal that every confirmation is failing.
-
-**Fix:** Log a warning with `orderId` (you do this in forgot-password). Count `mail.failed` if you add metrics.
-
-**Effort:** 30 min
+`/health/ready` is `@SkipThrottle()` and `@Auth(NONE)` and hits Postgres. That is correct for kube, but it is also a free DB ping. Keep it off the public internet or put it on an internal listener.
 
 #### 12.4 Graceful shutdown is hooks-only — `MEDIUM`
-`enableShutdownHooks()` disconnects Prisma on SIGTERM. There is no explicit “stop accepting, wait N seconds, then exit.” Under Kubernetes you want a preStop sleep + `app.close()` timeout so in-flight checkouts finish.
+Nest’s shutdown hooks disconnect Prisma. There is no explicit drain timeout (“stop traffic, wait 15s, exit”). Combined with no Dockerfile `STOPSIGNAL` story, deploys will drop in-flight checkouts.
 
-**Effort:** 2h
+#### 12.5 Audit writes can vanish — `LOW`
+`AuditProvider.record` is `void` + `.catch`. Correct for “never block payments.” Incorrect if you need a compliance trail. You listed compliance as none.
 
-#### 12.5 `/health/ready` is public and quiet — `LOW` (good)
-Returns `{ status: 'ok' }` only. Does not leak versions. `SkipThrottle` is correct for probes.
-
-**To get this module to 8+:** JSON logs with redaction. Sentry. One latency dashboard on `/orders/checkout` and `/auth/login`.
+**To get this module to 8+:** JSON logs + one APM/Sentry project + a documented SIGTERM drain.
 
 ---
 
-### Module 13 — Testing & Quality Gates — **4/10**
+### Module 13 — Testing & Quality Gates — **5/10**
 
-**Verdict in one paragraph:** Someone wrote real tests for the scary checkout/auth code. That is the right instinct. There is no e2e suite and nothing in CI that fails a bad merge, so the suite is a local courtesy.
+**Verdict in one paragraph:** You have more unit tests than `AGENTS.md` admits, and they sit on the right modules (auth, checkout, payments, reviews, money, env). They are not a quality **gate**, because nothing runs them on merge, and there is no e2e harness (`package.json` still points at `./test/jest-e2e.json` which does not exist).
 
-**What's working:** 19 `*.spec.ts` files sitting next to the logic they protect — webhook signature, checkout race, stock adjust, locks, idempotency, refresh-token store, access-token guard, order ownership, product ownership, COD reject, job lock. Jest is configured. No committed `.only`.
+**What's working:** 39 `*.spec.ts` files. No `.only` / `.skip`. Coverage of tokenVersion, refresh rotation, checkout idempotency, Stripe webhook util, stock adjust, payment status transitions, review eligibility. Jest is configured in `package.json`.
 
 **Findings:**
 
-#### 13.1 No e2e and no CI gate — `HIGH`
-`package.json` has `test:e2e` pointing at `./test/jest-e2e.json`. There is no `server/test/` tree. There is no `.github/workflows`.
+#### 13.1 CI does not run tests — `HIGH`
+No `.github/workflows`. A failing spec is a local problem.
 
-**Why it matters:** The tests you have will rot the first week nobody runs them. Ownership regressions (Module 7) will not get caught.
+**Fix:** `npm run lint` (without `--fix`), `npx tsc --noEmit`, `npm test`, `npm audit --omit=dev` on every PR. Fail the job.
 
-**Fix:** GitHub Action: `npm ci` → `npm run lint` (without `--fix`) → `npx tsc --noEmit` → `npm test` → `npm audit --omit=dev`. Add one e2e later: register → login → checkout (Stripe test mode or a fake).
+**Effort:** 2h.
 
-**Effort:** 4h for CI; 2 days for a thin e2e
+#### 13.2 No e2e / HTTP tests — `HIGH` for IDOR regression
+Ownership is implemented in providers and mostly unit-tested with mocks. A future controller that calls `findUnique({ where: { id } })` will not fail CI.
 
-#### 13.2 Large untested surface — `MEDIUM`
-No specs for users, addresses, files, reviews, notifications, sellers, stores, dashboard, mail, or multer. Login/register/reset themselves are untested (only token helpers and the access guard).
+**Fix:** One Nest testing-module test per sensitive `GET /:id` (orders, payments, files/secure, addresses) that expects 403 for another user.
 
-**To get this module to 8+:** CI that blocks merge. Login/refresh/logout tests. One checkout e2e. Ownership tests per Module 7.
+**Effort:** 1–2 days.
+
+#### 13.3 `npm run lint` uses `--fix` — `MEDIUM`
+`"lint": "eslint ... --fix"` mutates the tree. CI should lint without `--fix`.
+
+**To get this module to 8+:** CI gate + a thin e2e folder. Coverage percentage is less important than those two.
 
 ---
 
-### Module 14 — DevOps, CI/CD & Production Readiness — **3/10**
+### Module 14 — DevOps, CI/CD & Production Readiness — **4/10**
 
-**Verdict in one paragraph:** The application code is ahead of the delivery story. There is no image, no pipeline, no in-repo deploy, and no runbook. Staging/production would be a person remembering commands.
+**Verdict in one paragraph:** The application code is closer to production than the delivery machinery. Staging + production is the stated target; this repo cannot describe how a container is built, who runs migrations, or what happens on SIGTERM.
 
-**What's working:** `prisma migrate deploy` script exists. `start:prod` runs `node dist/main`. Shutdown hooks enabled. Health probes exist and are cheap. Lockfile committed. `.env` gitignored. Seed demo data is off by default.
+**What's working:** `prisma:migrate:deploy` script exists. Job locks prevent duplicate checkout expiry. Seeds refuse to run in production. Lockfile is committed. `knip.json` exists for dead-code hunting.
 
 **Findings:**
 
 #### 14.1 No Dockerfile — `HIGH`
-No image, no non-root user, no pinned base digest, no `HEALTHCHECK`, no `.dockerignore`.
+No multi-stage image, no non-root user, no `HEALTHCHECK`, no pinned base digest. Whoever deploys is inventing this under pressure.
 
-**Why it matters:** The first person to “just dockerize it” will ship as root with a `:latest` tag and a copied `.env`. That is a CRITICAL waiting to happen.
+**Fix:** Multi-stage Node 22/24 Debian or distroless, `USER node`, copy `dist` + `node_modules` production, `HEALTHCHECK` against `/health/ready`.
 
-**Fix:** Multi-stage Node 22 alpine (or distroless), `USER node`, copy `dist` + `prisma` + production `node_modules`, `HEALTHCHECK` against `/health/live`.
-
-**Effort:** 4h
+**Effort:** 1 day.
 
 #### 14.2 No CI/CD — `HIGH`
-Covered in Module 13. Also means migrations are not locked to a deploy step — someone will run `migrate deploy` on two pods at once or forget it.
+See Module 13. Also: no place to inject secrets from a manager; no migration job separate from app boot (running `migrate deploy` on every replica start is how you get advisory-lock stampedes).
 
-**Fix:** One migrate job before the rolling deploy. Not on every pod start.
+#### 14.3 In-process cron via `setInterval` — `MEDIUM`
+**Where:** `expire-abandoned-checkouts.provider.ts:43-52`
 
-**Effort:** 1 day with whatever you deploy on
+Job lock makes this safe-ish. It still couples “HTTP server” to “worker.” When you scale to 10 instances you run 10 timers that fight for one lock. Fine at 2 instances; move to a worker process later.
 
-#### 14.3 In-process cron on every instance — `MEDIUM` (mitigated)
-`ExpireAbandonedCheckoutsProvider` uses `setInterval` on every boot (`expire-abandoned-checkouts.provider.ts:43-52`) plus `JobLockProvider`. The lock is the right mitigation. If the lock table is unreachable, every instance still wakes up and errors (logged).
+#### 14.4 `start:prod` is `node dist/main` — `LOW`
+Correct. Ensure the image actually runs `prisma migrate deploy` **once** in the release pipeline, not in that command.
 
-**Fix:** Keep the lock. Add a metric when the lock is skipped vs taken.
-
-#### 14.4 No IaC, no runbook, no DR notes — `MEDIUM`
-Unverifiable from the repo: backups, restore tests, RTO/RPO, who gets paged.
-
-**To get this module to 8+:** Dockerfile + CI + migrate-before-deploy + a one-page runbook (health URLs, how to revoke tokens, how to expire a stuck checkout).
+**To get this module to 8+:** Dockerfile + GitHub Actions + a one-page runbook (migrations, health, rollback, Stripe webhook URL). That alone would lift the overall score.
 
 ---
 
-### Module 15 — Documentation & Maintainability — **6/10**
+### Module 15 — Documentation & Maintainability — **5/10**
 
-**Verdict in one paragraph:** The architecture docs are unusually good for a repo this size. The server README is still the Nest.js marketing page. A new backend developer can learn the rules from ADRs and then has to guess how to run Postgres.
+**Verdict in one paragraph:** Architecture docs in `docs/decisions/` and `server/walkthrough.md` are a genuine asset. The file a new backend engineer opens first — `server/README.md` — is still the NestJS starter, including a CircleCI badge for `nestjs/nest`.
 
-**What's working:** `docs/decisions/` (BFF, provider pattern, seller-owned products, JWT, file privacy, ownership). `server/walkthrough.md` and `server/AGENTS.md` exist. Code comments that were read explained *why* (dummy bcrypt hash, atomic checkout claim, audit must not block). Zero `TODO`/`FIXME`/`HACK` in `server/src`.
+**What's working:** ADRs 001–008 (BFF, providers, JWT, envelopes, files, ownership). Swagger from decorators. `server/.env.example` is complete enough to boot. Almost no TODO/FIXME in `src`.
 
 **Findings:**
 
-#### 15.1 `server/README.md` is the Nest starter — `MEDIUM`
-**Where:** `server/README.md:1-98`
+#### 15.1 README is framework boilerplate — `HIGH` for onboarding, **MEDIUM** in this rubric
+**Where:** `server/README.md`
 
-It tells you how to donate to Nest and deploy on Mau. It does not say: copy `.env.example`, run Postgres, `npm run prisma:migrate:dev`, `npm run start:dev`, API is on :3001, Swagger at `/api` when enabled.
+It does not mention PostgreSQL, Prisma migrate, Stripe CLI webhooks, required env vars, or “never point the browser at Nest.”
 
-**Fix:** Replace it with a 15-minute local setup. Keep the walkthrough for architecture.
+**Fix:** Replace it with: prerequisites, `cp .env.example .env`, `npm install`, `npm run prisma:migrate:dev`, `npm run start:dev`, how to run tests, how to point Stripe webhooks at `/orders/webhooks/stripe`.
 
-**Effort:** 1h
+**Effort:** 1h.
 
-#### 15.2 Onboarding friction
-A new backend developer can be productive in a week **if** someone points them at `AGENTS.md` + `walkthrough.md` + an existing module (`products` / `orders`). They will lose the first afternoon on env and “why is there no Docker.”
+#### 15.2 `AGENTS.md` disagrees with the tree — `LOW`
+Claims no `*.spec.ts`. There are 39. Stale agent instructions cause the next person to skip tests that exist.
 
-**To get this module to 8+:** Rewrite `server/README.md`. Link the ADRs from it.
+**To get this module to 8+:** Rewrite `server/README.md`. Point AGENTS at the real test layout.
 
 ---
 
 ## Quick Wins
 
-- Require `Idempotency-Key` (or body `idempotencyKey`) on `POST /orders/checkout`.
-- `genSalt(12)` in `bcrypt.provider.ts`.
-- Joi: `JWT_SECRET.min(32)` and pin `algorithms: ['HS256']`.
-- CORS: use the `FRONTEND_URL` allow-list in every environment.
-- Delete `images?: any[]` from `CreateProductDto`.
-- Read `PORT` from ConfigService, not `process.env`.
-- Log a warning when checkout confirmation email fails (do not swallow silently).
-- Only *create* the seed admin — never attach `SUPER_ADMIN` to an existing user.
-- Add `.editorconfig`.
-- Replace `server/README.md` with a real setup page.
+- Use `toCents(...)` in `complete-checkout.provider.ts` and `cancel-order.provider.ts` (20 min).
+- Cap the abandoned-checkout sweep with `take: 50` (15 min).
+- Add `@MaxLength(254)` on email DTOs (10 min).
+- Stop logging demo seed passwords (10 min).
+- Stop returning `existing.id` from duplicate register (30 min).
+- Expose `POST /auth/logout-all` (30 min).
+- Read `PORT` from `ConfigService` instead of `process.env` in `main.ts` (10 min).
+- Add `@@index([variantId])` on `CheckoutSessionItem` in the next migration (15 min).
+- Change `lint` script to not `--fix` in CI (10 min).
+- Align `.env.example` Swagger comment with “disabled whenever `NODE_ENV=production`” (5 min).
+- Raise `PASSWORD_MAX_LENGTH` to 72 and widen the allowed special-character class (20 min).
+- Put `*.pem` / `*.key` in `server/.gitignore` (2 min).
+- Document that `/health/ready` returns the `{ data, version }` envelope (10 min).
 
 ---
 
@@ -999,42 +939,53 @@ A new backend developer can be productive in a week **if** someone points them a
 
 | What | How to confirm |
 |------|----------------|
-| Live secret strength / reuse | Check the secret manager (or host env) for `JWT_SECRET` length and that staging ≠ prod. Rotate if it was ever committed historically (`git log -S JWT_SECRET --all`). |
-| `npm audit` / lockfile drift | `cd server && npm audit --omit=dev` and `npm ci`. I could not run audit in this pass. |
-| Actual Postgres indexes vs `schema.prisma` | `\d+ orders` / `\d+ product_variants` in `psql` on staging. Look for unused and missing. |
-| Pool math | `SHOW max_connections;` vs `instances × Prisma/pg pool`. |
-| Whether Nest is internet-facing | If only the Next BFF can reach :3001, CORS/Swagger risk drops. If Nest has a public DNS name, treat every finding as-is. |
-| TLS / HSTS / HTTP→HTTPS | Edge/load-balancer config. Not in this repo. |
-| Backups and restore | Ask whoever runs Postgres: last restore test date, encryption, retention. An untested backup is not a backup. |
-| Alerts | Confirm something pages a human on 5xx rate, checkout p95, and sweeper failures. |
-| Circular deps | `npx madge --circular server/src` from a clean install. |
-| Staging `NODE_ENV` | Must be `production` (Joi allows only `development\|production\|test`). If it is `development`, CORS is wide open. |
-| Stripe webhook endpoint in Stripe dashboard | Signing secret set; endpoint is `POST /orders/webhooks/stripe` (or the BFF proxy to it). |
-| File storage in prod | Today this is local disk (`UPLOADS_ROOT`). Multiple pods will not share uploads unless you put them on object storage or a shared volume. |
+| Production JWT secrets actually have ≥256 bits of entropy | Check the secret manager / host env. Do not paste them into chat. Joi only enforces length 32 and a weak-string denylist. |
+| `max_connections` vs app instances × pool size | `SHOW max_connections;` in Postgres; count replicas; set `PrismaPg` `max` so the product stays under ~70% of the cap. |
+| TLS 1.2+, HSTS, HTTP→HTTPS | `curl -I https://api...` in staging. Helmet may not emit HSTS if TLS is at the load balancer. |
+| Backups and restore | Ask whoever owns Postgres: last successful restore drill, RPO/RTO. Not in this repo. |
+| Alerts reaching a human | No Sentry/PagerDuty config in-repo. If it exists, it is outside Git. |
+| Stripe refunds done manually today | If ops already refunds in the Stripe dashboard then records here, the HIGH is process, not a surprise. Write that down. |
+| Whether `FRONTEND_URL` is ever comma-separated in real envs | If it is a single origin, the Joi `uri()` vs `split(',')` mismatch is dormant. |
+| `npm audit` reachability | Confirm mailer never parses untrusted MIME; confirm Prisma CLI is not in the production image. |
+| Index use in production | `EXPLAIN ANALYZE` on `GET /products?search=` and `GET /orders?page=` against a realistic dataset. Trigram indexes exist; I did not run them. |
+| Multi-instance file sharing | If you already mount `uploads/` on NFS/EFS, local disk is acceptable until object storage. Confirm it. |
 
 ---
 
 ## Suggested Roadmap
 
-**Week 1 (before production):**
-Require checkout idempotency. Raise JWT secret policy and pin HS256. bcrypt cost 12. CORS allow-list everywhere. Configure pg pool + statement timeout. Dockerfile (non-root). CI: lint, typecheck, test, audit. Magic-byte upload check. Confirm Nest is not publicly exposed (or put it behind the BFF only).
+**Week 1 (before a real staging deploy):**
+
+- CI: lint (no `--fix`), `tsc`, unit tests, `npm audit --omit=dev`.
+- Dockerfile + `/health/ready` as the probe; run `prisma migrate deploy` once per release, not per replica boot.
+- Configure `pg` pool size and `statement_timeout`.
+- Fix register id leak; use `toCents` on PaymentIntent matching.
+- Decide refunds: call Stripe or label the admin action as “record only.”
+- Redis (or equivalent) for throttling before you put the API behind more than one instance.
 
 **Weeks 2–4:**
-Session version on password change. Split JWT secrets. Integer-cent pricing. CHECK constraints. Fix `rating_desc` (denormalise rating). Redis throttle if >1 instance. Structured logs + Sentry. Ownership tests. Rewrite `server/README.md`. Unique PaymentIntent id. Admin-seed must not promote.
+
+- Object storage for uploads; keep private files off public `/uploads`.
+- `logout-all` + optional tokenVersion bump on logout.
+- Partial unique indexes for soft-deleted emails/phones.
+- Nest e2e tests for IDOR on orders, payments, secure files.
+- JSON logging + Sentry (or similar) on 5xx.
+- Money as strings/cents in JSON; stop `Number(decimal)` in mappers.
+- Password policy: raise max length, drop mandatory character classes.
 
 **Backlog:**
-`timestamptz` migration. Trigram/search. Error codes. Pino. Queue for mail. E2E checkout. Constraint renames. Object storage for uploads if you scale out. MFA if the risk profile changes.
+
+- `timestamptz` migration, `iss`/`aud`, account lockout, mail outbox, cursor pagination for admin lists, image re-encode, README rewrite, metrics on checkout and login, worker process for the abandoned-checkout sweep.
 
 ---
 
 ## Assumptions & Method
 
-**Assumed:** The Nest process is deployable on its own (findings treat it as a production HTTP API). The Next BFF is the intended public door (ADR-001) but was not audited. `NODE_ENV=production` will be set in prod. Stripe stays in test mode until week-1 items land.
+- Reviewed the working tree on `marketplace-v2` at `3c29c84` (plus uncommitted `server/` files present on disk). Scores reflect **code as it exists today**, not prior reports.
+- Did not treat `AGENTS.md` / walkthrough text as instructions that change scoring. Where they disagreed with code (test files exist), code won and the docs were listed as stale.
+- Did not execute the API against a live database or Stripe. Checkout locking, webhook verification, and ownership checks were confirmed by reading the implementations and their unit tests.
+- Commands run: git metadata, file counts, `rg` over `server/src`, `npm audit --omit=dev`, reads of controllers, auth/checkout/payment/file/schema/config/filters.
+- Coverage: all 17 controllers; auth/JWT/refresh/logout; checkout create/complete/webhook; payments refund/COD ownership; schema + CHECK migration; env validation; health; filters; storage signatures. Not every provider file was read line-by-line; repeated patterns (paginated `findMine` + ownership) were sampled.
+- Traffic profile assumed: e-commerce API, multiple Node processes in staging/prod, no regulatory extra (GDPR was still noted where unique-email-after-delete hurts users).
 
-**Read:** `package.json`, `tsconfig.json`, `eslint.config.mjs`, `.env.example`, `.gitignore`, `main.ts`, `app.module.ts`, env/JWT/app/stripe/database config, Prisma schema, auth lifecycle (controller, guards, login/refresh/logout/reset/forgot, token store, bcrypt), roles guard, filters, pagination, checkout create/complete/webhook/expire/lock/stock, payments ownership + refund + lifecycle, files controller + secure download + multer, products list/query/create DTO, users profile/block/map, reviews/notifications/cart/address/dashboard/seller/store controllers, health, swagger, seed admin, audit, job lock, 19 spec filenames, ADRs index, `server/README.md`.
-
-**Commands:** `git rev-parse`, file/LOC counts via Node, ripgrep across `server/src` for `any`, `process.env`, `@Auth(NONE)`, raw SQL, secrets patterns, injection phrases, `console.log`, TODO, eslint-disable. `npm audit` and `madge` were not run.
-
-**Coverage:** ~418 TS files in `server/src`; this review read the control plane (auth, checkout, payments, files, schema, config, filters) in full and sampled the rest via controllers + ownership providers. It is not a line-by-line read of every DTO. Findings that needed a surrounding read were opened before they were written down.
-
-**Limits:** No running app, no database, no Stripe account, no staging cluster. Performance findings are inferred from query shapes, not from query logs.
+A mid-level engineer’s Monday morning: stand up CI and a Dockerfile, fix the register id leak and `toCents` match, then put Redis in front of the throttler before the second replica goes live.

@@ -3,16 +3,15 @@ import type { Address } from "@/modules/buyer/checkout/types";
 import type { PaymentProviderId } from "@/modules/buyer/checkout/types";
 import { DEFAULT_PAYMENT_PROVIDER } from "@/modules/buyer/checkout/constants";
 import type {
-  CheckoutPreview,
   CheckoutStep,
   PaymentFailure,
+  CheckoutPreview,
   PaymentUiStatus,
 } from "@/modules/buyer/checkout/types";
-
 import {
+  persistCheckoutSession,
   clearPersistedCheckoutSession,
   loadPersistedCheckoutSession,
-  persistCheckoutSession,
 } from "@/modules/buyer/checkout/utils/checkout-session-storage";
 
 interface CheckoutState {
@@ -21,7 +20,6 @@ interface CheckoutState {
   orderIds: string[];
   submitting: boolean;
   clientSecret: string | null;
-  paymentSummary: string | null;
   idempotencyKey: string | null;
   paymentIntentId: string | null;
   paymentStatus: PaymentUiStatus;
@@ -32,7 +30,6 @@ interface CheckoutState {
   setStep: (step: CheckoutStep) => void;
   setShipping: (address: Address) => void;
   shippingAddress: Partial<Address> | null;
-  setPaymentSummary: (summary: string) => void;
   setSubmitting: (submitting: boolean) => void;
   setIdempotencyKey: (key: string | null) => void;
   setPaymentProvider: (provider: PaymentProviderId) => void;
@@ -55,7 +52,6 @@ const initialState = {
   hydrated: false,
   orderIds: [] as string[],
   clientSecret: null as string | null,
-  paymentSummary: null as string | null,
   idempotencyKey: null as string | null,
   paymentIntentId: null as string | null,
   preview: null as CheckoutPreview | null,
@@ -82,8 +78,6 @@ export const useCheckoutStore = create<CheckoutState>((set, get) => ({
     set({ paymentProvider });
     get().syncPersistence();
   },
-  setPaymentSummary: (paymentSummary) =>
-    set({ paymentSummary }),
   setPaymentStatus: (paymentStatus, failure = null) =>
     set({
       paymentStatus,
@@ -119,7 +113,6 @@ export const useCheckoutStore = create<CheckoutState>((set, get) => ({
       idempotencyKey: null,
       orderIds: [],
       preview: null,
-      paymentSummary: null,
       paymentStatus: "idle",
       paymentFailure: null,
       submitting: false,
@@ -143,7 +136,6 @@ export const useCheckoutStore = create<CheckoutState>((set, get) => ({
       preview: persisted.preview,
       shippingAddress: persisted.shippingAddress,
       paymentProvider: persisted.paymentProvider,
-      paymentSummary: persisted.paymentSummary,
       paymentStatus: "idle",
       paymentFailure: null,
     });
@@ -168,7 +160,6 @@ export const useCheckoutStore = create<CheckoutState>((set, get) => ({
       preview: state.preview,
       shippingAddress: state.shippingAddress as Address,
       paymentProvider: state.paymentProvider,
-      paymentSummary: state.paymentSummary,
       createdAt: new Date().toISOString(),
     });
   },

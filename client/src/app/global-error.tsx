@@ -1,7 +1,5 @@
 "use client";
 
-import { RouteError } from "@/shared/components/feedback/route-error";
-
 export default function GlobalError({
   error,
   reset,

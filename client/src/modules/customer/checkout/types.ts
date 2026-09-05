@@ -83,6 +83,5 @@ export type PersistedCheckoutSession = {
   checkoutSessionId: string;
   preview: CheckoutPreview;
   shippingAddress: Address;
-  paymentSummary: string | null;
   paymentProvider: PaymentProviderId;
 };
