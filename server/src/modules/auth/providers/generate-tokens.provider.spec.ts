@@ -55,4 +55,26 @@ describe('GenerateTokensProvider password-reset binding', () => {
     const second = calls[1]?.[0]?.pwd;
     expect(first).not.toBe(second);
   });
+
+  it('signs each token type with its own secret', async () => {
+    jwtService.signAsync.mockReset();
+    jwtService.signAsync.mockResolvedValue('token');
+
+    await provider.signToken(1, '15m', { typ: JwtTokenType.ACCESS });
+    await provider.signToken(1, '7d', { typ: JwtTokenType.REFRESH });
+    await provider.signToken(1, '1h', { typ: JwtTokenType.PASSWORD_RESET });
+
+    const secrets = (
+      jwtService.signAsync.mock.calls as unknown as Array<
+        [unknown, { secret?: string }]
+      >
+    ).map((call) => call[1]?.secret);
+
+    expect(secrets).toEqual([
+      jwtConfiguration.accessSecret,
+      jwtConfiguration.refreshSecret,
+      jwtConfiguration.resetSecret,
+    ]);
+    expect(new Set(secrets).size).toBe(3);
+  });
 });

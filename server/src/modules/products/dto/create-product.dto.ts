@@ -16,6 +16,7 @@ import {
   IsOptional,
   ValidateIf,
   ArrayMinSize,
+  ArrayMaxSize,
   ValidateNested,
 } from 'class-validator';
 
@@ -56,6 +57,7 @@ export class CreateProductDto {
 
   @ApiProperty({
     type: [CreateProductVariantDto],
+    maxItems: 50,
   })
   @Transform(({ value }): CreateProductVariantDto[] => {
     if (typeof value !== 'string') return value;
@@ -74,6 +76,7 @@ export class CreateProductDto {
   })
   @IsArray()
   @ArrayMinSize(1)
+  @ArrayMaxSize(50)
   @ValidateNested({ each: true })
   @Type(() => CreateProductVariantDto)
   @Validate(UniqueVariantSkuConstraint)

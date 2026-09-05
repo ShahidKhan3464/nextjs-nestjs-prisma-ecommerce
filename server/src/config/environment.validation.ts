@@ -71,4 +71,16 @@ export default Joi.object({
   MAIL_PORT: Joi.number().integer().min(1).max(65535).default(2525),
   SEED_DEMO_DATA: Joi.boolean().truthy('true').falsy('false').default(false),
   ALLOW_ADMIN_SEED: Joi.boolean().truthy('true').falsy('false').default(false),
+}).custom((value: Record<string, unknown>, helpers) => {
+  if (
+    value.JWT_ACCESS_SECRET === value.JWT_REFRESH_SECRET ||
+    value.JWT_ACCESS_SECRET === value.JWT_RESET_SECRET ||
+    value.JWT_REFRESH_SECRET === value.JWT_RESET_SECRET
+  ) {
+    return helpers.error('any.custom', {
+      message:
+        'JWT_ACCESS_SECRET, JWT_REFRESH_SECRET, and JWT_RESET_SECRET must all be different',
+    });
+  }
+  return value;
 });

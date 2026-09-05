@@ -9,6 +9,10 @@ type TransactionClient = Parameters<
   Parameters<PrismaService['$transaction']>[0]
 >[0];
 
+export type CreateUserOutcome =
+  | { created: true; user: User }
+  | { created: false; id: number };
+
 @Injectable()
 export class CreateUserProvider {
   private readonly logger = new Logger(CreateUserProvider.name);
@@ -22,19 +26,20 @@ export class CreateUserProvider {
   public async createUser(
     dto: CreateUserDto,
     tx?: TransactionClient,
-  ): Promise<User> {
+  ): Promise<CreateUserOutcome> {
     if (dto.password !== dto.confirmPassword) {
       throw new BadRequestException('Passwords do not match');
     }
 
     const db = tx ?? this.prisma;
+    const passwordHash = await this.hashingProvider.hash(dto.password);
 
     const existingUser = await db.user.findUnique({
       where: { email: dto.email },
     });
 
     if (existingUser) {
-      throw new BadRequestException('User already exists');
+      return { created: false, id: existingUser.id };
     }
 
     const savedUser = await db.user.create({
@@ -42,7 +47,7 @@ export class CreateUserProvider {
         email: dto.email,
         fullName: dto.fullName,
         phoneNumber: dto.phoneNumber,
-        password: await this.hashingProvider.hash(dto.password),
+        password: passwordHash,
       },
     });
 
@@ -50,7 +55,7 @@ export class CreateUserProvider {
       await this.sendWelcomeEmail(savedUser);
     }
 
-    return savedUser;
+    return { created: true, user: savedUser };
   }
 
   public async sendWelcomeEmail(

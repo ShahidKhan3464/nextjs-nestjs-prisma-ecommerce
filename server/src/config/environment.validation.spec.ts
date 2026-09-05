@@ -28,7 +28,7 @@ describe('environment JWT secret validation', () => {
         ...base,
         JWT_ACCESS_SECRET: 'too-short',
         JWT_REFRESH_SECRET: strong,
-        JWT_RESET_SECRET: strong,
+        JWT_RESET_SECRET: `${strong}s`,
       }).error,
     ).toBeDefined();
 
@@ -36,6 +36,35 @@ describe('environment JWT secret validation', () => {
       validation.validate({
         ...base,
         JWT_ACCESS_SECRET: 'replace_with_a_long_random_secret!!',
+        JWT_REFRESH_SECRET: strong,
+        JWT_RESET_SECRET: `${strong}s`,
+      }).error,
+    ).toBeDefined();
+  });
+
+  it('rejects when any two JWT secrets are equal', () => {
+    expect(
+      validation.validate({
+        ...base,
+        JWT_ACCESS_SECRET: strong,
+        JWT_REFRESH_SECRET: strong,
+        JWT_RESET_SECRET: `${strong}s`,
+      }).error,
+    ).toBeDefined();
+
+    expect(
+      validation.validate({
+        ...base,
+        JWT_ACCESS_SECRET: strong,
+        JWT_REFRESH_SECRET: `${strong}r`,
+        JWT_RESET_SECRET: strong,
+      }).error,
+    ).toBeDefined();
+
+    expect(
+      validation.validate({
+        ...base,
+        JWT_ACCESS_SECRET: `${strong}a`,
         JWT_REFRESH_SECRET: strong,
         JWT_RESET_SECRET: strong,
       }).error,

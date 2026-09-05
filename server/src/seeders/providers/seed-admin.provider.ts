@@ -23,12 +23,20 @@ export class SeedAdminProvider implements OnApplicationBootstrap {
       this.configService.get<string>('NODE_ENV') ??
       this.configService.get<string>('app.environments') ??
       'development';
+
+    if (nodeEnv === 'production') {
+      this.logger.debug(
+        'Admin seeding is disabled on the production API startup path.',
+      );
+      return;
+    }
+
     const allowAdminSeed =
       this.configService.get<boolean>('ALLOW_ADMIN_SEED') === true;
 
-    if (nodeEnv === 'production' && !allowAdminSeed) {
+    if (!allowAdminSeed) {
       this.logger.debug(
-        'Admin seeding skipped in production. Set ALLOW_ADMIN_SEED=true to enable.',
+        'Admin seeding skipped. Set ALLOW_ADMIN_SEED=true in development to enable it.',
       );
       return;
     }

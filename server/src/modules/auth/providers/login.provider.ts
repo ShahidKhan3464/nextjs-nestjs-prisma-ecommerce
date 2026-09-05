@@ -9,7 +9,6 @@ import {
   Injectable,
   ForbiddenException,
   UnauthorizedException,
-  ServiceUnavailableException,
 } from '@nestjs/common';
 
 export type LoggedInUser = Pick<
@@ -22,8 +21,8 @@ export type LoggedInUser = Pick<
 };
 
 /** Valid bcrypt hash used only to equalize timing when the email is unknown. */
-const DUMMY_PASSWORD_HASH =
-  '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy';
+export const DUMMY_PASSWORD_HASH =
+  '$2b$12$Rnw2pGHxig2dA7xpuMXHgezV76Oz7fbU1OzLN4BXiINyK5h08q6lO';
 
 @Injectable()
 export class LoginProvider {

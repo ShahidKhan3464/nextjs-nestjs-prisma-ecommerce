@@ -42,48 +42,56 @@ export class RefreshTokenStoreProvider {
     expiresAt: Date,
   ): Promise<{ reused: boolean } | { rotated: true; familyId: string }> {
     const tokenHash = this.hashToken(currentToken);
-    const existing = await this.prisma.refreshToken.findUnique({
-      where: { tokenHash },
-    });
-
-    if (!existing) {
-      return { reused: false };
-    }
-
-    if (existing.revokedAt) {
-      await this.revokeFamily(existing.familyId);
-      return { reused: true };
-    }
-
-    if (existing.expiresAt.getTime() <= Date.now()) {
-      await this.prisma.refreshToken.update({
-        where: { id: existing.id },
-        data: { revokedAt: new Date() },
-      });
-      return { reused: false };
-    }
-
     const newHash = this.hashToken(newToken);
 
-    await this.prisma.$transaction([
-      this.prisma.refreshToken.update({
-        where: { id: existing.id },
+    return this.prisma.$transaction(async (tx) => {
+      const existing = await tx.refreshToken.findUnique({
+        where: { tokenHash },
+      });
+
+      if (!existing) {
+        return { reused: false };
+      }
+
+      if (existing.revokedAt) {
+        await tx.refreshToken.updateMany({
+          where: { familyId: existing.familyId, revokedAt: null },
+          data: { revokedAt: new Date() },
+        });
+        return { reused: true };
+      }
+
+      if (existing.expiresAt.getTime() <= Date.now()) {
+        await tx.refreshToken.update({
+          where: { id: existing.id },
+          data: { revokedAt: new Date() },
+        });
+        return { reused: false };
+      }
+
+      const consumed = await tx.refreshToken.updateMany({
+        where: { id: existing.id, revokedAt: null },
         data: {
           revokedAt: new Date(),
           replacedByHash: newHash,
         },
-      }),
-      this.prisma.refreshToken.create({
+      });
+
+      if (consumed.count !== 1) {
+        return { reused: false };
+      }
+
+      await tx.refreshToken.create({
         data: {
           userId: existing.userId,
           familyId: existing.familyId,
           tokenHash: newHash,
           expiresAt,
         },
-      }),
-    ]);
+      });
 
-    return { rotated: true, familyId: existing.familyId };
+      return { rotated: true, familyId: existing.familyId };
+    });
   }
 
   public async revokeToken(refreshToken: string): Promise<void> {
