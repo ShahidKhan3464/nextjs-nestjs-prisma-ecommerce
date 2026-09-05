@@ -1,0 +1,8 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "entry": ["src/main.ts", "src/**/*.module.ts", "src/**/*.spec.ts"],
+  "project": ["src/**/*.ts"],
+  "ignore": ["src/generated/**"],
+  "ignoreMembers": ["MANUAL"],
+  "ignoreDependencies": ["pg"]
+}

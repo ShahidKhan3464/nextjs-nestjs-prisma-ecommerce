@@ -5,6 +5,8 @@ const FILTER_SLOTS = [
   "min-w-[min(100%,200px)]",
   "w-full min-w-[140px] sm:w-auto",
   "w-full min-w-[140px] sm:w-auto",
+  "w-full min-w-[160px] sm:w-auto",
+  "w-full min-w-[160px] sm:w-auto",
   "flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-end",
 ] as const;
 
@@ -20,7 +22,7 @@ export function ProductFiltersSkeleton() {
                 "h-10 rounded-md",
                 index === FILTER_SLOTS.length - 1
                   ? "w-full sm:w-28"
-                  : "w-full min-w-[140px]"
+                  : "w-full min-w-35"
               )}
             />
           </div>

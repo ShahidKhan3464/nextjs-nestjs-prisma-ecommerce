@@ -15,7 +15,7 @@ import { Eye, Ban, CheckCircle } from "lucide-react";
 import { Pagination } from "@/components/ui/pagination";
 import { AdminTableSkeleton } from "@/modules/admin/shared";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { useDebouncedValue } from "@/hooks/use-debounced-value";
+import { useDebouncedValue } from "@/shared/hooks/use-debounced-value";
 import { fetchAdminUsers, blockAdminUser } from "../services/users.service";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import {
@@ -38,9 +38,9 @@ import {
   AlertDialogTitle,
   AlertDialogAction,
   AlertDialogCancel,
-  AlertDialogContent,
   AlertDialogFooter,
   AlertDialogHeader,
+  AlertDialogContent,
   AlertDialogDescription,
 } from "@/components/ui/alert-dialog";
 
@@ -55,14 +55,14 @@ export function AdminUsersList() {
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
   const [searchInput, setSearchInput] = useState("");
-  const [statusFilter, setStatusFilter] = useState("active");
+  const [statusFilter, setStatusFilter] = useState("all");
   const isBlockedFilter = blockedFilterParam(statusFilter);
   const debouncedSearch = useDebouncedValue(searchInput, 500);
   const [blockTarget, setBlockTarget] = useState<BlockTarget | null>(null);
 
   useEffect(() => {
     setPage(1);
-  }, [debouncedSearch, statusFilter]);
+  }, [debouncedSearch, statusFilter, perPage]);
 
   const { data, isPending, isFetching, isPlaceholderData } = useQuery({
     queryKey: [
@@ -123,7 +123,7 @@ export function AdminUsersList() {
 
   const total = data.meta.totalItems ?? 0;
   const hasSearch = debouncedSearch.trim().length > 0;
-  const hasStatusFilter = statusFilter !== "active";
+  const hasStatusFilter = statusFilter !== "all";
   const isEmptyCatalog = total === 0 && !hasSearch && !hasStatusFilter;
   const showPagination = total > 0;
 
@@ -207,11 +207,22 @@ export function AdminUsersList() {
                       {format(new Date(u.createdAt), "MMM d, yyyy")}
                     </TableCell>
                     <TableCell>
-                      <Badge
-                        variant={u.role === "admin" ? "default" : "outline"}
-                      >
-                        {u.role}
-                      </Badge>
+                      <div className="flex flex-wrap gap-1">
+                        {u.roles.length > 0 ? (
+                          u.roles.map((role) => (
+                            <Badge
+                              key={role}
+                              variant={
+                                role === "SUPER_ADMIN" ? "default" : "outline"
+                              }
+                            >
+                              {role}
+                            </Badge>
+                          ))
+                        ) : (
+                          <Badge variant="outline">—</Badge>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell>
                       {u.isBlocked ? (

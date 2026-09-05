@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import {
@@ -10,33 +11,60 @@ import {
   SelectTrigger,
 } from "@/components/ui/select";
 
+const DEFAULT_PER_PAGE_OPTIONS = [10, 12, 25, 50];
+
 export function Pagination({
   page,
   perPage,
   totalPages,
   onPageChange,
   onPerPageChange,
+  perPageOptions = DEFAULT_PER_PAGE_OPTIONS,
 }: {
   page: number;
   perPage: number;
   totalPages: number;
   onPageChange: (p: number) => void;
   onPerPageChange: (n: number) => void;
+  perPageOptions?: number[];
 }) {
+  const options = useMemo(() => {
+    const merged = new Set([...perPageOptions, perPage]);
+    return [...merged].sort((a, b) => a - b);
+  }, [perPage, perPageOptions]);
+
+  const selectItems = useMemo(
+    () =>
+      options.map((option) => ({
+        value: String(option),
+        label: String(option),
+      })),
+    [options]
+  );
+
   return (
     <div className="flex items-center justify-between gap-2 py-4">
       <div className="flex items-center gap-2">
+        <span className="text-muted-foreground hidden text-sm sm:inline">
+          Rows per page
+        </span>
         <Select
-          defaultValue={String(perPage)}
-          onValueChange={(v) => onPerPageChange(Number(v))}
+          items={selectItems}
+          value={String(perPage)}
+          onValueChange={(value) => {
+            if (value == null) return;
+            onPerPageChange(Number(value));
+          }}
         >
-          <SelectTrigger className="w-[80px]">
-            <SelectValue />
+          <SelectTrigger className="w-22" aria-label="Rows per page">
+            <SelectValue placeholder={String(perPage)} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="10">10</SelectItem>
-            <SelectItem value="25">25</SelectItem>
-            <SelectItem value="50">50</SelectItem>
+            {options.map((option) => (
+              <SelectItem key={option} value={String(option)}>
+                {option}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
@@ -50,7 +78,7 @@ export function Pagination({
         >
           <ChevronLeft />
         </Button>
-        <div className="text-sm text-muted-foreground">
+        <div className="text-muted-foreground text-sm">
           Page {page} of {totalPages}
         </div>
         <Button

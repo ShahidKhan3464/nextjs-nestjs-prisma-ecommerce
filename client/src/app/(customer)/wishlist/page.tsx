@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { siteConfig } from "@/config/site";
-import { WishlistGrid } from "@/modules/customer/wishlist";
+import { WishlistGrid } from "@/modules/buyer/wishlist";
 
 export const metadata: Metadata = {
   title: "Wishlist",

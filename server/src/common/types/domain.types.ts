@@ -1,7 +1,12 @@
-import type { ProductStatus } from 'src/products/constants/product.constants';
+import type { OrderStatus } from 'src/common/enums/order-status.enum';
+import type { PaymentStatus } from 'src/common/enums/payment-status.enum';
+import type { ProductStatus } from 'src/common/enums/product-status.enum';
+import type { PaymentProvider } from 'src/common/enums/payment-provider.enum';
+import type { CheckoutSessionStatus } from 'src/common/enums/checkout-session-status.enum';
 import type {
   User,
   Order,
+  Payment,
   CartItem,
   Category,
   OrderItem,
@@ -10,23 +15,39 @@ import type {
   CheckoutSession,
   CheckoutSessionItem,
 } from 'src/generated/prisma/client';
-import type {
-  OrderStatus,
-  PaymentStatus,
-} from 'src/orders/constants/order.constants';
 
 export type ProductWithRelations = {
   id: number;
   name: string;
   createdAt: Date;
   updatedAt: Date;
+  storeId: number;
   basePrice: number;
   categoryId: number;
   slug: string | null;
   category?: Category;
+  store?: {
+    id: number;
+    name: string;
+    slug: string;
+    status: string;
+    logoUrl?: string | null;
+    deletedAt?: Date | null;
+    verifiedAt?: Date | null;
+    sellerProfile?: {
+      id: number;
+      status: string;
+      userId?: number;
+      businessName?: string;
+      deletedAt?: Date | null;
+    };
+  };
+  reviewCount?: number;
   images?: StoredFile[];
   status: ProductStatus;
+  averageRating?: number;
   deletedAt: Date | null;
+  publishedAt: Date | null;
   description: string | null;
   variants?: ProductVariantWithRelations[];
 };
@@ -41,31 +62,58 @@ export type CartItemWithRelations = CartItem & {
   user?: User;
 };
 
+/** Line items use purchase-time snapshots; variant is id/productId only when needed. */
 export type OrderItemWithRelations = Omit<OrderItem, 'priceAtPurchase'> & {
   priceAtPurchase: number;
-  variant?: ProductVariantWithRelations;
+  variant?: {
+    id: number;
+    productId: number;
+  };
+};
+
+export type PaymentWithRelations = Omit<
+  Payment,
+  'amount' | 'refundedAmount' | 'status' | 'provider'
+> & {
+  amount: number;
+  status: PaymentStatus;
+  refundedAmount: number;
+  provider: PaymentProvider;
+};
+
+type OrderStoreSummary = {
+  id: number;
+  name: string;
+  slug: string;
+  status: string;
+  deletedAt?: Date | null;
+  logoUrl?: string | null;
+  verifiedAt?: Date | null;
+  sellerName?: string | null;
 };
 
 export type OrderWithRelations = Omit<
   Order,
-  'status' | 'paymentStatus' | 'totalAmount' | 'subtotal' | 'tax'
+  'status' | 'totalAmount' | 'subtotal' | 'tax'
 > & {
-  status: OrderStatus;
-  paymentStatus: PaymentStatus;
-  totalAmount: number;
-  subtotal: number;
   tax: number;
-  user?: User;
+  subtotal: number;
+  status: OrderStatus;
+  totalAmount: number;
+  store?: OrderStoreSummary;
   items?: OrderItemWithRelations[];
+  payment?: PaymentWithRelations | null;
+  user?: Pick<User, 'id' | 'email' | 'fullName'>;
 };
 
 export type CheckoutSessionWithRelations = Omit<
   CheckoutSession,
-  'totalAmount' | 'subtotal' | 'tax'
+  'totalAmount' | 'subtotal' | 'tax' | 'status'
 > & {
-  totalAmount: number;
-  subtotal: number;
   tax: number;
+  subtotal: number;
+  totalAmount: number;
+  status: CheckoutSessionStatus;
   items: CheckoutSessionItemWithRelations[];
 };
 

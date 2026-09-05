@@ -4,13 +4,20 @@ import Image from "next/image";
 import { toast } from "sonner";
 import * as React from "react";
 import { cn } from "@/lib/utils";
+import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
+import { StoreChip } from "./store-chip";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cartAddItem } from "@/lib/cart-actions";
+import { ProductBadges } from "./product-badges";
+import { useQuery } from "@tanstack/react-query";
+import { queryKeys } from "@/constants/query-keys";
 import type { Product, ProductVariant } from "../types";
-import { useRecentlyViewedStore } from "@/store/recently-viewed-store";
+import { useIsSeller } from "@/modules/auth/hooks/use-roles";
 import { useWishlistHydrate } from "@/shared/hooks/use-wishlist-hydrate";
+import { RatingStars } from "@/shared/components/marketplace/rating-stars";
+import { fetchMyStore } from "@/modules/seller/store/services/store.service";
 import {
   formatVariantLabel,
   findVariantForSize,
@@ -18,7 +25,20 @@ import {
   findVariantByOptions,
   uniqueVariantOptionValues,
   hasUniqueVariantOptionMatrix,
-} from "../lib/variant-label";
+} from "../utils/variant-label";
+
+const ProductReviewsSection = dynamic(
+  () =>
+    import("@/modules/buyer/reviews").then((m) => m.ProductReviewsSection),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="mx-auto max-w-6xl px-4 pb-10 lg:px-6">
+        <div className="bg-muted/40 h-40 animate-pulse rounded-xl" />
+      </div>
+    ),
+  }
+);
 
 type Props = {
   product: Product;
@@ -58,6 +78,8 @@ function OptionPills({
             <button
               key={opt}
               type="button"
+              aria-pressed={selected}
+              aria-label={`${label}: ${opt}`}
               onClick={() => onChange(opt)}
               className={cn(
                 "min-w-11 cursor-pointer rounded-md border px-4 py-2 text-sm font-medium transition-all",
@@ -78,7 +100,20 @@ function OptionPills({
 
 export function ProductDetailView({ product }: Props) {
   useWishlistHydrate();
-  const recordView = useRecentlyViewedStore((s) => s.recordView);
+  const isSellerUser = useIsSeller();
+  const { data: myStore, isPending: myStorePending } = useQuery({
+    queryKey: queryKeys.store.me,
+    queryFn: fetchMyStore,
+    enabled: isSellerUser,
+    staleTime: 60_000,
+    retry: false,
+  });
+  const isOwnListing =
+    isSellerUser &&
+    myStore != null &&
+    product.store != null &&
+    String(myStore.id) === product.store.id;
+  const blockAddToBag = isOwnListing || (isSellerUser && myStorePending);
 
   const sizes = React.useMemo(
     () => uniqueVariantOptionValues(product.variants, "size"),
@@ -102,10 +137,6 @@ export function ProductDetailView({ product }: Props) {
   const [selectedColor, setSelectedColor] = React.useState(
     defaultVariant?.options?.color?.trim() ?? colors[0]
   );
-
-  React.useEffect(() => {
-    recordView(product.slug ?? product.id);
-  }, [product.slug, product.id, recordView]);
 
   function applyVariant(match: ProductVariant) {
     setVariantId(match.id);
@@ -150,7 +181,7 @@ export function ProductDetailView({ product }: Props) {
   const [adding, setAdding] = React.useState(false);
 
   async function handleAddToCart() {
-    if (!variant || adding) return;
+    if (!variant || adding || blockAddToBag) return;
     setAdding(true);
     try {
       await cartAddItem({
@@ -163,8 +194,21 @@ export function ProductDetailView({ product }: Props) {
         quantity: 1,
         image: variant.image ?? product.images[0],
         maxQty: variant.stock,
+        store: product.store
+          ? {
+            id: product.store.id,
+            name: product.store.name,
+            slug: product.store.slug,
+            logoUrl: product.store.logoUrl,
+            verified: product.store.verified,
+            sellerName:
+              product.store.seller?.businessName ?? product.store.name,
+          }
+          : null,
       });
       toast.success("Added to bag");
+    } catch {
+      /* cartAddItem already toasted */
     } finally {
       setAdding(false);
     }
@@ -173,179 +217,223 @@ export function ProductDetailView({ product }: Props) {
   const inStock = (variant?.stock ?? 0) > 0;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35, ease: "easeOut" }}
-      className="mx-auto grid max-w-6xl gap-10 p-4 lg:grid-cols-2 lg:gap-14 lg:p-6"
-    >
-      {/* Gallery */}
-      <div className="mx-auto w-full max-w-xl space-y-4 lg:mx-0">
-        <div className="border-border relative aspect-4/5 w-full overflow-hidden rounded-2xl border bg-muted/30 shadow-sm">
-          <Image
-            fill
-            priority
-            src={activeImage}
-            alt={product.name}
-            sizes="(max-width: 1024px) 100vw, 50vw"
-            className="object-cover transition-opacity duration-300"
-          />
-        </div>
-
-        {galleryImages.length > 1 ? (
-          <div
-            role="listbox"
-            aria-label="Product images"
-            className="flex gap-2.5 overflow-x-auto pb-1"
-          >
-            {galleryImages.map((src, index) => {
-              const selected = index === activeIndex;
-              return (
-                <button
-                  type="button"
-                  role="option"
-                  key={`${src}-${index}`}
-                  aria-selected={selected}
-                  onClick={() => setActiveIndex(index)}
-                  aria-label={`View image ${index + 1} of ${galleryImages.length}`}
-                  className={cn(
-                    "border-border relative cursor-pointer size-20 shrink-0 overflow-hidden rounded-lg border-2 bg-muted/40 transition-all",
-                    "hover:border-foreground/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                    selected && "border-foreground ring-1 ring-foreground/20"
-                  )}
-                >
-                  <Image
-                    fill
-                    alt=""
-                    src={src}
-                    sizes="80px"
-                    className="object-cover"
-                  />
-                </button>
-              );
-            })}
+    <div className="space-y-12">
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35, ease: "easeOut" }}
+        className="mx-auto grid max-w-6xl gap-10 p-4 lg:grid-cols-2 lg:gap-14 lg:p-6"
+      >
+        {/* Gallery */}
+        <div className="mx-auto w-full max-w-xl space-y-4 lg:mx-0">
+          <div className="border-border relative aspect-4/5 w-full overflow-hidden rounded-2xl border bg-muted/30 shadow-sm">
+            <Image
+              fill
+              priority
+              src={activeImage}
+              alt={product.name}
+              sizes="(max-width: 1024px) 100vw, 50vw"
+              className="object-cover transition-opacity duration-300"
+            />
           </div>
-        ) : null}
-      </div>
 
-      {/* Details */}
-      <div className="flex flex-col justify-center gap-8">
-        <header className="space-y-4">
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge variant="secondary" className="font-normal">
-              {product.category}
-            </Badge>
-          </div>
-          <h1 className="font-heading text-3xl font-semibold tracking-tight md:text-4xl">
-            {product.name}
-          </h1>
-          {product.description?.trim() ? (
-            <p className="text-muted-foreground max-w-prose text-base leading-relaxed">
-              {product.description}
-            </p>
-          ) : null}
-        </header>
-
-        <div className="border-border space-y-6 rounded-2xl border bg-card p-6 shadow-sm">
-          <div className="flex flex-wrap items-end justify-between gap-4 border-b pb-6">
-            <motion.div layout>
-              <p className="text-muted-foreground mb-1 text-xs font-medium uppercase tracking-wider">
-                Price
-              </p>
-              <p className="text-3xl font-semibold tabular-nums tracking-tight">
-                ${variant?.price.toFixed(2) ?? "—"}
-              </p>
-              {variant?.compareAtPrice ? (
-                <p className="text-muted-foreground mt-1 text-sm line-through tabular-nums">
-                  ${variant.compareAtPrice.toFixed(2)}
-                </p>
-              ) : null}
-            </motion.div>
-            <Badge
-              variant={inStock ? "secondary" : "destructive"}
-              className="text-xs font-medium"
+          {galleryImages.length > 1 ? (
+            <div
+              role="listbox"
+              aria-label="Product images"
+              className="flex gap-2.5 overflow-x-auto pb-1"
             >
-              {inStock ? `${variant?.stock ?? 0} in stock` : "Out of stock"}
-            </Badge>
-          </div>
-
-          {product.variants.length > 0 ? (
-            <div className="space-y-5">
-              {useOptionPickers ? (
-                <>
-                  <OptionPills
-                    label="Size"
-                    options={sizes}
-                    value={selectedSize}
-                    onChange={handleSizeChange}
-                  />
-                  <OptionPills
-                    label="Color"
-                    options={colors}
-                    value={selectedColor}
-                    onChange={handleColorChange}
-                  />
-                </>
-              ) : (
-                <div className="space-y-2.5">
-                  <p className="text-sm font-medium">Options</p>
-                  <div className="flex flex-wrap gap-2">
-                    {product.variants.map((v) => {
-                      const selected = v.id === variantId;
-                      const disabled = v.stock <= 0;
-                      return (
-                        <button
-                          key={v.id}
-                          type="button"
-                          disabled={disabled}
-                          onClick={() => setVariantId(v.id)}
-                          className={cn(
-                            "rounded-md border px-4 py-2 text-sm font-medium transition-all",
-                            selected
-                              ? "border-foreground bg-foreground text-background"
-                              : "border-border bg-background hover:border-foreground/40",
-                            disabled && "cursor-not-allowed opacity-40"
-                          )}
-                        >
-                          {formatVariantLabel(v)}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {variant ? (
-                <p className="text-muted-foreground text-xs">
-                  Selected:{" "}
-                  <span className="text-foreground font-medium">
-                    {formatVariantLabel(variant)}
-                  </span>
-                  {variant.sku ? (
-                    <>
-                      {" "}
-                      · SKU{" "}
-                      <span className="font-mono text-[11px]">
-                        {variant.sku}
-                      </span>
-                    </>
-                  ) : null}
-                </p>
-              ) : null}
+              {galleryImages.map((src, index) => {
+                const selected = index === activeIndex;
+                return (
+                  <button
+                    type="button"
+                    role="option"
+                    key={`${src}-${index}`}
+                    aria-selected={selected}
+                    onClick={() => setActiveIndex(index)}
+                    aria-label={`View image ${index + 1} of ${galleryImages.length}`}
+                    className={cn(
+                      "border-border relative cursor-pointer size-20 shrink-0 overflow-hidden rounded-lg border-2 bg-muted/40 transition-all",
+                      "hover:border-foreground/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                      selected && "border-foreground ring-1 ring-foreground/20"
+                    )}
+                  >
+                    <Image
+                      fill
+                      alt=""
+                      src={src}
+                      sizes="80px"
+                      className="object-cover"
+                    />
+                  </button>
+                );
+              })}
             </div>
           ) : null}
-
-          <Button
-            size="lg"
-            type="button"
-            onClick={() => void handleAddToCart()}
-            disabled={!variant || !inStock || adding}
-            className="h-12 w-full text-base font-semibold"
-          >
-            {adding ? "Adding…" : inStock ? "Add to bag" : "Out of stock"}
-          </Button>
         </div>
-      </div>
-    </motion.div>
+
+        {/* Details */}
+        <div className="flex flex-col justify-center gap-8">
+          <header className="space-y-4">
+            <ProductBadges product={product} includeCategory />
+            <h1 className="font-heading text-3xl font-semibold tracking-tight md:text-4xl">
+              {product.name}
+            </h1>
+            {product.averageRating != null &&
+              (product.reviewCount ?? 0) > 0 ? (
+              <div className="flex flex-wrap items-center gap-2">
+                <RatingStars
+                  readOnly
+                  size="md"
+                  value={product.averageRating}
+                  ariaLabel={`${product.averageRating.toFixed(1)} out of 5`}
+                />
+                <span className="text-muted-foreground text-sm tabular-nums">
+                  {product.averageRating.toFixed(1)} ({product.reviewCount}{" "}
+                  review{(product.reviewCount ?? 0) === 1 ? "" : "s"})
+                </span>
+              </div>
+            ) : null}
+            {product.store ? (
+              <div className="border-border space-y-2 rounded-xl border bg-muted/30 p-3">
+                <p className="text-muted-foreground text-[10px] font-medium uppercase tracking-wider">
+                  Sold by
+                </p>
+                <StoreChip store={product.store} showVerified />
+                {product.store.seller?.businessName ? (
+                  <p className="text-muted-foreground text-xs">
+                    {product.store.seller.businessName}
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
+            {product.description?.trim() ? (
+              <p className="text-muted-foreground max-w-prose text-base leading-relaxed">
+                {product.description}
+              </p>
+            ) : null}
+          </header>
+
+          <div className="border-border space-y-6 rounded-2xl border bg-card p-6 shadow-sm">
+            <div className="flex flex-wrap items-end justify-between gap-4 border-b pb-6">
+              <motion.div layout>
+                <p className="text-muted-foreground mb-1 text-xs font-medium uppercase tracking-wider">
+                  Price
+                </p>
+                <p className="text-3xl font-semibold tabular-nums tracking-tight">
+                  ${variant?.price.toFixed(2) ?? "—"}
+                </p>
+                {variant?.compareAtPrice ? (
+                  <p className="text-muted-foreground mt-1 text-sm line-through tabular-nums">
+                    ${variant.compareAtPrice.toFixed(2)}
+                  </p>
+                ) : null}
+              </motion.div>
+              <Badge
+                variant={inStock ? "secondary" : "destructive"}
+                className="text-xs font-medium"
+              >
+                {inStock ? `${variant?.stock ?? 0} in stock` : "Out of stock"}
+              </Badge>
+            </div>
+
+            {product.variants.length > 0 ? (
+              <div className="space-y-5">
+                {useOptionPickers ? (
+                  <>
+                    <OptionPills
+                      label="Size"
+                      options={sizes}
+                      value={selectedSize}
+                      onChange={handleSizeChange}
+                    />
+                    <OptionPills
+                      label="Color"
+                      options={colors}
+                      value={selectedColor}
+                      onChange={handleColorChange}
+                    />
+                  </>
+                ) : (
+                  <div className="space-y-2.5">
+                    <p className="text-sm font-medium">Options</p>
+                    <div className="flex flex-wrap gap-2">
+                      {product.variants.map((v) => {
+                        const selected = v.id === variantId;
+                        const disabled = v.stock <= 0;
+                        return (
+                          <button
+                            key={v.id}
+                            type="button"
+                            disabled={disabled}
+                            aria-pressed={selected}
+                            onClick={() => setVariantId(v.id)}
+                            className={cn(
+                              "rounded-md border px-4 py-2 text-sm font-medium transition-all",
+                              selected
+                                ? "border-foreground bg-foreground text-background"
+                                : "border-border bg-background hover:border-foreground/40",
+                              disabled && "cursor-not-allowed opacity-40"
+                            )}
+                          >
+                            {formatVariantLabel(v)}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {variant ? (
+                  <p className="text-muted-foreground text-xs">
+                    Selected:{" "}
+                    <span className="text-foreground font-medium">
+                      {formatVariantLabel(variant)}
+                    </span>
+                    {variant.sku ? (
+                      <>
+                        {" "}
+                        · SKU{" "}
+                        <span className="font-mono text-[11px]">
+                          {variant.sku}
+                        </span>
+                      </>
+                    ) : null}
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
+
+            <Button
+              size="lg"
+              type="button"
+              onClick={() => void handleAddToCart()}
+              className="h-12 w-full text-base font-semibold"
+              disabled={!variant || !inStock || adding || blockAddToBag}
+            >
+              {isOwnListing
+                ? "Your listing"
+                : adding
+                  ? "Adding…"
+                  : inStock
+                    ? "Add to bag"
+                    : "Out of stock"}
+            </Button>
+            {isOwnListing ? (
+              <p className="text-muted-foreground text-center text-xs">
+                You cannot purchase products from your own store.
+              </p>
+            ) : null}
+          </div>
+        </div>
+      </motion.div>
+
+      <ProductReviewsSection
+        productId={product.id}
+        reviewCount={product.reviewCount}
+        averageRating={product.averageRating}
+      />
+    </div>
   );
 }

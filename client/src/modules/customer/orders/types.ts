@@ -1,5 +1,12 @@
 export type OrderStatus = "pending" | "shipped" | "delivered" | "cancelled";
-export type PaymentStatus = "paid" | "failed" | "refunded";
+export type PaymentStatus =
+  | "paid"
+  | "pending"
+  | "processing"
+  | "failed"
+  | "cancelled"
+  | "refunded"
+  | "partially_refunded";
 
 export type OrderLineItem = {
   image?: string;
@@ -11,14 +18,25 @@ export type OrderLineItem = {
   priceAtPurchase: number;
 };
 
+export type OrderStore = {
+  id: string;
+  name: string;
+  slug: string;
+  verified: boolean;
+  sellerName: string;
+  logoUrl: string | null;
+};
+
 export type Order = {
   id: string;
   tax: number;
   total: number;
   userId: string;
+  storeId?: string;
   subtotal: number;
   createdAt: string;
   shippedAt?: string;
+  store?: OrderStore;
   orderNumber: string;
   status: OrderStatus;
   deliveredAt?: string;
@@ -48,8 +66,33 @@ export type OrderListParams = {
   dateTo?: string;
   dateFrom?: string;
   paymentStatus?: string;
+  page?: number;
+  limit?: number;
+};
+
+export type PaginatedOrdersResult = {
+  orders: Order[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
 };
 
 export type CancelOrderInput = {
   reason: string;
 };
+
+export type FilterOption<T extends string = string> = {
+  value: T;
+  label: string;
+};
+
+export type OrderStatusFilterValue = OrderStatus | "all";
+
+export type OrderPaymentStatusFilterValue =
+  | "all"
+  | "paid"
+  | "refunded"
+  | "pending";

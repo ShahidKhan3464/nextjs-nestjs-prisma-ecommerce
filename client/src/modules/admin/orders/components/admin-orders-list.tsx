@@ -5,19 +5,25 @@ import { cn } from "@/lib/utils";
 import { EyeIcon } from "lucide-react";
 import { ROUTES } from "@/constants/routes";
 import { Input } from "@/components/ui/input";
+import type { OrderListParams } from "../types";
 import { queryKeys } from "@/constants/query-keys";
 import { formatOrderDate } from "@/lib/format-date";
 import { useEffect, useMemo, useState } from "react";
 import { Pagination } from "@/components/ui/pagination";
 import { AdminTableSkeleton } from "@/modules/admin/shared";
 import { fetchAdminOrders } from "../services/orders.service";
-import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { EmptyState } from "@/shared/components/feedback/empty-state";
+import { useDebouncedValue } from "@/shared/hooks/use-debounced-value";
 import {
   OrderStatusBadge,
   PaymentStatusBadge,
-} from "@/modules/customer/orders/components/order-status-badges";
+} from "@/modules/buyer/orders/components/order-status-badges";
+import {
+  ORDER_STATUS_FILTER_OPTIONS,
+  BUYER_PAYMENT_STATUS_FILTER_OPTIONS,
+} from "@/modules/buyer/orders/constants";
 import {
   Select,
   SelectItem,
@@ -34,20 +40,6 @@ import {
   TableHeader,
 } from "@/components/ui/table";
 
-const ORDER_STATUS_OPTIONS = [
-  { value: "all", label: "All" },
-  { value: "pending", label: "Pending" },
-  { value: "shipped", label: "Shipped" },
-  { value: "delivered", label: "Delivered" },
-  { value: "cancelled", label: "Cancelled" },
-] as const;
-
-const PAYMENT_STATUS_OPTIONS = [
-  { value: "all", label: "All" },
-  { value: "paid", label: "Paid" },
-  { value: "refunded", label: "Refunded" },
-] as const;
-
 export function AdminOrdersList() {
   const qc = useQueryClient();
   const [page, setPage] = useState(1);
@@ -56,48 +48,62 @@ export function AdminOrdersList() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [paymentFilter, setPaymentFilter] = useState("all");
   const debouncedSearch = useDebouncedValue(searchInput, 500);
+  const hasSearch = debouncedSearch.trim().length > 0;
 
   useEffect(() => {
     setPage(1);
-  }, [debouncedSearch, statusFilter, paymentFilter]);
+  }, [debouncedSearch, statusFilter, paymentFilter, perPage]);
 
   const listParams = useMemo(() => {
-    const params: {
-      status?: string;
-      paymentStatus?: string;
-    } = {};
+    const params: OrderListParams = {};
     if (statusFilter !== "all") params.status = statusFilter;
     if (paymentFilter !== "all") params.paymentStatus = paymentFilter;
-    return Object.keys(params).length > 0 ? params : undefined;
-  }, [statusFilter, paymentFilter]);
+    if (hasSearch) {
+      params.page = 1;
+      params.limit = 100;
+    } else {
+      params.page = page;
+      params.limit = perPage;
+    }
+    return params;
+  }, [statusFilter, paymentFilter, hasSearch, page, perPage]);
 
-  const { data, isPending } = useQuery({
-    queryKey: queryKeys.admin.orders(listParams ?? {}),
+  const { data, isPending, isError, refetch } = useQuery({
+    queryKey: queryKeys.admin.orders(listParams),
     queryFn: () => fetchAdminOrders(listParams),
   });
 
   const filtered = useMemo(() => {
-    if (!data) return [];
+    const orders = data?.orders ?? [];
+    if (!hasSearch) return orders;
     const q = debouncedSearch.trim().toLowerCase();
-    if (!q) return data;
-    return data.filter((o) => {
+    return orders.filter((o) => {
       return (
         o.id.toLowerCase().includes(q) ||
         o.orderNumber.toLowerCase().includes(q)
       );
     });
-  }, [data, debouncedSearch]);
+  }, [data?.orders, debouncedSearch, hasSearch]);
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
+  const totalPages = hasSearch
+    ? Math.max(1, Math.ceil(filtered.length / perPage))
+    : (data?.pagination.totalPages ?? 1);
   const pageClamped = Math.min(page, totalPages);
-  const sliceStart = (pageClamped - 1) * perPage;
-  const pageRows = filtered.slice(sliceStart, sliceStart + perPage);
+  const pageRows = hasSearch
+    ? filtered.slice((pageClamped - 1) * perPage, pageClamped * perPage)
+    : filtered;
+  const paginationPage = hasSearch
+    ? pageClamped
+    : (data?.pagination.page ?? pageClamped);
+  const paginationPerPage = hasSearch
+    ? perPage
+    : (data?.pagination.limit ?? perPage);
 
   useEffect(() => {
     if (page !== pageClamped) setPage(pageClamped);
   }, [page, pageClamped]);
 
-  if (isPending || !data) {
+  if (isPending && !data) {
     return (
       <AdminTableSkeleton
         filterWidths={["w-72", "w-32", "w-32", "w-24"]}
@@ -113,11 +119,24 @@ export function AdminOrdersList() {
     );
   }
 
-  const total = data.length;
-  const hasSearch = debouncedSearch.trim().length > 0;
+  if (isError || !data) {
+    return (
+      <EmptyState
+        title="Could not load orders"
+        description="Please try again in a moment."
+        action={
+          <Button type="button" onClick={() => void refetch()}>
+            Retry
+          </Button>
+        }
+      />
+    );
+  }
+
+  const total = data?.pagination.total ?? 0;
   const hasFilters = statusFilter !== "all" || paymentFilter !== "all";
   const isEmptyCatalog = total === 0 && !hasSearch && !hasFilters;
-  const showPagination = filtered.length > 0;
+  const showPagination = (data?.pagination.total ?? 0) > 0 || filtered.length > 0;
 
   return (
     <div className="space-y-4">
@@ -140,7 +159,7 @@ export function AdminOrdersList() {
               <SelectValue placeholder="Order status" />
             </SelectTrigger>
             <SelectContent>
-              {ORDER_STATUS_OPTIONS.map((option) => (
+              {ORDER_STATUS_FILTER_OPTIONS.map((option) => (
                 <SelectItem key={option.value} value={option.value}>
                   {option.label}
                 </SelectItem>
@@ -158,7 +177,7 @@ export function AdminOrdersList() {
               <SelectValue placeholder="Payment" />
             </SelectTrigger>
             <SelectContent>
-              {PAYMENT_STATUS_OPTIONS.map((option) => (
+              {BUYER_PAYMENT_STATUS_FILTER_OPTIONS.map((option) => (
                 <SelectItem key={option.value} value={option.value}>
                   {option.label}
                 </SelectItem>
@@ -233,10 +252,10 @@ export function AdminOrdersList() {
 
         {showPagination ? (
           <Pagination
-            perPage={perPage}
-            page={pageClamped}
+            page={paginationPage}
             onPageChange={setPage}
             totalPages={totalPages}
+            perPage={paginationPerPage}
             onPerPageChange={(n) => {
               setPerPage(n);
               setPage(1);

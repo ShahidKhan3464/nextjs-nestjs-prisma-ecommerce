@@ -1,0 +1,205 @@
+import { StripeService } from 'src/integrations/stripe';
+import { CancelOrderDto } from '../dto/cancel-order.dto';
+import { PrismaService } from 'src/prisma/prisma.service';
+import type { OrderResponse } from '../types/order.types';
+import { UserRole } from 'src/common/enums/user-role.enum';
+import { mapOrderToResponse } from '../utils/map-order.util';
+import { UsersService } from 'src/modules/users/users.service';
+import { AuditProvider } from 'src/common/audit/audit.provider';
+import { MailService } from 'src/integrations/mail/mail.service';
+import { OrderOwnershipProvider } from './order-ownership.provider';
+import { findOrderWithImages } from 'src/common/prisma/file-query.util';
+import { adjustVariantStock } from '../utils/adjust-variant-stock.util';
+import { OrderStatus, PaymentStatus } from '../constants/order.constants';
+import { AuditAction, AuditEntityType } from 'src/common/audit/audit.constants';
+import { NotificationService } from 'src/modules/notifications/notification.service';
+import { PaymentFailureReason } from 'src/modules/payments/constants/payment.constants';
+import { NotificationType } from 'src/modules/notifications/constants/notification.constants';
+import { PaymentLifecycleProvider } from 'src/modules/payments/providers/payment-lifecycle.provider';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
+
+@Injectable()
+export class CancelOrderProvider {
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly mailService: MailService,
+    private readonly usersService: UsersService,
+    private readonly stripeService: StripeService,
+    private readonly auditProvider: AuditProvider,
+    private readonly notificationService: NotificationService,
+    private readonly orderOwnershipProvider: OrderOwnershipProvider,
+    private readonly paymentLifecycleProvider: PaymentLifecycleProvider,
+  ) {}
+
+  async cancel(
+    orderId: number,
+    userId: number,
+    roles: UserRole[],
+    dto: CancelOrderDto,
+  ): Promise<OrderResponse> {
+    const order = await findOrderWithImages(this.prisma, { id: orderId });
+
+    if (!order) {
+      throw new NotFoundException('Order not found');
+    }
+
+    this.orderOwnershipProvider.assertCanCancel(order, userId, roles);
+
+    if (order.status !== OrderStatus.PENDING) {
+      throw new BadRequestException('Only pending orders can be cancelled');
+    }
+
+    const payment = order.payment;
+    const wasPaid = payment?.status === PaymentStatus.SUCCEEDED;
+    let externalRefundId: string | null = null;
+
+    // Claim cancel in DB first so concurrent cancels cannot double-refund.
+    const claim = await this.prisma.order.updateMany({
+      where: { id: orderId, status: OrderStatus.PENDING },
+      data: {
+        status: OrderStatus.CANCELLED,
+        cancellationReason: dto.reason.trim(),
+        cancelledAt: new Date(),
+      },
+    });
+
+    if (claim.count === 0) {
+      throw new BadRequestException('Only pending orders can be cancelled');
+    }
+
+    try {
+      if (wasPaid && payment?.transactionId) {
+        const refundable =
+          Math.round(
+            (Number(payment.amount) - Number(payment.refundedAmount ?? 0)) *
+              100,
+          ) / 100;
+
+        if (refundable <= 0) {
+          throw new BadRequestException(
+            'Order payment has already been refunded',
+          );
+        }
+
+        const refundAmountCents = Math.round(refundable * 100);
+        if (refundAmountCents < 1) {
+          throw new BadRequestException('Refundable amount is too small');
+        }
+
+        const refund = await this.stripeService.createRefund(
+          {
+            payment_intent: payment.transactionId,
+            amount: refundAmountCents,
+          },
+          { idempotencyKey: `order-cancel-${orderId}` },
+        );
+        externalRefundId = refund.id;
+      }
+
+      await this.prisma.$transaction(async (tx) => {
+        const lockedOrder = await tx.order.findUnique({
+          where: { id: orderId },
+          include: { items: true, payment: true },
+        });
+
+        if (!lockedOrder) {
+          throw new NotFoundException('Order not found');
+        }
+
+        // Stock was reserved at checkout create — always release on cancel.
+        await adjustVariantStock(
+          tx,
+          lockedOrder.items.map((item) => ({
+            variantId: item.variantId,
+            quantity: item.quantity,
+          })),
+          'release',
+        );
+
+        if (lockedOrder.payment) {
+          if (wasPaid) {
+            const refundAmount =
+              Math.round(
+                (Number(lockedOrder.payment.amount) -
+                  Number(lockedOrder.payment.refundedAmount ?? 0)) *
+                  100,
+              ) / 100;
+
+            await this.paymentLifecycleProvider.applyRefund(tx, {
+              paymentId: lockedOrder.payment.id,
+              amount: refundAmount,
+              reason: dto.reason.trim(),
+              externalRefundId,
+            });
+          } else {
+            await this.paymentLifecycleProvider.markFailedOrKeep(
+              tx,
+              lockedOrder.payment.id,
+              PaymentFailureReason.PAYMENT_CANCELLED,
+            );
+          }
+        }
+      });
+    } catch (error) {
+      // Compensate claim if refund/stock update fails after status flip.
+      await this.prisma.order
+        .updateMany({
+          where: {
+            id: orderId,
+            status: OrderStatus.CANCELLED,
+          },
+          data: {
+            status: OrderStatus.PENDING,
+            cancellationReason: null,
+            cancelledAt: null,
+          },
+        })
+        .catch(() => undefined);
+      throw error;
+    }
+
+    const updated = await findOrderWithImages(this.prisma, { id: orderId });
+    if (!updated) {
+      throw new NotFoundException('Order not found');
+    }
+
+    const response = mapOrderToResponse(updated, {
+      includeBuyer: this.orderOwnershipProvider.shouldIncludeBuyer(roles),
+    });
+
+    this.auditProvider.record({
+      action: AuditAction.ORDER_CANCELLED,
+      entityType: AuditEntityType.ORDER,
+      entityId: orderId,
+      before: { status: OrderStatus.PENDING },
+      after: { status: OrderStatus.CANCELLED, reason: dto.reason.trim() },
+    });
+
+    const customer = await this.usersService.findOneById(updated.userId);
+    if (customer?.email) {
+      void this.mailService
+        .sendOrderStatusUpdateEmail(
+          customer.email,
+          customer.fullName,
+          response,
+          OrderStatus.CANCELLED,
+        )
+        .catch(() => undefined);
+    }
+
+    void this.notificationService
+      .create({
+        userId: updated.userId,
+        type: NotificationType.ORDER_CANCELLED,
+        title: 'Order cancelled',
+        message: `Your order #${updated.id} has been cancelled.`,
+      })
+      .catch(() => undefined);
+
+    return response;
+  }
+}

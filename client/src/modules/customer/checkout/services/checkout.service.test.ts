@@ -1,5 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { abandonCheckout, cancelCheckout } from "./checkout.service";
+import {
+  abandonCheckout,
+  cancelCheckout,
+  recoverCheckout,
+} from "./checkout.service";
 
 vi.mock("@/services/api/client", () => ({
   api: {
@@ -37,5 +41,24 @@ describe("checkout.service", () => {
   it("skips abandon when payment intent id is missing", () => {
     abandonCheckout(null);
     expect(api.post).not.toHaveBeenCalled();
+  });
+
+  it("recovers checkout via idempotent complete", async () => {
+    vi.mocked(api.post).mockResolvedValueOnce({
+      data: {
+        data: {
+          orders: [{ id: "1", orderNumber: "ORD-1" }],
+          order: { id: "1", orderNumber: "ORD-1" },
+        },
+      },
+    });
+
+    const orders = await recoverCheckout("pi_test_456");
+
+    expect(api.post).toHaveBeenCalledWith(
+      "/api/v1/customer/orders/checkout/complete",
+      { paymentIntentId: "pi_test_456" }
+    );
+    expect(orders).toHaveLength(1);
   });
 });

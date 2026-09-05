@@ -1,11 +1,28 @@
-import type { Order } from "@/modules/customer/orders/types";
+import type { Order } from "@/modules/buyer/orders/types";
 
 type DashboardStatusCount = {
   count: number;
   status: string;
 };
 
-export type CustomerDashboardData = {
+type DashboardActivityItem = {
+  id: string;
+  type: string;
+  title: string;
+  message: string;
+  isRead: boolean;
+  createdAt: string;
+};
+
+type DashboardPurchasedProduct = {
+  productId: string;
+  name: string;
+  slug: string;
+  imageUrl: string | null;
+  purchasedAt: string;
+};
+
+export type BuyerDashboardData = {
   totalOrders: number;
   totalSpending: number;
   wishlistCount: number;
@@ -13,4 +30,6 @@ export type CustomerDashboardData = {
   recentOrders: Order[];
   ordersByStatus: DashboardStatusCount[];
   spendingByMonth: { month: string; amount: number }[];
+  recentNotifications: DashboardActivityItem[];
+  recentlyPurchased: DashboardPurchasedProduct[];
 };

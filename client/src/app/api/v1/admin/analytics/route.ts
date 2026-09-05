@@ -15,11 +15,53 @@ type NestDashboardPayload = {
     variants: number;
     customers: number;
     pendingOrders: number;
+    pendingSellerApprovals?: number;
   };
   recentOrders: NestOrderPayload[];
   revenueByDay: { date: string; revenue: number }[];
   ordersByStatus: { status: string; count: number }[];
   lowStock: { sku: string; product: string; stock: number }[];
+  recentNotifications?: {
+    id: string;
+    type: string;
+    title: string;
+    message: string;
+    isRead: boolean;
+    createdAt: string;
+  }[];
+  recentReviews?: {
+    id: string;
+    rating: number;
+    title: string | null;
+    comment: string | null;
+    productName: string;
+    productSlug: string;
+    buyerName: string;
+    createdAt: string;
+  }[];
+  pendingApprovals?: {
+    id: string;
+    kind: "seller" | "store";
+    name: string;
+    status: string;
+    createdAt: string;
+  }[];
+  topProducts?: {
+    productId: string;
+    name: string;
+    slug: string;
+    unitsSold: number;
+    revenue: number;
+    averageRating: number;
+    reviewCount: number;
+  }[];
+  recentCustomers?: {
+    id: string;
+    fullName: string;
+    email: string;
+    ordersCount: number;
+    lastOrderAt: string;
+  }[];
 };
 
 export async function GET(req: Request) {
@@ -52,7 +94,16 @@ export async function GET(req: Request) {
   return jsonOk({
     data: {
       ...payload,
+      totals: {
+        ...payload.totals,
+        pendingSellerApprovals: payload.totals.pendingSellerApprovals ?? 0,
+      },
       recentOrders: (payload.recentOrders ?? []).map(normalizeNestOrderPayload),
+      recentNotifications: payload.recentNotifications ?? [],
+      recentReviews: payload.recentReviews ?? [],
+      pendingApprovals: payload.pendingApprovals ?? [],
+      topProducts: payload.topProducts ?? [],
+      recentCustomers: payload.recentCustomers ?? [],
     },
   });
 }

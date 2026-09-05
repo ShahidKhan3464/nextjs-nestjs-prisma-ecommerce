@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { requireUser } from "@/lib/require-auth";
 import { getBackendUrl } from "@/lib/backend-url";
 import { jsonMessage, jsonOk } from "@/lib/api-response";
 import { nestErrorMessage, forwardAuthorization } from "@/lib/nest-http";
@@ -8,6 +9,9 @@ const cancelSchema = z.object({
 });
 
 export async function POST(req: Request) {
+  const auth = await requireUser(req);
+  if (auth instanceof Response) return auth;
+
   let json: unknown;
   try {
     json = await req.json();

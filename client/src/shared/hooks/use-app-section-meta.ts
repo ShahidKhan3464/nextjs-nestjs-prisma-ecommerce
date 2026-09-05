@@ -2,22 +2,26 @@
 
 import { useMemo } from "react";
 import { usePathname } from "next/navigation";
-import { useAuthStore } from "@/store/auth-store";
+import { useUserRoles } from "@/modules/auth";
+import { resolveShopChrome } from "@/shared/navigation/app-nav";
 
 export function useAppSectionMeta(): { title: string; hint?: string } {
   const pathname = usePathname();
-  const role = useAuthStore((s) => s.user?.role);
+  const roles = useUserRoles();
+  const chrome = resolveShopChrome(roles);
 
   return useMemo(() => {
-    const admin = role === "admin";
-
     if (pathname === "/dashboard") {
-      return admin
-        ? { title: "Analytics", hint: "Overview" }
-        : { title: "Dashboard", hint: "Your overview" };
+      if (chrome === "admin") {
+        return { title: "Analytics", hint: "Overview" };
+      }
+      if (chrome === "seller") {
+        return { title: "Dashboard", hint: "Seller overview" };
+      }
+      return { title: "Dashboard", hint: "Your overview" };
     }
     if (pathname === "/profile") {
-      return { title: "Profile", hint: "Account settings" };
+      return { title: "Profile", hint: "Account & addresses" };
     }
     if (pathname.startsWith("/products/") && pathname !== "/products") {
       if (pathname.startsWith("/products/new")) {
@@ -26,15 +30,25 @@ export function useAppSectionMeta(): { title: string; hint?: string } {
       if (pathname.startsWith("/products/edit/")) {
         return { title: "Edit product", hint: "Update catalog item" };
       }
+      if (pathname.startsWith("/products/manage/")) {
+        return {
+          title: "Product",
+          hint:
+            chrome === "seller"
+              ? "Listing & variants"
+              : "Details",
+        };
+      }
       return { title: "Product", hint: "Details & variants" };
     }
     if (pathname === "/products") {
-      return admin
-        ? { title: "Products", hint: "Inventory" }
-        : { title: "Shop", hint: "Browse catalog" };
+      if (chrome === "seller") {
+        return { title: "Products", hint: "Your listings" };
+      }
+      return { title: "Shop", hint: "Browse catalog" };
     }
     if (pathname === "/categories") {
-      return admin
+      return chrome === "admin"
         ? { title: "Categories", hint: "Manage product categories" }
         : { title: "Categories", hint: "Browse categories" };
     }
@@ -47,24 +61,81 @@ export function useAppSectionMeta(): { title: string; hint?: string } {
     if (pathname.startsWith("/orders/") && pathname !== "/orders") {
       return {
         title: "Order",
-        hint: admin ? "Fulfillment" : "Receipt & status",
+        hint:
+          chrome === "admin"
+            ? "Fulfillment"
+            : chrome === "seller"
+              ? "Order details"
+              : "Receipt & status",
       };
     }
     if (pathname === "/orders") {
       return {
         title: "Orders",
-        hint: admin ? "All storefront orders" : "Your history",
+        hint:
+          chrome === "admin"
+            ? "All storefront orders"
+            : chrome === "seller"
+              ? "Your sales"
+              : "Your history",
       };
     }
+    if (pathname === "/reviews") {
+      return {
+        title: "Reviews",
+        hint:
+          chrome === "admin"
+            ? "Moderation"
+            : chrome === "seller"
+              ? "Store feedback"
+              : "Reviews",
+      };
+    }
+    if (pathname === "/shop") {
+      return { title: "Shop", hint: "Browse catalog" };
+    }
     if (pathname === "/cart") return { title: "Cart" };
+    if (pathname === "/checkout/success") return { title: "Order confirmed" };
     if (pathname === "/checkout") return { title: "Checkout" };
     if (pathname === "/wishlist") return { title: "Wishlist" };
+    if (pathname === "/become-seller" || pathname.startsWith("/become-seller/")) {
+      return { title: "Become a seller", hint: "Seller application" };
+    }
 
     if (pathname === "/users") return { title: "Users", hint: "Accounts" };
     if (pathname.startsWith("/users/")) {
       return { title: "User detail", hint: "Customer record" };
     }
+    if (pathname === "/seller-profiles") {
+      return { title: "Seller applications", hint: "Review & approve" };
+    }
+    if (pathname.startsWith("/seller-profiles/")) {
+      return { title: "Seller application", hint: "Application detail" };
+    }
+    if (pathname === "/payments") {
+      return {
+        title: "Payments",
+        hint:
+          chrome === "admin"
+            ? "Refunds & inspection"
+            : chrome === "seller"
+              ? "Store payments & COD"
+              : "Payments",
+      };
+    }
+    if (pathname.startsWith("/payments/")) {
+      return {
+        title: "Payment",
+        hint: chrome === "admin" ? "Refund & details" : "Payment details",
+      };
+    }
+    if (pathname === "/stores") {
+      return { title: "Stores", hint: "Verify & suspend" };
+    }
+    if (pathname.startsWith("/stores/manage/")) {
+      return { title: "Store", hint: "Moderation" };
+    }
 
     return { title: "Store" };
-  }, [pathname, role]);
+  }, [pathname, chrome]);
 }

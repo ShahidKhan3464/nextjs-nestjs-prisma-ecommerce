@@ -1,7 +1,7 @@
 import { getSiteUrl } from "@/lib/backend-url";
 import { useAuthStore, isTokenExpired } from "@/store/auth-store";
 import { handlePossibleBlockedApiError } from "@/lib/account-blocked";
-import { resetCartWishlistSession } from "@/lib/cart-wishlist-session";
+import { clearLocalCartAndWishlist } from "@/lib/cart-wishlist-session";
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from "axios";
 
 declare module "axios" {
@@ -49,7 +49,7 @@ async function refreshAccessToken(): Promise<string> {
 }
 
 api.interceptors.request.use(async (config) => {
-  const token = useAuthStore.getState().accessToken;
+  const { accessToken: token, user } = useAuthStore.getState();
 
   // Skip auth endpoints — they don't need a token and must not trigger refresh
   const url = config.url ?? "";
@@ -60,14 +60,19 @@ api.interceptors.request.use(async (config) => {
     url.includes("/auth/forgot-password") ||
     url.includes("/auth/reset-password");
 
-  if (!isAuthEndpoint && token && isTokenExpired()) {
+  // After reload, user may be persisted while access token is memory-only —
+  // refresh via httpOnly cookie so Authorization is available when needed.
+  const needsTokenBootstrap =
+    !isAuthEndpoint && Boolean(user) && (!token || isTokenExpired());
+
+  if (needsTokenBootstrap) {
     try {
       const fresh = await refreshAccessToken();
       config.headers.Authorization = `Bearer ${fresh}`;
     } catch (refreshError) {
       if (!handlePossibleBlockedApiError(refreshError)) {
+        clearLocalCartAndWishlist();
         useAuthStore.getState().clearSession();
-        resetCartWishlistSession();
       }
     }
   } else if (token) {
@@ -112,8 +117,8 @@ api.interceptors.response.use(
       return api(original);
     } catch (refreshError) {
       if (!handlePossibleBlockedApiError(refreshError)) {
+        clearLocalCartAndWishlist();
         useAuthStore.getState().clearSession();
-        resetCartWishlistSession();
       }
       return Promise.reject(error);
     }

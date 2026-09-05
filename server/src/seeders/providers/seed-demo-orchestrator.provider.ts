@@ -1,5 +1,6 @@
 import { ConfigService } from '@nestjs/config';
 import { SeedResult } from '../types/seed-result.type.js';
+import { SeedSellersProvider } from './seed-sellers.provider.js';
 import { SeedProductsProvider } from './seed-products.provider.js';
 import { SeedCustomersProvider } from './seed-customers.provider.js';
 import { SeedCategoriesProvider } from './seed-categories.provider.js';
@@ -11,9 +12,10 @@ export class SeedDemoOrchestratorProvider implements OnApplicationBootstrap {
 
   constructor(
     private readonly configService: ConfigService,
-    private readonly seedCategoriesProvider: SeedCategoriesProvider,
+    private readonly seedSellersProvider: SeedSellersProvider,
     private readonly seedProductsProvider: SeedProductsProvider,
     private readonly seedCustomersProvider: SeedCustomersProvider,
+    private readonly seedCategoriesProvider: SeedCategoriesProvider,
   ) {}
 
   public async onApplicationBootstrap(): Promise<void> {
@@ -24,10 +26,16 @@ export class SeedDemoOrchestratorProvider implements OnApplicationBootstrap {
     this.logger.log('Starting demo data seeding...');
 
     const categoryResult = await this.seedCategoriesProvider.seed();
+    const sellerResult = await this.seedSellersProvider.seed();
     const productResult = await this.seedProductsProvider.seed();
     const customerResult = await this.seedCustomersProvider.seed();
 
-    this.logSummary(categoryResult, productResult, customerResult);
+    this.logSummary(
+      categoryResult,
+      sellerResult,
+      productResult,
+      customerResult,
+    );
   }
 
   private shouldSeedDemoData(): boolean {
@@ -54,6 +62,7 @@ export class SeedDemoOrchestratorProvider implements OnApplicationBootstrap {
 
   private logSummary(
     categoryResult: SeedResult,
+    sellerResult: SeedResult,
     productResult: SeedResult,
     customerResult: SeedResult,
   ): void {
@@ -69,6 +78,7 @@ export class SeedDemoOrchestratorProvider implements OnApplicationBootstrap {
       [
         'Demo seeding complete.',
         format('Categories', categoryResult),
+        format('Sellers', sellerResult),
         format('Products', productResult),
         format('Customers', customerResult),
       ].join(' '),

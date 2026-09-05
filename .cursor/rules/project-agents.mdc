@@ -1,0 +1,18 @@
+---
+description: Prisma ecommerce global AI instructions — source of truth is root AGENTS.md
+alwaysApply: true
+---
+
+# Project AI instructions
+
+Follow the repository root **`AGENTS.md`** as the source of truth for global agent behavior.
+
+When working under `client/`, also follow **`client/AGENTS.md`**.
+When working under `server/`, also follow **`server/AGENTS.md`**.
+
+Detailed architecture lives in **`client/walkthrough.md`** and **`server/walkthrough.md`** — load only the sections you need.
+
+Workflows, reference implementations, and context-loading strategy: **`docs/ai-development.md`**.
+Architectural decisions: **`docs/decisions/`**.
+
+Do not duplicate or override those documents here. Prefer minimum sufficient context over loading the whole repo. If documentation conflicts with source code, report it — code wins for runtime behavior.

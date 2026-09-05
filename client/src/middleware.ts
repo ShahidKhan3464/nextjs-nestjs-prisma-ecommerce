@@ -2,7 +2,11 @@ import { NextResponse } from "next/server";
 import { ROUTES } from "@/constants/routes";
 import type { NextRequest } from "next/server";
 import { verifyToken } from "@/lib/server-auth";
+import { isSeller, isSuperAdmin } from "@/modules/auth/utils/roles";
 import {
+  isAdminOnlyPath,
+  isSellerStorePath,
+  isSellerProductPath,
   isProtectedShopPath,
   safeProtectedRedirectPath,
 } from "@/lib/auth-route-guards";
@@ -84,13 +88,15 @@ export async function middleware(request: NextRequest) {
     return res;
   }
 
-  const adminOnly =
-    pathname.startsWith("/users") ||
-    pathname === "/products/new" ||
-    pathname.startsWith("/products/new/") ||
-    pathname.startsWith("/products/edit/");
+  if (isAdminOnlyPath(pathname) && !isSuperAdmin(payload.roles)) {
+    return NextResponse.redirect(new URL(ROUTES.dashboard, request.url));
+  }
 
-  if (adminOnly && payload.role !== "admin") {
+  if (isSellerProductPath(pathname) && !isSeller(payload.roles)) {
+    return NextResponse.redirect(new URL(ROUTES.dashboard, request.url));
+  }
+
+  if (isSellerStorePath(pathname) && !isSeller(payload.roles)) {
     return NextResponse.redirect(new URL(ROUTES.dashboard, request.url));
   }
 

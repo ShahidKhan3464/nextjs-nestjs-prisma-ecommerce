@@ -1,7 +1,5 @@
-import { Badge } from "@/components/ui/badge";
 import type { OrderStatus, PaymentStatus } from "../types";
-
-type BadgeVariant = "default" | "secondary" | "outline" | "destructive";
+import { Badge, type BadgeVariant } from "@/components/ui/badge";
 
 const orderStatusVariant: Record<OrderStatus, BadgeVariant> = {
   pending: "outline",
@@ -26,8 +24,12 @@ export function normalizeOrderStatus(status: string): OrderStatus {
 
 const paymentStatusVariant: Record<PaymentStatus, BadgeVariant> = {
   paid: "default",
+  pending: "outline",
+  processing: "secondary",
   failed: "destructive",
+  cancelled: "destructive",
   refunded: "secondary",
+  partially_refunded: "secondary",
 };
 
 export function OrderStatusBadge({ status }: { status: OrderStatus }) {

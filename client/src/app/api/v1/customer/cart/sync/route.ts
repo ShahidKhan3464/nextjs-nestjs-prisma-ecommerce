@@ -1,7 +1,8 @@
 import type { ApiResponse } from "@/types";
+import { requireUser } from "@/lib/require-auth";
 import { getBackendUrl } from "@/lib/backend-url";
 import { jsonMessage, jsonOk } from "@/lib/api-response";
-import type { CartItem } from "@/modules/customer/cart/types";
+import type { CartItem } from "@/modules/buyer/cart/types";
 import { nestErrorMessage, forwardAuthorization } from "@/lib/nest-http";
 import {
   type NestCartItemPayload,
@@ -9,6 +10,9 @@ import {
 } from "@/lib/nest-cart-mapper";
 
 export async function POST(req: Request) {
+  const auth = await requireUser(req);
+  if (auth instanceof Response) return auth;
+
   const backend = getBackendUrl();
   const payload = await req.json();
 

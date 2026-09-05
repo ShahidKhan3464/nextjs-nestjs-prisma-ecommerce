@@ -1,7 +1,8 @@
 import type { ApiResponse } from "@/types";
+import { requireUser } from "@/lib/require-auth";
 import { getBackendUrl } from "@/lib/backend-url";
 import { jsonMessage, jsonOk } from "@/lib/api-response";
-import type { CartItem } from "@/modules/customer/cart/types";
+import type { CartItem } from "@/modules/buyer/cart/types";
 import { nestErrorMessage, forwardAuthorization } from "@/lib/nest-http";
 import {
   type NestCartItemPayload,
@@ -12,6 +13,9 @@ export async function PATCH(
   req: Request,
   ctx: { params: Promise<{ variantId: string }> }
 ) {
+  const auth = await requireUser(req);
+  if (auth instanceof Response) return auth;
+
   const { variantId } = await ctx.params;
   const backend = getBackendUrl();
   const payload = await req.json();
@@ -51,6 +55,9 @@ export async function DELETE(
   req: Request,
   ctx: { params: Promise<{ variantId: string }> }
 ) {
+  const auth = await requireUser(req);
+  if (auth instanceof Response) return auth;
+
   const { variantId } = await ctx.params;
   const backend = getBackendUrl();
 

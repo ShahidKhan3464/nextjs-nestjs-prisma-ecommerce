@@ -7,10 +7,10 @@ import { handlePossibleBlockedApiError } from "@/lib/account-blocked";
 
 /** Periodically hits an authenticated API so blocked users are signed out promptly. */
 export function BlockedSessionGuard() {
-  const accessToken = useAuthStore((s) => s.accessToken);
+  const user = useAuthStore((s) => s.user);
 
   React.useEffect(() => {
-    if (!accessToken) return;
+    if (!user) return;
 
     let cancelled = false;
 
@@ -27,13 +27,13 @@ export function BlockedSessionGuard() {
     void verifyActiveSession();
     const id = window.setInterval(() => {
       void verifyActiveSession();
-    }, 60_000);
+    }, 120_000);
 
     return () => {
       cancelled = true;
       window.clearInterval(id);
     };
-  }, [accessToken]);
+  }, [user]);
 
   return null;
 }

@@ -1,3 +1,4 @@
+import { requireAdmin } from "@/lib/require-auth";
 import type { ApiResponse } from "@/types";
 import { getBackendUrl } from "@/lib/backend-url";
 import { jsonMessage, jsonOk } from "@/lib/api-response";
@@ -12,6 +13,8 @@ export async function GET(
   req: Request,
   ctx: { params: Promise<{ id: string }> }
 ) {
+  const admin = await requireAdmin(req);
+  if (admin instanceof Response) return admin;
   const { id } = await ctx.params;
   const backend = getBackendUrl();
   const res = await fetch(`${backend}/categories/${encodeURIComponent(id)}`, {
@@ -44,6 +47,8 @@ export async function PATCH(
   req: Request,
   ctx: { params: Promise<{ id: string }> }
 ) {
+  const admin = await requireAdmin(req);
+  if (admin instanceof Response) return admin;
   const { id } = await ctx.params;
   const payload = await req.json();
   const backend = getBackendUrl();
@@ -82,6 +87,8 @@ export async function DELETE(
   req: Request,
   ctx: { params: Promise<{ id: string }> }
 ) {
+  const admin = await requireAdmin(req);
+  if (admin instanceof Response) return admin;
   const { id } = await ctx.params;
   const backend = getBackendUrl();
   const res = await fetch(`${backend}/categories/${encodeURIComponent(id)}`, {

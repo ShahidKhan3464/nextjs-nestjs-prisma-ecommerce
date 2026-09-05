@@ -5,17 +5,22 @@ import { cn } from "@/lib/utils";
 import { EyeIcon } from "lucide-react";
 import { ROUTES } from "@/constants/routes";
 import { Input } from "@/components/ui/input";
+import type { OrderListParams } from "../types";
 import { queryKeys } from "@/constants/query-keys";
 import { formatOrderDate } from "@/lib/format-date";
 import { useEffect, useMemo, useState } from "react";
 import { Pagination } from "@/components/ui/pagination";
 import { fetchOrders } from "../services/orders.service";
 import { AdminTableSkeleton } from "@/modules/admin/shared";
-import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { EmptyState } from "@/shared/components/feedback/empty-state";
+import { useDebouncedValue } from "@/shared/hooks/use-debounced-value";
 import { OrderStatusBadge, PaymentStatusBadge } from "./order-status-badges";
+import {
+  ORDER_STATUS_FILTER_OPTIONS,
+  BUYER_PAYMENT_STATUS_FILTER_OPTIONS,
+} from "../constants";
 import {
   Select,
   SelectItem,
@@ -32,20 +37,6 @@ import {
   TableHeader,
 } from "@/components/ui/table";
 
-const ORDER_STATUS_OPTIONS = [
-  { value: "all", label: "All" },
-  { value: "pending", label: "Pending" },
-  { value: "shipped", label: "Shipped" },
-  { value: "delivered", label: "Delivered" },
-  { value: "cancelled", label: "Cancelled" },
-] as const;
-
-const PAYMENT_STATUS_OPTIONS = [
-  { value: "all", label: "All" },
-  { value: "paid", label: "Paid" },
-  { value: "refunded", label: "Refunded" },
-] as const;
-
 export function OrdersList() {
   const qc = useQueryClient();
   const [page, setPage] = useState(1);
@@ -54,28 +45,36 @@ export function OrdersList() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [paymentFilter, setPaymentFilter] = useState("all");
   const debouncedSearch = useDebouncedValue(searchInput, 500);
+  const hasSearch = debouncedSearch.trim().length > 0;
 
   useEffect(() => {
     setPage(1);
-  }, [debouncedSearch, statusFilter, paymentFilter]);
+  }, [debouncedSearch, statusFilter, paymentFilter, perPage]);
 
   const listParams = useMemo(() => {
-    const params: { status?: string; paymentStatus?: string } = {};
+    const params: OrderListParams = {};
     if (statusFilter !== "all") params.status = statusFilter;
     if (paymentFilter !== "all") params.paymentStatus = paymentFilter;
-    return Object.keys(params).length > 0 ? params : undefined;
-  }, [statusFilter, paymentFilter]);
+    if (hasSearch) {
+      params.page = 1;
+      params.limit = 100;
+    } else {
+      params.page = page;
+      params.limit = perPage;
+    }
+    return params;
+  }, [statusFilter, paymentFilter, hasSearch, page, perPage]);
 
   const { data, isPending } = useQuery({
-    queryKey: queryKeys.orders.list(listParams ?? {}),
+    queryKey: queryKeys.orders.list(listParams),
     queryFn: () => fetchOrders(listParams),
   });
 
   const filtered = useMemo(() => {
-    if (!data) return [];
+    const orders = data?.orders ?? [];
+    if (!hasSearch) return orders;
     const q = debouncedSearch.trim().toLowerCase();
-    if (!q) return data;
-    return data.filter((o) => {
+    return orders.filter((o) => {
       const idMatch =
         o.id.toLowerCase().includes(q) ||
         o.orderNumber.toLowerCase().includes(q);
@@ -86,12 +85,21 @@ export function OrdersList() {
       );
       return idMatch || itemMatch;
     });
-  }, [data, debouncedSearch]);
+  }, [data?.orders, debouncedSearch, hasSearch]);
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
+  const totalPages = hasSearch
+    ? Math.max(1, Math.ceil(filtered.length / perPage))
+    : (data?.pagination.totalPages ?? 1);
   const pageClamped = Math.min(page, totalPages);
-  const sliceStart = (pageClamped - 1) * perPage;
-  const pageRows = filtered.slice(sliceStart, sliceStart + perPage);
+  const pageRows = hasSearch
+    ? filtered.slice((pageClamped - 1) * perPage, pageClamped * perPage)
+    : filtered;
+  const paginationPage = hasSearch
+    ? pageClamped
+    : (data?.pagination.page ?? pageClamped);
+  const paginationPerPage = hasSearch
+    ? perPage
+    : (data?.pagination.limit ?? perPage);
 
   useEffect(() => {
     if (page !== pageClamped) setPage(pageClamped);
@@ -103,6 +111,7 @@ export function OrdersList() {
         filterWidths={["w-72", "w-32", "w-32", "w-24"]}
         columns={[
           { className: "flex-1" },
+          { className: "w-36" },
           { className: "w-24" },
           { className: "w-24" },
           { className: "flex-1" },
@@ -115,7 +124,7 @@ export function OrdersList() {
   }
 
   if (
-    !data?.length &&
+    (data?.pagination.total ?? 0) === 0 &&
     statusFilter === "all" &&
     paymentFilter === "all" &&
     !debouncedSearch.trim()
@@ -152,7 +161,7 @@ export function OrdersList() {
               <SelectValue placeholder="Order status" />
             </SelectTrigger>
             <SelectContent>
-              {ORDER_STATUS_OPTIONS.map((option) => (
+              {ORDER_STATUS_FILTER_OPTIONS.map((option) => (
                 <SelectItem key={option.value} value={option.value}>
                   {option.label}
                 </SelectItem>
@@ -169,7 +178,7 @@ export function OrdersList() {
               <SelectValue placeholder="Payment" />
             </SelectTrigger>
             <SelectContent>
-              {PAYMENT_STATUS_OPTIONS.map((option) => (
+              {BUYER_PAYMENT_STATUS_FILTER_OPTIONS.map((option) => (
                 <SelectItem key={option.value} value={option.value}>
                   {option.label}
                 </SelectItem>
@@ -190,7 +199,8 @@ export function OrdersList() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Order</TableHead>
+                  <TableHead>Order</TableHead>
+              <TableHead>Store</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Payment</TableHead>
               <TableHead>Placed</TableHead>
@@ -205,7 +215,7 @@ export function OrdersList() {
             {pageRows.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={7}
+                  colSpan={8}
                   className="text-muted-foreground py-10 text-center text-sm"
                 >
                   No orders found.
@@ -216,6 +226,19 @@ export function OrdersList() {
                 <TableRow key={order.id}>
                   <TableCell className="font-mono text-sm">
                     {order.orderNumber}
+                  </TableCell>
+                  <TableCell className="min-w-36 whitespace-normal">
+                    {order.store ? (
+                      <div className="space-y-0.5">
+                        <p className="text-sm font-medium">{order.store.name}</p>
+                        <p className="text-muted-foreground text-xs">
+                          {order.store.sellerName}
+                          {order.store.verified ? " · Verified" : ""}
+                        </p>
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground text-sm">—</span>
+                    )}
                   </TableCell>
                   <TableCell>
                     <OrderStatusBadge status={order.status} />
@@ -241,6 +264,15 @@ export function OrdersList() {
                         buttonVariants({ variant: "outline", size: "icon" })
                       )}
                       aria-label={`View order ${order.orderNumber}`}
+                      onMouseEnter={() => {
+                        void qc.prefetchQuery({
+                          queryKey: queryKeys.orders.detail(order.id),
+                          queryFn: () =>
+                            import("../services/orders.service").then((m) =>
+                              m.fetchOrder(order.id)
+                            ),
+                        });
+                      }}
                     >
                       <EyeIcon className="h-4 w-4" />
                     </Link>
@@ -252,10 +284,10 @@ export function OrdersList() {
         </Table>
 
         <Pagination
-          perPage={perPage}
-          page={pageClamped}
+          page={paginationPage}
           onPageChange={setPage}
           totalPages={totalPages}
+          perPage={paginationPerPage}
           onPerPageChange={(n) => {
             setPerPage(n);
             setPage(1);

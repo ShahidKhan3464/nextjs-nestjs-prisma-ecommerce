@@ -13,7 +13,7 @@ import { Pagination } from "@/components/ui/pagination";
 import { Pencil, Trash2, RotateCcw } from "lucide-react";
 import { AdminTableSkeleton } from "@/modules/admin/shared";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { useDebouncedValue } from "@/hooks/use-debounced-value";
+import { useDebouncedValue } from "@/shared/hooks/use-debounced-value";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   deleteAdminCategory,
@@ -54,14 +54,14 @@ export function AdminCategoriesList() {
   const debouncedSearch = useDebouncedValue(searchInput, 500);
   const [statusFilter, setStatusFilter] = useState<
     "active" | "removed" | "all"
-  >("active");
+  >("all");
   const [deleteTarget, setDeleteTarget] = useState<AdminCategoryOption | null>(
     null
   );
 
   useEffect(() => {
     setPage(1);
-  }, [debouncedSearch, statusFilter]);
+  }, [debouncedSearch, statusFilter, perPage]);
 
   const { data, isPending, isFetching, isPlaceholderData } = useQuery({
     queryKey: [
@@ -120,7 +120,7 @@ export function AdminCategoriesList() {
 
   const total = data.pagination?.total ?? 0;
   const hasSearch = debouncedSearch.trim().length > 0;
-  const hasStatusFilter = statusFilter !== "active";
+  const hasStatusFilter = statusFilter !== "all";
   const isEmptyCatalog = total === 0 && !hasSearch && !hasStatusFilter;
   const showPagination = total > 0;
 

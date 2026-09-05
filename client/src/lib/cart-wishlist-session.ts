@@ -1,11 +1,16 @@
 import { useAuthStore } from "@/store/auth-store";
 import { useCartStore } from "@/store/cart-store";
 import { useWishlistStore } from "@/store/wishlist-store";
-import { fetchCart } from "@/modules/customer/cart/services/cart.service";
-import { fetchWishlist } from "@/modules/customer/wishlist/services/wishlist.service";
+import { fetchCart } from "@/modules/buyer/cart/services/cart.service";
+import { fetchWishlist } from "@/modules/buyer/wishlist/services/wishlist.service";
+import {
+  currentCartWishlistOwnerId,
+  removeUserCartWishlistStorage,
+  wipeSharedCartWishlistStorage,
+} from "@/lib/cart-wishlist-ownership";
 
 export function isAuthenticatedForCartWishlist(): boolean {
-  return Boolean(useAuthStore.getState().accessToken);
+  return Boolean(useAuthStore.getState().user);
 }
 
 let sessionUserId: string | null = null;
@@ -14,12 +19,22 @@ let wishlistLoadedForSession = false;
 let cartHydrateInFlight: Promise<void> | null = null;
 let wishlistHydrateInFlight: Promise<void> | null = null;
 
-export function resetCartWishlistSession(): void {
+function resetCartWishlistSession(): void {
   sessionUserId = null;
   cartLoadedForSession = false;
   wishlistLoadedForSession = false;
   cartHydrateInFlight = null;
   wishlistHydrateInFlight = null;
+}
+
+/** Logout / forced-session-end: empty in-memory bags and drop that user's storage keys. */
+export function clearLocalCartAndWishlist(): void {
+  const userId = currentCartWishlistOwnerId();
+  useCartStore.getState().resetToGuest();
+  useWishlistStore.getState().resetToGuest();
+  removeUserCartWishlistStorage(userId);
+  wipeSharedCartWishlistStorage();
+  resetCartWishlistSession();
 }
 
 /** Called after login sync so we do not re-fetch on the next page. */
@@ -31,6 +46,14 @@ export function markCartWishlistSessionHydrated(): void {
   wishlistLoadedForSession = true;
 }
 
+/** Force a fresh cart fetch (used after optimistic update failures). */
+export async function refetchCart(): Promise<void> {
+  if (!isAuthenticatedForCartWishlist()) return;
+  cartLoadedForSession = false;
+  cartHydrateInFlight = null;
+  await hydrateCartOnce();
+}
+
 function currentUserId(): string | null {
   return useAuthStore.getState().user?.id ?? null;
 }
@@ -39,6 +62,8 @@ function resetIfUserChanged(): void {
   const uid = currentUserId();
   if (uid && sessionUserId && uid !== sessionUserId) {
     resetCartWishlistSession();
+    useCartStore.getState().setItems([]);
+    useWishlistStore.getState().setProductIds([]);
   }
 }
 
@@ -72,7 +97,7 @@ export async function hydrateWishlistOnce(): Promise<void> {
 
   if (!wishlistHydrateInFlight) {
     wishlistHydrateInFlight = (async () => {
-      const productIds = await fetchWishlist();
+      const { productIds } = await fetchWishlist();
       useWishlistStore.getState().setProductIds(productIds);
       wishlistLoadedForSession = true;
       sessionUserId = uid;

@@ -1,0 +1,12 @@
+import { LOW_STOCK_THRESHOLD } from 'src/common/constants/inventory.constants';
+
+export { LOW_STOCK_THRESHOLD };
+
+export const DASHBOARD_REVENUE_DAYS = 7;
+export const DASHBOARD_RECENT_ORDERS_LIMIT = 5;
+export const DASHBOARD_RECENT_NOTIFICATIONS_LIMIT = 8;
+export const DASHBOARD_RECENT_ACTIVITY_LIMIT = 8;
+export const DASHBOARD_RECENT_REVIEWS_LIMIT = 5;
+export const DASHBOARD_TOP_PRODUCTS_LIMIT = 5;
+export const DASHBOARD_RECENT_CUSTOMERS_LIMIT = 5;
+export const DASHBOARD_PENDING_APPROVALS_LIMIT = 10;

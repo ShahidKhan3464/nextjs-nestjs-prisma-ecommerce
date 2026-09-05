@@ -1,8 +1,9 @@
 import { z } from "zod";
 import type { ApiResponse } from "@/types";
+import { requireUser } from "@/lib/require-auth";
 import { getBackendUrl } from "@/lib/backend-url";
 import { jsonMessage, jsonOk } from "@/lib/api-response";
-import type { CheckoutSession } from "@/modules/customer/checkout/types";
+import type { CheckoutSession } from "@/modules/buyer/checkout/types";
 import { nestErrorMessage, forwardAuthorization } from "@/lib/nest-http";
 
 const checkoutSchema = z.object({
@@ -16,9 +17,13 @@ const checkoutSchema = z.object({
     phone: z.string().optional(),
     postalCode: z.string().min(1),
   }),
+  idempotencyKey: z.string().min(8).max(128).optional(),
 });
 
 export async function POST(req: Request) {
+  const auth = await requireUser(req);
+  if (auth instanceof Response) return auth;
+
   let json: unknown;
   try {
     json = await req.json();
@@ -31,14 +36,21 @@ export async function POST(req: Request) {
     return jsonMessage("Invalid checkout payload", 422);
   }
 
+  const headerKey = req.headers.get("idempotency-key")?.trim();
+  const idempotencyKey = parsed.data.idempotencyKey ?? headerKey;
+
   const backend = getBackendUrl();
   const res = await fetch(`${backend}/orders/checkout`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      ...(idempotencyKey ? { "Idempotency-Key": idempotencyKey } : {}),
       ...forwardAuthorization(req),
     },
-    body: JSON.stringify(parsed.data),
+    body: JSON.stringify({
+      shippingAddress: parsed.data.shippingAddress,
+      ...(idempotencyKey ? { idempotencyKey } : {}),
+    }),
   });
 
   let raw: unknown = null;
@@ -58,6 +70,18 @@ export async function POST(req: Request) {
     return jsonMessage("Invalid checkout response", 500);
   }
 
-  const body: ApiResponse<CheckoutSession> = { data };
+  const session: CheckoutSession = {
+    clientSecret: data.clientSecret,
+    paymentIntentId: data.paymentIntentId,
+    checkoutSessionId: String(data.checkoutSessionId ?? ""),
+    orderIds: Array.isArray(data.orderIds) ? data.orderIds.map(String) : [],
+    preview: {
+      tax: Number(data.preview?.tax ?? 0),
+      total: Number(data.preview?.total ?? 0),
+      subtotal: Number(data.preview?.subtotal ?? 0),
+    },
+  };
+
+  const body: ApiResponse<CheckoutSession> = { data: session };
   return jsonOk(body, { status: 201 });
 }

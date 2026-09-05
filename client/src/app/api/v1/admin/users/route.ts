@@ -1,3 +1,4 @@
+import { requireAdmin } from "@/lib/require-auth";
 import type { User } from "@/types";
 import type { ApiResponse } from "@/types";
 import { getBackendUrl } from "@/lib/backend-url";
@@ -17,6 +18,8 @@ type NestPagedUsers = {
 };
 
 export async function GET(req: Request) {
+  const admin = await requireAdmin(req);
+  if (admin instanceof Response) return admin;
   const url = new URL(req.url);
   const backend = getBackendUrl();
   const qs = url.searchParams.toString();

@@ -1,10 +1,24 @@
 export const DEMO_SEED_CATEGORY_MARKER = 'Electronics & Gadgets';
 
-export const DEMO_SEED_PRODUCT_SKU_MARKER = 'SEED-ELEC-001-BLK';
+/** Marker SKU for store 01 / first catalog product (idempotency). */
+export const DEMO_SEED_PRODUCT_SKU_MARKER = 'S01-SEED-ELEC-001-BLK';
 
 export const DEMO_SEED_CUSTOMER_EMAIL_MARKER = 'demo.customer1@example.com';
 
+export const DEMO_SEED_SELLER_EMAIL_MARKER = 'demo.seller1@example.com';
+
+/** Marker storage key for store 01 logo (idempotency for store/seller files). */
+export const DEMO_SEED_STORE_LOGO_MARKER =
+  'external/demo/stores/demo-store-01/logo.jpg';
+
 export const DEMO_CUSTOMER_PASSWORD = 'Password@123';
+
+export const DEMO_SELLER_PASSWORD = 'Password@123';
+
+/** Products created per demo store (3 DRAFT + 12 ACTIVE / published). */
+export const DEMO_PRODUCTS_PER_STORE = 15;
+
+export const DEMO_DRAFT_PRODUCTS_PER_STORE = 3;
 
 export type DemoCategorySeed = {
   name: string;
@@ -27,8 +41,48 @@ export type DemoProductSeed = {
   variants: DemoVariantSeed[];
 };
 
+export type DemoSellerSeed = {
+  fullName: string;
+  email: string;
+  phoneNumber: string;
+  businessName: string;
+  businessEmail: string;
+  businessPhone: string;
+  taxNumber: string;
+  registrationNumber: string;
+  store: {
+    name: string;
+    slug: string;
+    description: string;
+    address: string;
+    city: string;
+    postalCode: string;
+    country: string;
+  };
+};
+
 export function picsumImageUrl(seed: string): string {
   return `https://picsum.photos/seed/${encodeURIComponent(seed)}/800/600`;
+}
+
+/** Store tag used to uniquify product SKUs/slugs across sellers (S01…S05). */
+export function demoStoreTag(storeIndex: number): string {
+  return `S${String(storeIndex + 1).padStart(2, '0')}`;
+}
+
+export function demoStoreLogoStorageKey(storeSlug: string): string {
+  return `external/demo/stores/${storeSlug}/logo.jpg`;
+}
+
+export function demoStoreBannerStorageKey(storeSlug: string): string {
+  return `external/demo/stores/${storeSlug}/banner.jpg`;
+}
+
+export function demoSellerDocumentStorageKey(
+  sellerNumber: string,
+  documentKind: 'tax' | 'license',
+): string {
+  return `external/demo/sellers/demo-seller-${sellerNumber}/${documentKind}.pdf`;
 }
 
 export const DEMO_CATEGORIES: DemoCategorySeed[] = [
@@ -84,7 +138,7 @@ export const DEMO_CATEGORIES: DemoCategorySeed[] = [
   },
 ];
 
-export const DEMO_CUSTOMERS = Array.from({ length: 10 }, (_, index) => {
+export const DEMO_CUSTOMERS = Array.from({ length: 5 }, (_, index) => {
   const number = String(index + 1).padStart(2, '0');
 
   return {
@@ -93,6 +147,42 @@ export const DEMO_CUSTOMERS = Array.from({ length: 10 }, (_, index) => {
     phoneNumber: `0300123456${index}`,
   };
 });
+
+const DEMO_SELLER_CITIES = [
+  'Karachi',
+  'Lahore',
+  'Islamabad',
+  'Rawalpindi',
+  'Faisalabad',
+] as const;
+
+export const DEMO_SELLERS: DemoSellerSeed[] = Array.from(
+  { length: 5 },
+  (_, index) => {
+    const number = String(index + 1).padStart(2, '0');
+    const city = DEMO_SELLER_CITIES[index] ?? 'Karachi';
+
+    return {
+      fullName: `Demo Seller ${number}`,
+      email: `demo.seller${index + 1}@example.com`,
+      phoneNumber: `0300987654${index}`,
+      businessName: `Demo Business ${number}`,
+      businessEmail: `business.seller${index + 1}@example.com`,
+      businessPhone: `042123456${index}`,
+      taxNumber: `TAX-SEED-${number}`,
+      registrationNumber: `REG-SEED-${number}`,
+      store: {
+        name: `Demo Store ${number}`,
+        slug: `demo-store-${number}`,
+        description: `Curated demo catalog for Demo Store ${number}.`,
+        address: `${100 + index} Seed Market Road`,
+        city,
+        postalCode: `74${number}0`,
+        country: 'Pakistan',
+      },
+    };
+  },
+);
 
 export const DEMO_PRODUCTS: DemoProductSeed[] = [
   {

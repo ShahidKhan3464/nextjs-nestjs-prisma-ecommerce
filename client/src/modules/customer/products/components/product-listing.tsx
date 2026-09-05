@@ -6,43 +6,67 @@ import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/constants/query-keys";
 import { Skeleton } from "@/components/ui/skeleton";
+import type { PaginatedResponse } from "@/types/api";
 import { Pagination } from "@/components/ui/pagination";
 import type { Product, ProductListParams } from "../types";
 import { fetchProducts } from "../services/products.service";
+import { toProductListParams } from "../utils/product-list-params";
 import { EmptyState } from "@/shared/components/feedback/empty-state";
 import { useWishlistHydrate } from "@/shared/hooks/use-wishlist-hydrate";
 import { useProductSearchParams } from "../hooks/use-product-search-params";
 
-function toParams(
-  values: ReturnType<typeof useProductSearchParams>["values"]
-): ProductListParams {
-  return {
-    q: values.q || undefined,
-    categoryId: values.category ? Number(values.category) : undefined,
-    maxPrice: values.maxPrice ? Number(values.maxPrice) : undefined,
-    page: values.page,
-    limit: 12,
-  };
-}
+type Props = {
+  /** When set, scopes the listing to a store (also reflected in URL when present). */
+  storeId?: number;
+  /** When provided by a parent, avoids a duplicate products query. */
+  listData?: PaginatedResponse<Product> | undefined;
+  listPending?: boolean;
+  listParams?: ProductListParams;
+};
 
-export function ProductListing() {
+export function ProductListing({
+  storeId,
+  listData,
+  listPending,
+  listParams,
+}: Props) {
   useWishlistHydrate();
   const { values, setParams } = useProductSearchParams();
-  const params = toParams(values);
+  const params =
+    listParams ??
+    toProductListParams(
+      {
+        ...values,
+        storeId: storeId != null ? String(storeId) : values.storeId,
+      },
+      storeId != null ? { storeId } : undefined
+    );
 
-  const { data, isPending, isError, refetch } = useQuery({
+  const ownedQuery = useQuery({
     queryKey: queryKeys.products.list(
       params as unknown as Record<string, unknown>
     ),
     queryFn: () => fetchProducts(params),
     placeholderData: (prev) => prev,
+    enabled: listData === undefined && listPending === undefined,
   });
+
+  const data = listData !== undefined ? listData : ownedQuery.data;
+  const isPending =
+    listPending !== undefined ? listPending : ownedQuery.isPending;
+  const isError = listData !== undefined ? false : ownedQuery.isError;
+  const refetch = ownedQuery.refetch;
 
   if (isPending && !data) {
     return (
       <motion.div layout className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
         {Array.from({ length: 8 }).map((_, i) => (
-          <Skeleton key={i} className="h-48 rounded-2xl sm:h-52" />
+          <div key={i} className="space-y-3">
+            <Skeleton className="h-48 rounded-2xl sm:h-52" />
+            <Skeleton className="h-4 w-3/4" />
+            <Skeleton className="h-3 w-1/2" />
+            <Skeleton className="h-8 w-20" />
+          </div>
         ))}
       </motion.div>
     );
@@ -83,10 +107,10 @@ export function ProductListing() {
 
       <Pagination
         page={pagination.page}
-        perPage={pagination.limit}
-        onPerPageChange={() => {}} // Not implemented in search params yet, but required by component
+        perPage={values.limit}
         totalPages={pagination.totalPages}
         onPageChange={(p) => setParams({ page: p })}
+        onPerPageChange={(n) => setParams({ limit: n, page: 1 })}
       />
     </div>
   );

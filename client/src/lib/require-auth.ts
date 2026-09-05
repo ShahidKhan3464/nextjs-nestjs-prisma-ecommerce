@@ -3,11 +3,12 @@ import { cookies } from "next/headers";
 import { jsonMessage } from "@/lib/api-response";
 import { AUTH_SESSION_COOKIE } from "@/lib/auth-cookies";
 import { verifyToken, type JwtPayload } from "@/lib/server-auth";
+import { isSeller, isSuperAdmin } from "@/modules/auth/utils/roles";
 
 function userFromSessionPayload(payload: JwtPayload): User {
   return {
     id: payload.sub,
-    role: payload.role,
+    roles: payload.roles,
     email: payload.email,
     createdAt: new Date().toISOString(),
     isBlocked: payload.isBlocked ?? false,
@@ -32,10 +33,21 @@ export async function requireUser(req: Request): Promise<User | Response> {
   return userFromSessionPayload(payload);
 }
 
+/** Requires an authenticated session with the `SUPER_ADMIN` role. */
 export async function requireAdmin(req: Request): Promise<User | Response> {
   const res = await requireUser(req);
   if (res instanceof Response) return res;
-  if (res.role !== "admin") {
+  if (!isSuperAdmin(res.roles)) {
+    return jsonMessage("Forbidden", 403);
+  }
+  return res;
+}
+
+/** Requires an authenticated session with the `SELLER` role. */
+export async function requireSeller(req: Request): Promise<User | Response> {
+  const res = await requireUser(req);
+  if (res instanceof Response) return res;
+  if (!isSeller(res.roles)) {
     return jsonMessage("Forbidden", 403);
   }
   return res;

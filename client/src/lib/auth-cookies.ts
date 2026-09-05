@@ -3,8 +3,9 @@
  *
  * 1. `AUTH_SESSION_COOKIE` — Next.js session JWT (`typ: "access"`). Used by `middleware` for
  *    protected routes; not the Nest API bearer.
- * 2. `AUTH_BACKEND_ACCESS_COOKIE` — Nest access JWT. Copied into the client store as
- *    `accessToken` for `Authorization: Bearer …` on `/api/v1/*` → Nest proxies.
+ * 2. `AUTH_BACKEND_ACCESS_COOKIE` — Nest access JWT (httpOnly). Route Handlers
+ *    forward it via `forwardAuthorization`. The client keeps a memory-only copy
+ *    in Zustand for `Authorization` headers after login/refresh (not persisted).
  * 3. `AUTH_REFRESH_COOKIE` — Nest refresh JWT. Never readable from client JS; refresh calls
  *    send it automatically (`credentials`). The refresh Route Handler reads it and POSTs
  *    `{ refreshToken }` to Nest `POST /auth/refresh`.

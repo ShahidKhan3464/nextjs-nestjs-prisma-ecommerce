@@ -1,6 +1,7 @@
+import type { ApiResponse, User } from "@/types";
 import { getBackendUrl } from "@/lib/backend-url";
 import { jsonMessage, jsonOk } from "@/lib/api-response";
-import type { ApiResponse, User, UserRole } from "@/types";
+import { normalizeRoles } from "@/modules/auth/utils/roles";
 
 type NestRegisterPayload = {
   data?: {
@@ -8,14 +9,12 @@ type NestRegisterPayload = {
       id: number;
       email: string;
       fullName: string;
-      role?: UserRole;
+      roles?: unknown;
       isBlocked?: boolean;
     };
   };
   message?: string | string[];
 };
-
-const DEFAULT_ROLE: UserRole = "customer";
 
 export async function POST(req: Request) {
   let body: unknown;
@@ -57,14 +56,15 @@ export async function POST(req: Request) {
     return jsonMessage("Unexpected response from server", 502);
   }
 
+  const roles = normalizeRoles(u.roles);
   const user: User = {
-    id: String(u.id),
     email: u.email,
+    id: String(u.id),
     name: u.fullName,
     fullName: u.fullName,
-    role: u.role ?? DEFAULT_ROLE,
     isBlocked: u.isBlocked ?? false,
     createdAt: new Date().toISOString(),
+    roles: roles.length > 0 ? roles : ["BUYER"],
   };
 
   const response: ApiResponse<{ user: User }> = {

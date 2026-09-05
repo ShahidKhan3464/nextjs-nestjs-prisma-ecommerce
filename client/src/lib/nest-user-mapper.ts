@@ -1,14 +1,15 @@
-import type { User, UserRole } from "@/modules/auth";
+import type { User } from "@/modules/auth";
+import { normalizeRoles } from "@/modules/auth/utils/roles";
 import { resolveUploadUrl } from "@/lib/resolve-upload-url";
 
-/** Backend user shape (TypeORM entity JSON). */
+/** Backend user shape (Nest JSON). */
 export type NestUserDto = {
   id: number;
-  role: string;
   email: string;
+  roles?: unknown;
   fullName: string;
-  isBlocked?: boolean;
   avatarUrl?: string;
+  isBlocked?: boolean;
   createdAt?: string | Date;
   createDate?: string | Date;
   phoneNumber?: string | null;
@@ -24,18 +25,14 @@ function toIsoDate(value: string | Date | undefined): string {
 
 export function mapNestUserToClient(dto: NestUserDto): User {
   const createdAt = toIsoDate(dto.createdAt ?? dto.createDate);
-  const role =
-    dto.role === "admin" || dto.role === "customer"
-      ? (dto.role as UserRole)
-      : "customer";
 
   return {
-    role,
     createdAt,
     email: dto.email,
     id: String(dto.id),
     name: dto.fullName,
     fullName: dto.fullName,
+    roles: normalizeRoles(dto.roles),
     isBlocked: dto.isBlocked ?? false,
     phoneNumber: dto.phoneNumber ?? undefined,
     avatarUrl: resolveUploadUrl(dto.avatarUrl),

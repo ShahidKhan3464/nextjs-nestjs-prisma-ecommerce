@@ -1,12 +1,13 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import type { Metadata } from "next";
 import { siteConfig } from "@/config/site";
 import { ROUTES } from "@/constants/routes";
+import { isSeller } from "@/modules/auth/utils/roles";
 import { buttonVariants } from "@/components/ui/button";
 import { getAccessTokenPayload } from "@/lib/session-cookie";
-import { AdminProductsList } from "@/modules/admin/products";
-import { ProductsPageContent } from "@/modules/customer/products/components/products-page-content";
+import { SellerProductsPage } from "@/modules/seller/products";
+import { ProductsPageContent } from "@/modules/buyer/products/components/products-page-content";
 
 export const metadata: Metadata = {
   title: "Products",
@@ -16,32 +17,42 @@ export const metadata: Metadata = {
 export default async function ProductsPage() {
   const session = await getAccessTokenPayload();
 
-  if (session?.role === "admin") {
+  if (session && isSeller(session.roles)) {
     return (
       <div className="space-y-4">
-        <header className="flex items-center justify-between">
+        <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-0.5">
             <h1 className="font-heading text-3xl font-semibold tracking-tight">
               Products
             </h1>
             <p className="text-muted-foreground text-sm">
-              Maintain your catalog—search inventory, refresh data, and add new
-              listings when you are ready.
+              Manage listings for your store—draft, publish, archive, and
+              restore.
             </p>
           </div>
-          <div>
-            <Link
-              href={ROUTES.productNew}
-              className={cn(buttonVariants({ size: "default" }))}
-            >
-              Add product
-            </Link>
-          </div>
+          <Link
+            href={ROUTES.productNew}
+            className={cn(buttonVariants({ size: "default" }), "self-start")}
+          >
+            Add product
+          </Link>
         </header>
-        <AdminProductsList />
+        <SellerProductsPage />
       </div>
     );
   }
 
-  return <ProductsPageContent />;
+  return (
+    <div className="space-y-4">
+      <header className="space-y-0.5">
+        <h1 className="font-heading text-3xl font-semibold tracking-tight">
+          Products
+        </h1>
+        <p className="text-muted-foreground text-sm">
+          Browse our catalog and find the perfect product for you.
+        </p>
+      </header>
+      <ProductsPageContent />
+    </div>
+  );
 }

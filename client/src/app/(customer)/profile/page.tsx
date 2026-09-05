@@ -1,18 +1,21 @@
-import { ProfileForm } from "@/modules/customer/profile";
+import { Suspense } from "react";
+import { ProfileView } from "@/modules/buyer/profile";
 
 export default function ProfilePage() {
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
+    <div className="space-y-4">
       <header className="space-y-0.5">
         <h1 className="font-heading text-3xl font-semibold tracking-tight">
           Profile
         </h1>
         <p className="text-muted-foreground text-sm">
-          Keep your name and contact information current for orders and
-          receipts.
+          Manage your account settings and saved addresses for orders and
+          checkout.
         </p>
       </header>
-      <ProfileForm />
+      <Suspense fallback={null}>
+        <ProfileView />
+      </Suspense>
     </div>
   );
 }

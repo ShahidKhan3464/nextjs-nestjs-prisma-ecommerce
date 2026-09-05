@@ -1,3 +1,4 @@
+import { requireAdmin } from "@/lib/require-auth";
 import { z } from "zod";
 import { getBackendUrl } from "@/lib/backend-url";
 import type { ApiResponse, Order } from "@/types";
@@ -16,6 +17,8 @@ export async function PATCH(
   req: Request,
   ctx: { params: Promise<{ id: string }> }
 ) {
+  const admin = await requireAdmin(req);
+  if (admin instanceof Response) return admin;
   const { id } = await ctx.params;
 
   let json: unknown;

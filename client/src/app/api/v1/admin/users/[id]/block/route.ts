@@ -1,3 +1,5 @@
+import { z } from "zod";
+import { requireAdmin } from "@/lib/require-auth";
 import type { User } from "@/types";
 import type { ApiResponse } from "@/types";
 import { getBackendUrl } from "@/lib/backend-url";
@@ -11,7 +13,13 @@ import {
 
 type Props = { params: Promise<{ id: string }> };
 
+const blockSchema = z.object({
+  isBlocked: z.boolean(),
+});
+
 export async function PATCH(req: Request, { params }: Props) {
+  const admin = await requireAdmin(req);
+  if (admin instanceof Response) return admin;
   const { id } = await params;
   const backend = getBackendUrl();
 
@@ -19,7 +27,12 @@ export async function PATCH(req: Request, { params }: Props) {
   try {
     bodyData = await req.json();
   } catch {
-    // Keep an empty payload so Nest can return the proper validation error.
+    return jsonMessage("Invalid JSON body", 400);
+  }
+
+  const parsed = blockSchema.safeParse(bodyData);
+  if (!parsed.success) {
+    return jsonMessage("isBlocked must be a boolean", 422);
   }
 
   const res = await fetch(`${backend}/users/${id}/block`, {
@@ -28,7 +41,7 @@ export async function PATCH(req: Request, { params }: Props) {
       ...forwardAuthorization(req),
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(bodyData),
+    body: JSON.stringify(parsed.data),
   });
 
   let raw: unknown = null;

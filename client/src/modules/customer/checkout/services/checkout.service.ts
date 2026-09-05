@@ -1,6 +1,6 @@
 import { api } from "@/services/api/client";
 import type { ApiResponse } from "@/types/api";
-import type { Order } from "@/modules/customer/orders/types";
+import type { Order } from "@/modules/buyer/orders/types";
 import type {
   CheckoutSession,
   CreateCheckoutInput,
@@ -30,9 +30,17 @@ export function abandonCheckout(paymentIntentId: string | null | undefined) {
 }
 
 export async function completeCheckout(body: CompleteCheckoutInput) {
-  const res = await api.post<ApiResponse<{ order: Order }>>(
+  const res = await api.post<ApiResponse<{ orders: Order[]; order: Order }>>(
     "/api/v1/customer/orders/checkout/complete",
     body
   );
-  return res.data.data.order;
+  return res.data.data.orders ?? [res.data.data.order];
+}
+
+/**
+ * Recover a checkout after Stripe success when complete failed (network).
+ * Backend complete is idempotent — safe to retry.
+ */
+export async function recoverCheckout(paymentIntentId: string) {
+  return completeCheckout({ paymentIntentId });
 }
