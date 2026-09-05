@@ -1,7 +1,4 @@
-import type {
-  Order,
-  OrderListParams,
-} from "@/modules/buyer/orders/types";
+import type { Order, OrderListParams } from "@/modules/buyer/orders/types";
 
 type OrderBuyer = {
   id: string;

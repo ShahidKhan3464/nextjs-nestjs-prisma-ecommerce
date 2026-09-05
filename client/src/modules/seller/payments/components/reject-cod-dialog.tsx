@@ -61,10 +61,7 @@ export function RejectCodDialog({
     mutationFn: (values: RejectCodFormValues) => {
       if (!payment) throw new Error("Missing payment");
       const reason = values.reason?.trim();
-      return rejectSellerCodPayment(
-        payment.id,
-        reason ? { reason } : {}
-      );
+      return rejectSellerCodPayment(payment.id, reason ? { reason } : {});
     },
     onSuccess: async (updated) => {
       toast.success("COD payment rejected");

@@ -41,10 +41,9 @@ export async function GET(req: Request) {
   const backend = getBackendUrl();
   const { searchParams } = new URL(req.url);
   const qs = searchParams.toString();
-  const res = await fetch(
-    `${backend}/notifications${qs ? `?${qs}` : ""}`,
-    { headers: { ...forwardAuthorization(req) } }
-  );
+  const res = await fetch(`${backend}/notifications${qs ? `?${qs}` : ""}`, {
+    headers: { ...forwardAuthorization(req) },
+  });
 
   let raw: unknown = null;
   try {

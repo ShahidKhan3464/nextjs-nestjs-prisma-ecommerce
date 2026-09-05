@@ -56,14 +56,19 @@ function toIsoOrNull(value: unknown): string | null {
   return null;
 }
 
-function mapStore(store: NestProductStorePayload | null | undefined): ProductStore | undefined {
-  if (!store || typeof store.name !== "string" || typeof store.slug !== "string") {
+function mapStore(
+  store: NestProductStorePayload | null | undefined
+): ProductStore | undefined {
+  if (
+    !store ||
+    typeof store.name !== "string" ||
+    typeof store.slug !== "string"
+  ) {
     return undefined;
   }
 
   const seller: ProductStoreSeller | undefined =
-    store.sellerProfile &&
-    typeof store.sellerProfile.businessName === "string"
+    store.sellerProfile && typeof store.sellerProfile.businessName === "string"
       ? {
           id: store.sellerProfile.id,
           businessName: store.sellerProfile.businessName,
@@ -112,8 +117,7 @@ export function normalizeNestProductPayload(p: NestProductPayload): Product {
   const categoryId = p.category?.id ?? p.categoryId;
   const averageRating =
     p.averageRating != null ? Number(p.averageRating) : undefined;
-  const reviewCount =
-    p.reviewCount != null ? Number(p.reviewCount) : undefined;
+  const reviewCount = p.reviewCount != null ? Number(p.reviewCount) : undefined;
 
   return {
     slug,

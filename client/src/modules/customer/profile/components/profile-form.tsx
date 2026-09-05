@@ -242,7 +242,9 @@ export function ProfileForm() {
                 />
               ) : (
                 <div className="text-muted-foreground flex size-full items-center justify-center text-2xl font-semibold">
-                  {(user?.fullName ?? user?.name ?? "?").charAt(0).toUpperCase()}
+                  {(user?.fullName ?? user?.name ?? "?")
+                    .charAt(0)
+                    .toUpperCase()}
                 </div>
               )}
             </div>
@@ -275,7 +277,9 @@ export function ProfileForm() {
         <Separator />
 
         <section className="space-y-3">
-          <h2 className="font-heading text-lg font-semibold">Personal details</h2>
+          <h2 className="font-heading text-lg font-semibold">
+            Personal details
+          </h2>
           <Form {...profileForm}>
             <form
               onSubmit={profileForm.handleSubmit(onProfileSubmit)}
@@ -355,13 +359,18 @@ export function ProfileForm() {
           <>
             <Separator />
             <section className="space-y-2">
-              <h2 className="font-heading text-lg font-semibold">Sell with us</h2>
+              <h2 className="font-heading text-lg font-semibold">
+                Sell with us
+              </h2>
               <p className="text-muted-foreground text-sm">
-                Apply to open a seller account and list products on the marketplace.
+                Apply to open a seller account and list products on the
+                marketplace.
               </p>
               <Link
                 href={ROUTES.becomeSeller}
-                className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+                className={cn(
+                  buttonVariants({ variant: "outline", size: "sm" })
+                )}
               >
                 Become a seller
               </Link>

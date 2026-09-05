@@ -44,7 +44,10 @@ type NestSellerProductVariantDto = {
 };
 
 function parseStatus(value: unknown): ProductStatus {
-  if (typeof value === "string" && (PRODUCT_STATUSES as readonly string[]).includes(value)) {
+  if (
+    typeof value === "string" &&
+    (PRODUCT_STATUSES as readonly string[]).includes(value)
+  ) {
     return value as ProductStatus;
   }
   return "DRAFT";
@@ -109,6 +112,5 @@ export function mapNestSellerProduct(p: NestSellerProductDto): SellerProduct {
       images.length > 0
         ? images
         : [{ id: 0, url: "/placeholder.svg", urlPath: "/placeholder.svg" }],
-
   };
 }

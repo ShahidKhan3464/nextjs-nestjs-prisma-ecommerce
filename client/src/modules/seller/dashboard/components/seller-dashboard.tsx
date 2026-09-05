@@ -105,7 +105,9 @@ export function SellerDashboard() {
               </>
             ) : store ? (
               <>
-                <CardTitle className="font-heading text-xl">{store.name}</CardTitle>
+                <CardTitle className="font-heading text-xl">
+                  {store.name}
+                </CardTitle>
                 <p className="text-muted-foreground text-sm">
                   {store.businessName}
                   {store.city ? ` · ${store.city}` : ""}
@@ -138,7 +140,9 @@ export function SellerDashboard() {
             ) : store ? (
               <>
                 <div className="flex flex-wrap items-center gap-2">
-                  <Badge variant="secondary">{formatStatusLabel(store.status)}</Badge>
+                  <Badge variant="secondary">
+                    {formatStatusLabel(store.status)}
+                  </Badge>
                   {store.verifiedAt ? (
                     <Badge variant="outline">Verified</Badge>
                   ) : (
@@ -202,28 +206,28 @@ export function SellerDashboard() {
             ) : (
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={data?.revenueByDay ?? []}>
-                <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-                <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-                <YAxis tick={{ fontSize: 12 }} />
-                <Tooltip
-                  contentStyle={{ borderRadius: 8 }}
-                  formatter={(value) => [
-                    typeof value === "number"
-                      ? `$${value.toFixed(2)}`
-                      : String(value ?? ""),
-                    "Revenue",
-                  ]}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="revenue"
-                  stroke="hsl(var(--primary))"
-                  fill="hsl(var(--primary))"
-                  fillOpacity={0.12}
-                  strokeWidth={2}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
+                  <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                  <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+                  <YAxis tick={{ fontSize: 12 }} />
+                  <Tooltip
+                    contentStyle={{ borderRadius: 8 }}
+                    formatter={(value) => [
+                      typeof value === "number"
+                        ? `$${value.toFixed(2)}`
+                        : String(value ?? ""),
+                      "Revenue",
+                    ]}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="revenue"
+                    stroke="hsl(var(--primary))"
+                    fill="hsl(var(--primary))"
+                    fillOpacity={0.12}
+                    strokeWidth={2}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
             )}
           </CardContent>
         </Card>
@@ -440,7 +444,10 @@ export function SellerDashboard() {
             ) : (
               <ul className="divide-y">
                 {data?.recentReviews?.map((review) => (
-                  <li key={review.id} className="space-y-1 py-3 first:pt-0 last:pb-0">
+                  <li
+                    key={review.id}
+                    className="space-y-1 py-3 first:pt-0 last:pb-0"
+                  >
                     <div className="flex items-start justify-between gap-3">
                       <Link
                         href={ROUTES.product(review.productSlug)}

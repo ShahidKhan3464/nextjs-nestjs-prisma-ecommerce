@@ -236,7 +236,9 @@ export function AdminOrderDetail({ orderId }: Props) {
 
           <section className="space-y-3 text-sm">
             <h2 className="font-medium tracking-wide uppercase">Payment</h2>
-            <p className="text-muted-foreground">{order.paymentMethodSummary}</p>
+            <p className="text-muted-foreground">
+              {order.paymentMethodSummary}
+            </p>
             <div className="space-y-1 border-t pt-3">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Subtotal</span>

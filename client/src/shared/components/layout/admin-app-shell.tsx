@@ -6,10 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/constants/query-keys";
 import { RoleAppShell } from "@/shared/components/layout/role-app-shell";
 import { fetchAdminAnalytics } from "@/modules/admin/dashboard/services/analytics.service";
-import {
-  getNavForRoles,
-  shopChromeTitle,
-} from "@/shared/navigation/app-nav";
+import { getNavForRoles, shopChromeTitle } from "@/shared/navigation/app-nav";
 
 type Props = {
   roles: UserRole[];

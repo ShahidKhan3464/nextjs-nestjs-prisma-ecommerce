@@ -230,9 +230,7 @@ export function AdminStoreDetail({ storeId }: Props) {
         </MetaCard>
         <MetaCard label="Avg rating">
           <p className="tabular-nums">
-            {store.averageRating != null
-              ? store.averageRating.toFixed(1)
-              : "—"}
+            {store.averageRating != null ? store.averageRating.toFixed(1) : "—"}
           </p>
         </MetaCard>
         <MetaCard label="Products sold">

@@ -24,23 +24,14 @@ import {
   PRODUCT_LIFECYCLE_FILTER_OPTIONS,
 } from "../constants";
 
-import {
-  Eye,
-  Pencil,
-  RotateCcw,
-  Trash2,
-  Upload,
-} from "lucide-react";
+import { Eye, Pencil, RotateCcw, Trash2, Upload } from "lucide-react";
 import type {
   ProductLifeCycle,
   ProductStatus,
   SellerProduct,
   SellerProductListResult,
 } from "../types";
-import {
-  canPublishProduct,
-  canRestoreProduct,
-} from "../types";
+import { canPublishProduct, canRestoreProduct } from "../types";
 import {
   deleteSellerProduct,
   fetchSellerProducts,
@@ -98,9 +89,7 @@ function patchListProduct(
   if (!data) return data;
   return {
     ...data,
-    products: data.products.map((p) =>
-      p.id === id ? { ...p, ...patch } : p
-    ),
+    products: data.products.map((p) => (p.id === id ? { ...p, ...patch } : p)),
   };
 }
 
@@ -138,21 +127,28 @@ export function SellerProductsList() {
     queryFn: () => fetchSellerCategories(),
   });
 
-  const { data, isPending, isFetching, isPlaceholderData, isError, error, refetch } =
-    useQuery({
-      queryKey: listKey,
-      queryFn: () =>
-        fetchSellerProducts({
-          page,
-          limit: perPage,
-          lifeCycle,
-          search: debouncedSearch || undefined,
-          status: statusFilter === "all" ? undefined : statusFilter,
-          categoryId:
-            categoryFilter === "all" ? undefined : Number(categoryFilter),
-        }),
-      placeholderData: (prev) => prev,
-    });
+  const {
+    data,
+    isPending,
+    isFetching,
+    isPlaceholderData,
+    isError,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: listKey,
+    queryFn: () =>
+      fetchSellerProducts({
+        page,
+        limit: perPage,
+        lifeCycle,
+        search: debouncedSearch || undefined,
+        status: statusFilter === "all" ? undefined : statusFilter,
+        categoryId:
+          categoryFilter === "all" ? undefined : Number(categoryFilter),
+      }),
+    placeholderData: (prev) => prev,
+  });
 
   const invalidateLists = async () => {
     await qc.invalidateQueries({ queryKey: queryKeys.seller.products.all });
@@ -272,9 +268,7 @@ export function SellerProductsList() {
   const total = data.pagination?.total ?? 0;
   const hasSearch = debouncedSearch.trim().length > 0;
   const hasFilters =
-    lifeCycle !== "all" ||
-    statusFilter !== "all" ||
-    categoryFilter !== "all";
+    lifeCycle !== "all" || statusFilter !== "all" || categoryFilter !== "all";
   const isEmptyCatalog = total === 0 && !hasSearch && !hasFilters;
 
   if (isEmptyCatalog) {
@@ -315,9 +309,7 @@ export function SellerProductsList() {
             >
               <SelectTrigger className="w-full">
                 <SelectValue
-                  placeholder={
-                    categoriesLoading ? "Loading…" : "All"
-                  }
+                  placeholder={categoriesLoading ? "Loading…" : "All"}
                 >
                   {categoryFilter !== "all"
                     ? formatFilterLabel(
@@ -371,9 +363,11 @@ export function SellerProductsList() {
             >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Lifecycle">
-                  {PRODUCT_LIFECYCLE_FILTER_OPTIONS.find(
-                    (opt) => opt.value === lifeCycle
-                  )?.label}
+                  {
+                    PRODUCT_LIFECYCLE_FILTER_OPTIONS.find(
+                      (opt) => opt.value === lifeCycle
+                    )?.label
+                  }
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
@@ -404,122 +398,118 @@ export function SellerProductsList() {
               : ""
           }
         >
-        <Table>
-          <TableHeader>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-16" />
+                <TableHead>Name</TableHead>
+                <TableHead className="hidden md:table-cell">Category</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="hidden sm:table-cell">Variants</TableHead>
+                <TableHead className="w-40 text-center">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {data.products.length === 0 ? (
                 <TableRow>
-                  <TableHead className="w-16" />
-                  <TableHead>Name</TableHead>
-                  <TableHead className="hidden md:table-cell">
-                    Category
-                  </TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="hidden sm:table-cell">
-                    Variants
-                  </TableHead>
-                  <TableHead className="w-40 text-center">Actions</TableHead>
+                  <TableCell
+                    colSpan={6}
+                    className="text-muted-foreground py-10 text-center text-sm"
+                  >
+                    No products match your filters.
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {data.products.length === 0 ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={6}
-                      className="text-muted-foreground py-10 text-center text-sm"
-                    >
-                      No products match your filters.
+              ) : (
+                data.products.map((p) => (
+                  <TableRow key={p.id}>
+                    <TableCell>
+                      <ProductThumb
+                        alt={p.name}
+                        src={p.images[0]?.url ?? "/placeholder.svg"}
+                      />
                     </TableCell>
-                  </TableRow>
-                ) : (
-                  data.products.map((p) => (
-                    <TableRow key={p.id}>
-                      <TableCell>
-                        <ProductThumb
-                          alt={p.name}
-                          src={p.images[0]?.url ?? "/placeholder.svg"}
-                        />
-                      </TableCell>
-                      <TableCell>
+                    <TableCell>
+                      <Link
+                        href={ROUTES.productManage(p.id)}
+                        className="font-medium hover:underline"
+                      >
+                        {p.name}
+                      </Link>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground hidden text-sm md:table-cell">
+                      {formatFilterLabel(p.category) || "—"}
+                    </TableCell>
+                    <TableCell>
+                      <ProductStatusBadge product={p} />
+                    </TableCell>
+                    <TableCell className="hidden tabular-nums sm:table-cell">
+                      {p.variants.length}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center justify-center gap-1">
                         <Link
                           href={ROUTES.productManage(p.id)}
-                          className="font-medium hover:underline"
+                          className={cn(
+                            buttonVariants({
+                              variant: "outline",
+                              size: "icon",
+                            })
+                          )}
+                          aria-label={`View ${p.name}`}
                         >
-                          {p.name}
+                          <Eye className="size-4" />
                         </Link>
-                      </TableCell>
-                      <TableCell className="text-muted-foreground hidden text-sm md:table-cell">
-                        {formatFilterLabel(p.category) || "—"}
-                      </TableCell>
-                      <TableCell>
-                        <ProductStatusBadge product={p} />
-                      </TableCell>
-                      <TableCell className="hidden tabular-nums sm:table-cell">
-                        {p.variants.length}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center justify-center gap-1">
+                        {!p.isRemoved ? (
                           <Link
-                            href={ROUTES.productManage(p.id)}
+                            href={ROUTES.productEdit(p.id)}
                             className={cn(
                               buttonVariants({
                                 variant: "outline",
                                 size: "icon",
                               })
                             )}
-                            aria-label={`View ${p.name}`}
+                            aria-label={`Edit ${p.name}`}
                           >
-                            <Eye className="size-4" />
+                            <Pencil className="size-4" />
                           </Link>
-                          {!p.isRemoved ? (
-                            <Link
-                              href={ROUTES.productEdit(p.id)}
-                              className={cn(
-                                buttonVariants({
-                                  variant: "outline",
-                                  size: "icon",
-                                })
-                              )}
-                              aria-label={`Edit ${p.name}`}
-                            >
-                              <Pencil className="size-4" />
-                            </Link>
-                          ) : null}
-                          {canPublishProduct(p) ? (
-                            <Button
-                              size="icon"
-                              variant="outline"
-                              disabled={publish.isPending}
-                              aria-label={`Publish ${p.name}`}
-                              onClick={() => publish.mutate(p.id)}
-                            >
-                              <Upload className="size-4" />
-                            </Button>
-                          ) : null}
-                          {canRestoreProduct(p) ? (
-                            <Button
-                              size="icon"
-                              variant="outline"
-                              disabled={restore.isPending}
-                              aria-label={`Restore ${p.name}`}
-                              onClick={() => restore.mutate(p.id)}
-                            >
-                              <RotateCcw className="size-4" />
-                            </Button>
-                          ) : null}
-                          {!p.isRemoved ? (
-                            <Button
-                              size="icon"
-                              variant="destructive"
-                              aria-label={`Remove ${p.name}`}
-                              onClick={() => setDeleteTarget(p)}
-                            >
-                              <Trash2 className="size-4" />
-                            </Button>
-                          ) : null}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
+                        ) : null}
+                        {canPublishProduct(p) ? (
+                          <Button
+                            size="icon"
+                            variant="outline"
+                            disabled={publish.isPending}
+                            aria-label={`Publish ${p.name}`}
+                            onClick={() => publish.mutate(p.id)}
+                          >
+                            <Upload className="size-4" />
+                          </Button>
+                        ) : null}
+                        {canRestoreProduct(p) ? (
+                          <Button
+                            size="icon"
+                            variant="outline"
+                            disabled={restore.isPending}
+                            aria-label={`Restore ${p.name}`}
+                            onClick={() => restore.mutate(p.id)}
+                          >
+                            <RotateCcw className="size-4" />
+                          </Button>
+                        ) : null}
+                        {!p.isRemoved ? (
+                          <Button
+                            size="icon"
+                            variant="destructive"
+                            aria-label={`Remove ${p.name}`}
+                            onClick={() => setDeleteTarget(p)}
+                          >
+                            <Trash2 className="size-4" />
+                          </Button>
+                        ) : null}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
 

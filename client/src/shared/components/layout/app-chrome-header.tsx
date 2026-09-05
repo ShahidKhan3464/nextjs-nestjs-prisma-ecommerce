@@ -90,49 +90,49 @@ export function AppChromeHeader({ sectionTitle, sectionHint }: Props) {
         <div className="flex items-center gap-2">
           <NotificationBell />
           <DropdownMenu>
-          <DropdownMenuTrigger
-            className={cn(
-              buttonVariants({ variant: "outline", size: "sm" }),
-              "gap-2"
-            )}
-          >
-            <User className="size-4 shrink-0" />
-            <span className="max-w-35 truncate">{user.name}</span>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-52">
-            <DropdownMenuLabel className="font-normal">
-              <div className="flex flex-col space-y-1">
-                <span className="text-sm font-medium">{user.name}</span>
-                <span className="text-muted-foreground text-xs">
-                  {user.email}
-                </span>
-                <span className="text-muted-foreground text-xs">
-                  {roleLabel(chrome)}
-                </span>
-              </div>
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={() => {
-                router.push(ROUTES.dashboard);
-              }}
+            <DropdownMenuTrigger
+              className={cn(
+                buttonVariants({ variant: "outline", size: "sm" }),
+                "gap-2"
+              )}
             >
-              <LayoutDashboard className="mr-2 size-4" /> Dashboard
-            </DropdownMenuItem>
-            {showProfile ? (
+              <User className="size-4 shrink-0" />
+              <span className="max-w-35 truncate">{user.name}</span>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-52">
+              <DropdownMenuLabel className="font-normal">
+                <div className="flex flex-col space-y-1">
+                  <span className="text-sm font-medium">{user.name}</span>
+                  <span className="text-muted-foreground text-xs">
+                    {user.email}
+                  </span>
+                  <span className="text-muted-foreground text-xs">
+                    {roleLabel(chrome)}
+                  </span>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={() => {
-                  router.push(ROUTES.profile);
+                  router.push(ROUTES.dashboard);
                 }}
               >
-                <User className="mr-2 size-4" /> Profile
+                <LayoutDashboard className="mr-2 size-4" /> Dashboard
               </DropdownMenuItem>
-            ) : null}
-            <DropdownMenuItem onClick={() => void logout()}>
-              <LogOut className="mr-2 size-4" /> Sign out
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+              {showProfile ? (
+                <DropdownMenuItem
+                  onClick={() => {
+                    router.push(ROUTES.profile);
+                  }}
+                >
+                  <User className="mr-2 size-4" /> Profile
+                </DropdownMenuItem>
+              ) : null}
+              <DropdownMenuItem onClick={() => void logout()}>
+                <LogOut className="mr-2 size-4" /> Sign out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       ) : (
         <Link

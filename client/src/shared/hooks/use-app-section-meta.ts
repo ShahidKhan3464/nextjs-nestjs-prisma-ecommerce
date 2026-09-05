@@ -33,10 +33,7 @@ export function useAppSectionMeta(): { title: string; hint?: string } {
       if (pathname.startsWith("/products/manage/")) {
         return {
           title: "Product",
-          hint:
-            chrome === "seller"
-              ? "Listing & variants"
-              : "Details",
+          hint: chrome === "seller" ? "Listing & variants" : "Details",
         };
       }
       return { title: "Product", hint: "Details & variants" };
@@ -98,7 +95,10 @@ export function useAppSectionMeta(): { title: string; hint?: string } {
     if (pathname === "/checkout/success") return { title: "Order confirmed" };
     if (pathname === "/checkout") return { title: "Checkout" };
     if (pathname === "/wishlist") return { title: "Wishlist" };
-    if (pathname === "/become-seller" || pathname.startsWith("/become-seller/")) {
+    if (
+      pathname === "/become-seller" ||
+      pathname.startsWith("/become-seller/")
+    ) {
       return { title: "Become a seller", hint: "Seller application" };
     }
 

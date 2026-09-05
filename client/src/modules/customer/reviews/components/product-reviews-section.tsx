@@ -20,10 +20,7 @@ import { EmptyState } from "@/shared/components/feedback/empty-state";
 import { ReviewCard } from "@/shared/components/marketplace/review-card";
 import { RatingStars } from "@/shared/components/marketplace/rating-stars";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  createReviewSchema,
-  type ReviewFormValues,
-} from "../schemas";
+import { createReviewSchema, type ReviewFormValues } from "../schemas";
 import {
   createReview,
   deleteReview,

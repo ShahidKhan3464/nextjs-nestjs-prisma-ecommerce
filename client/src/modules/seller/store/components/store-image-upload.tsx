@@ -7,15 +7,8 @@ import { Button } from "@/components/ui/button";
 import { queryKeys } from "@/constants/query-keys";
 import { getApiErrorMessage } from "@/lib/api-error";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  getStoreFile,
-  type Store,
-  type StoreFileType,
-} from "../types";
-import {
-  removeStoreFile,
-  uploadStoreFile,
-} from "../services/store.service";
+import { getStoreFile, type Store, type StoreFileType } from "../types";
+import { removeStoreFile, uploadStoreFile } from "../services/store.service";
 
 const ACCEPT = "image/jpeg,image/png,image/gif,image/webp";
 const MAX_BYTES = 5 * 1024 * 1024;
@@ -66,7 +59,9 @@ function StoreImageSlot({
       if (inputRef.current) inputRef.current.value = "";
     },
     onError: (error) => {
-      toast.error(getApiErrorMessage(error, `Could not upload ${label.toLowerCase()}`));
+      toast.error(
+        getApiErrorMessage(error, `Could not upload ${label.toLowerCase()}`)
+      );
       setPreviewUrl((prev) => {
         if (prev) URL.revokeObjectURL(prev);
         return null;
@@ -87,7 +82,9 @@ function StoreImageSlot({
       toast.success(`${label} removed`);
     },
     onError: (error) => {
-      toast.error(getApiErrorMessage(error, `Could not remove ${label.toLowerCase()}`));
+      toast.error(
+        getApiErrorMessage(error, `Could not remove ${label.toLowerCase()}`)
+      );
     },
   });
 
@@ -132,7 +129,9 @@ function StoreImageSlot({
             alt={`${store.name} ${label.toLowerCase()} preview`}
             src={displayUrl}
             className="object-cover"
-            sizes={type === "BANNER" ? "(max-width: 896px) 100vw, 896px" : "192px"}
+            sizes={
+              type === "BANNER" ? "(max-width: 896px) 100vw, 896px" : "192px"
+            }
             unoptimized={Boolean(previewUrl)}
           />
         ) : (
@@ -213,7 +212,7 @@ export function StoreImageUpload({ store, disabled }: Props) {
           disabled={disabled}
           aspectClass="aspect-[3/1]"
           hint="Wide image at the top of your store page."
-          />
+        />
       </div>
     </section>
   );

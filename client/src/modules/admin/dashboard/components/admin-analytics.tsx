@@ -40,7 +40,6 @@ import {
   TableHeader,
 } from "@/components/ui/table";
 
-
 function formatStatusLabel(status: string) {
   return status.charAt(0) + status.slice(1).toLowerCase();
 }
@@ -409,7 +408,10 @@ export function AdminAnalytics() {
             ) : (
               <ul className="divide-y">
                 {data.recentReviews.slice(0, 8).map((review) => (
-                  <li key={review.id} className="space-y-1 py-3 first:pt-0 last:pb-0">
+                  <li
+                    key={review.id}
+                    className="space-y-1 py-3 first:pt-0 last:pb-0"
+                  >
                     <div className="flex items-start justify-between gap-3">
                       <Link
                         href={ROUTES.product(review.productSlug)}

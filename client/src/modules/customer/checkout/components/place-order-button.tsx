@@ -147,7 +147,7 @@ export function PlaceOrderButton({ onSuccess, onRetryReady }: Props) {
 
   return (
     <Button
-    size="lg"
+      size="lg"
       type="button"
       className="w-full sm:w-auto"
       onClick={() => void handlePlaceOrder()}

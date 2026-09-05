@@ -23,8 +23,7 @@ type Props = {
 export function ProductCard({ product, className }: Props) {
   const wishlisted = useWishlistStore((s) => s.has(product.id));
   const prices = product.variants.map((v) => v.price);
-  const minPrice =
-    prices.length > 0 ? Math.min(...prices) : product.basePrice;
+  const minPrice = prices.length > 0 ? Math.min(...prices) : product.basePrice;
 
   return (
     <motion.article
@@ -95,9 +94,7 @@ export function ProductCard({ product, className }: Props) {
               />
               <span className="text-muted-foreground text-xs tabular-nums">
                 {product.averageRating.toFixed(1)}
-                {product.reviewCount != null
-                  ? ` (${product.reviewCount})`
-                  : ""}
+                {product.reviewCount != null ? ` (${product.reviewCount})` : ""}
               </span>
             </span>
           ) : null}

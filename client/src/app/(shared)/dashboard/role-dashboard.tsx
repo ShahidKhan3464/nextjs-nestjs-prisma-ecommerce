@@ -20,20 +20,17 @@ function DashboardSkeleton() {
 }
 
 const AdminAnalytics = dynamic(
-  () =>
-    import("@/modules/admin/dashboard").then((m) => m.AdminAnalytics),
+  () => import("@/modules/admin/dashboard").then((m) => m.AdminAnalytics),
   { loading: () => <DashboardSkeleton />, ssr: false }
 );
 
 const SellerDashboard = dynamic(
-  () =>
-    import("@/modules/seller/dashboard").then((m) => m.SellerDashboard),
+  () => import("@/modules/seller/dashboard").then((m) => m.SellerDashboard),
   { loading: () => <DashboardSkeleton />, ssr: false }
 );
 
 const DashboardOverview = dynamic(
-  () =>
-    import("@/modules/buyer/dashboard").then((m) => m.DashboardOverview),
+  () => import("@/modules/buyer/dashboard").then((m) => m.DashboardOverview),
   { loading: () => <DashboardSkeleton />, ssr: false }
 );
 

@@ -73,9 +73,7 @@ export function ProductFilters({ disabled = false }: { disabled?: boolean }) {
               className="w-full"
               disabled={disabled || categoriesLoading}
             >
-              <SelectValue
-                placeholder={categoriesLoading ? "Loading…" : "All"}
-              >
+              <SelectValue placeholder={categoriesLoading ? "Loading…" : "All"}>
                 {values.category && categories.length > 0
                   ? formatFilterLabel(
                       categories.find((c) => String(c.id) === values.category)

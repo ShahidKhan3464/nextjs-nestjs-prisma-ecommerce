@@ -48,8 +48,7 @@ export function SellerPaymentsList() {
   const qc = useQueryClient();
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
-  const [statusFilter, setStatusFilter] =
-    useState<PaymentStatusFilter>("ALL");
+  const [statusFilter, setStatusFilter] = useState<PaymentStatusFilter>("ALL");
   const [providerFilter, setProviderFilter] =
     useState<PaymentProviderFilter>("ALL");
 
@@ -132,9 +131,11 @@ export function SellerPaymentsList() {
           >
             <SelectTrigger className="w-full!">
               <SelectValue placeholder="Status">
-                {PAYMENT_STATUS_FILTER_OPTIONS.find(
-                  (opt) => opt.value === statusFilter
-                )?.label}
+                {
+                  PAYMENT_STATUS_FILTER_OPTIONS.find(
+                    (opt) => opt.value === statusFilter
+                  )?.label
+                }
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
@@ -156,9 +157,11 @@ export function SellerPaymentsList() {
           >
             <SelectTrigger className="w-full!">
               <SelectValue placeholder="Method">
-                {PAYMENT_PROVIDER_FILTER_OPTIONS.find(
-                  (opt) => opt.value === providerFilter
-                )?.label}
+                {
+                  PAYMENT_PROVIDER_FILTER_OPTIONS.find(
+                    (opt) => opt.value === providerFilter
+                  )?.label
+                }
               </SelectValue>
             </SelectTrigger>
             <SelectContent>

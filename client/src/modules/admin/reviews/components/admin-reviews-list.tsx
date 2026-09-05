@@ -67,11 +67,12 @@ export function AdminReviewsList() {
     [page, perPage, ratingFilter, storeIdInput]
   );
 
-  const { data, isPending, isFetching, isPlaceholderData, isError, refetch } = useQuery({
-    queryKey: queryKeys.reviews.admin(listParams),
-    queryFn: () => fetchAdminReviews(listParams),
-    placeholderData: (prev) => prev,
-  });
+  const { data, isPending, isFetching, isPlaceholderData, isError, refetch } =
+    useQuery({
+      queryKey: queryKeys.reviews.admin(listParams),
+      queryFn: () => fetchAdminReviews(listParams),
+      placeholderData: (prev) => prev,
+    });
 
   const removeMutation = useMutation({
     mutationFn: (id: string) => deleteAdminReview(id),

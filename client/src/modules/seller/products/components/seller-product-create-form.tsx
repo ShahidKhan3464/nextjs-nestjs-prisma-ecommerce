@@ -19,7 +19,11 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createSellerProduct } from "../services/products.service";
 import { fetchSellerCategories } from "../services/categories.service";
 import { useProductImageFilePreviews } from "../hooks/use-product-image-previews";
-import { productImagesSchema, productSchema, type ProductValues } from "../schemas";
+import {
+  productImagesSchema,
+  productSchema,
+  type ProductValues,
+} from "../schemas";
 import {
   parseCategoryId,
   sortCategoriesByName,
@@ -94,7 +98,9 @@ export function SellerProductCreateForm() {
   async function onSubmit(values: ProductValues) {
     const imagesParsed = productImagesSchema.safeParse(files);
     if (!imagesParsed.success) {
-      toast.error(imagesParsed.error.issues[0]?.message ?? "Add product images");
+      toast.error(
+        imagesParsed.error.issues[0]?.message ?? "Add product images"
+      );
       return;
     }
 
@@ -113,7 +119,9 @@ export function SellerProductCreateForm() {
         variants: mapFormVariantsToPayload(values.variants),
       });
       toast.success(
-        values.status === "ACTIVE" ? "Product published" : "Product saved as draft"
+        values.status === "ACTIVE"
+          ? "Product published"
+          : "Product saved as draft"
       );
       await qc.invalidateQueries({ queryKey: queryKeys.seller.products.all });
       qc.setQueryData(queryKeys.seller.products.detail(product.id), product);

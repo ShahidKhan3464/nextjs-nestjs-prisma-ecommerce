@@ -20,10 +20,7 @@ export function VerifiedBadge({
         className
       )}
     >
-      <BadgeCheck
-        className={cn("size-3.5", compact && "size-3")}
-        aria-hidden
-      />
+      <BadgeCheck className={cn("size-3.5", compact && "size-3")} aria-hidden />
       Verified
     </Badge>
   );

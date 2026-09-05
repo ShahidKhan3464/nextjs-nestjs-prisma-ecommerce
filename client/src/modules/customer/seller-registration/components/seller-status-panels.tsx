@@ -165,7 +165,10 @@ export function SellerApprovedPanel({ profile }: { profile: SellerProfile }) {
                 Go to seller dashboard
               </Link>
             ) : (
-              <Button onClick={() => void activateSellerPortal()} disabled={activating}>
+              <Button
+                onClick={() => void activateSellerPortal()}
+                disabled={activating}
+              >
                 {activating ? "Activating…" : "Activate seller portal"}
               </Button>
             )}

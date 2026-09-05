@@ -93,7 +93,10 @@ export function isProductSort(value: string): value is ProductSort {
 
 export function getProductBadges(product: Product): ProductBadgeKind[] {
   const badges: ProductBadgeKind[] = [];
-  const totalStock = product.variants.reduce((sum, v) => sum + (v.stock ?? 0), 0);
+  const totalStock = product.variants.reduce(
+    (sum, v) => sum + (v.stock ?? 0),
+    0
+  );
 
   if (totalStock <= 0) {
     badges.push("out_of_stock");

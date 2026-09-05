@@ -34,7 +34,9 @@ export async function GET(
   }
 
   const envelope = raw as {
-    data?: { order?: NestOrderPayload; customerUserId?: string } | NestOrderPayload;
+    data?:
+      | { order?: NestOrderPayload; customerUserId?: string }
+      | NestOrderPayload;
   };
   const payload = envelope?.data;
   const orderRaw =

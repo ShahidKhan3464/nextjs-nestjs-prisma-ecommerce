@@ -5,10 +5,7 @@ import { requireSeller } from "@/lib/require-auth";
 import { mapNestStore } from "@/lib/nest-store-mapper";
 import { jsonMessage, jsonOk } from "@/lib/api-response";
 import { STORE_FILE_TYPES } from "@/modules/seller/store/types";
-import {
-  nestErrorMessage,
-  forwardAuthorization,
-} from "@/lib/nest-http";
+import { nestErrorMessage, forwardAuthorization } from "@/lib/nest-http";
 
 const typeSchema = z.enum(STORE_FILE_TYPES);
 

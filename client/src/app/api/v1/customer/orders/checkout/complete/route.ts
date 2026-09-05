@@ -57,7 +57,7 @@ export async function POST(req: Request) {
   const ordersRaw = Array.isArray(
     payload && typeof payload === "object" && "orders" in payload
       ? payload.orders
-      : null,
+      : null
   )
     ? (payload as { orders: NestOrderPayload[] }).orders
     : payload

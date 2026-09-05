@@ -50,8 +50,7 @@ export function AdminPaymentsList() {
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
   const [orderIdInput, setOrderIdInput] = useState("");
-  const [statusFilter, setStatusFilter] =
-    useState<PaymentStatusFilter>("ALL");
+  const [statusFilter, setStatusFilter] = useState<PaymentStatusFilter>("ALL");
   const [providerFilter, setProviderFilter] =
     useState<PaymentProviderFilter>("ALL");
 

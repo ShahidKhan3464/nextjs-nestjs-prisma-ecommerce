@@ -281,10 +281,7 @@ export function CheckoutWizard() {
       </div>
 
       <TabsContent value="review" className="space-y-6">
-        <CheckoutAddressCard
-          showManageLink
-          address={shippingAddress}
-        />
+        <CheckoutAddressCard showManageLink address={shippingAddress} />
         <Separator />
         <div className="space-y-3">
           <p className="text-sm font-medium">Stores in this order</p>

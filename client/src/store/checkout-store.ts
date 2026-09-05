@@ -33,7 +33,10 @@ interface CheckoutState {
   setSubmitting: (submitting: boolean) => void;
   setIdempotencyKey: (key: string | null) => void;
   setPaymentProvider: (provider: PaymentProviderId) => void;
-  setPaymentStatus: (status: PaymentUiStatus, failure?: PaymentFailure | null) => void;
+  setPaymentStatus: (
+    status: PaymentUiStatus,
+    failure?: PaymentFailure | null
+  ) => void;
   setCheckoutSession: (session: {
     paymentIntentId: string;
     clientSecret: string;

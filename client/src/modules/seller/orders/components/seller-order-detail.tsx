@@ -196,7 +196,9 @@ export function SellerOrderDetail({ orderId }: Props) {
               <p>{order.buyer.email}</p>
             </div>
           ) : (
-            <p className="text-muted-foreground">Customer details unavailable.</p>
+            <p className="text-muted-foreground">
+              Customer details unavailable.
+            </p>
           )}
         </section>
 
@@ -241,7 +243,9 @@ export function SellerOrderDetail({ orderId }: Props) {
         <Separator />
 
         <section className="space-y-3 text-sm">
-          <h2 className="font-medium tracking-wide uppercase">Revenue summary</h2>
+          <h2 className="font-medium tracking-wide uppercase">
+            Revenue summary
+          </h2>
           <div className="space-y-1">
             <div className="flex justify-between">
               <span className="text-muted-foreground">Subtotal</span>

@@ -60,9 +60,7 @@ export function AdminStoresList() {
           limit: perPage,
           search: debouncedSearch || undefined,
           status:
-            statusFilter === "ALL"
-              ? undefined
-              : (statusFilter as StoreStatus),
+            statusFilter === "ALL" ? undefined : (statusFilter as StoreStatus),
         }),
       placeholderData: (prev) => prev,
     });

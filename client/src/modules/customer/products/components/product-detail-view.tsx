@@ -28,8 +28,7 @@ import {
 } from "../utils/variant-label";
 
 const ProductReviewsSection = dynamic(
-  () =>
-    import("@/modules/buyer/reviews").then((m) => m.ProductReviewsSection),
+  () => import("@/modules/buyer/reviews").then((m) => m.ProductReviewsSection),
   {
     ssr: false,
     loading: () => (
@@ -196,14 +195,14 @@ export function ProductDetailView({ product }: Props) {
         maxQty: variant.stock,
         store: product.store
           ? {
-            id: product.store.id,
-            name: product.store.name,
-            slug: product.store.slug,
-            logoUrl: product.store.logoUrl,
-            verified: product.store.verified,
-            sellerName:
-              product.store.seller?.businessName ?? product.store.name,
-          }
+              id: product.store.id,
+              name: product.store.name,
+              slug: product.store.slug,
+              logoUrl: product.store.logoUrl,
+              verified: product.store.verified,
+              sellerName:
+                product.store.seller?.businessName ?? product.store.name,
+            }
           : null,
       });
       toast.success("Added to bag");
@@ -280,8 +279,7 @@ export function ProductDetailView({ product }: Props) {
             <h1 className="font-heading text-3xl font-semibold tracking-tight md:text-4xl">
               {product.name}
             </h1>
-            {product.averageRating != null &&
-              (product.reviewCount ?? 0) > 0 ? (
+            {product.averageRating != null && (product.reviewCount ?? 0) > 0 ? (
               <div className="flex flex-wrap items-center gap-2">
                 <RatingStars
                   readOnly

@@ -2,10 +2,7 @@ import type { ApiResponse } from "@/types";
 import { getBackendUrl } from "@/lib/backend-url";
 import { requireAdmin } from "@/lib/require-auth";
 import { jsonOk, jsonMessage } from "@/lib/api-response";
-import {
-  nestErrorMessage,
-  forwardAuthorization,
-} from "@/lib/nest-http";
+import { nestErrorMessage, forwardAuthorization } from "@/lib/nest-http";
 
 type Ctx = { params: Promise<{ id: string }> };
 

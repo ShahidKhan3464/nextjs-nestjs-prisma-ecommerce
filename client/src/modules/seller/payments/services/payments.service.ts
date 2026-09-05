@@ -45,9 +45,7 @@ export async function fetchSellerPayments(
 }
 
 export async function fetchSellerPayment(id: string | number) {
-  const res = await api.get<{ data: Payment }>(
-    `/api/v1/seller/payments/${id}`
-  );
+  const res = await api.get<{ data: Payment }>(`/api/v1/seller/payments/${id}`);
   return res.data.data;
 }
 

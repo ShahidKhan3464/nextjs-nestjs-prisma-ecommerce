@@ -117,7 +117,9 @@ export function SellerDocumentUpload({ documents, disabled }: Props) {
                   <Select
                     value={field.value}
                     onValueChange={(value) =>
-                      field.onChange((value ?? "BUSINESS_LICENSE") as SellerDocumentType)
+                      field.onChange(
+                        (value ?? "BUSINESS_LICENSE") as SellerDocumentType
+                      )
                     }
                     disabled={disabled || mutation.isPending}
                   >

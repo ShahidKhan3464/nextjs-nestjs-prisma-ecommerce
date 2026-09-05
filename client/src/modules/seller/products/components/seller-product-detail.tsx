@@ -173,7 +173,10 @@ export function SellerProductDetail({ productId }: { productId: string }) {
     return (
       <EmptyState
         title="Could not load product"
-        description={getApiErrorMessage(error, "This product may not belong to your store.")}
+        description={getApiErrorMessage(
+          error,
+          "This product may not belong to your store."
+        )}
         action={
           <div className="flex gap-2">
             <Button

@@ -1,10 +1,7 @@
 import { jsonMessage } from "@/lib/api-response";
 import { requireAdmin } from "@/lib/require-auth";
 import { getBackendUrl } from "@/lib/backend-url";
-import {
-  nestErrorMessage,
-  forwardAuthorization,
-} from "@/lib/nest-http";
+import { nestErrorMessage, forwardAuthorization } from "@/lib/nest-http";
 
 type Props = { params: Promise<{ fileId: string }> };
 
