@@ -3,6 +3,7 @@ import { diskStorage } from 'multer';
 import { existsSync, mkdirSync } from 'fs';
 import { BadRequestException } from '@nestjs/common';
 import { getUploadsRoot } from 'src/integrations/storage/uploads-root';
+import { wrapDiskStorageWithSignatureCheck } from 'src/integrations/storage/file-signature';
 import { LocalStorageProvider } from 'src/integrations/storage/providers/local-storage.provider';
 import {
   IMAGE_MAX_BYTES,
@@ -29,17 +30,20 @@ export function createFileDiskMulterOptions(
   const maxBytes = profile === 'image' ? IMAGE_MAX_BYTES : DOCUMENT_MAX_BYTES;
 
   return {
-    storage: diskStorage({
-      destination: (_req, _file, cb) => {
-        if (!existsSync(destDir)) {
-          mkdirSync(destDir, { recursive: true });
-        }
-        cb(null, destDir);
-      },
-      filename: (_req, file, cb) => {
-        cb(null, LocalStorageProvider.buildUuidFilename(file.originalname));
-      },
-    }),
+    storage: wrapDiskStorageWithSignatureCheck(
+      diskStorage({
+        destination: (_req, _file, cb) => {
+          if (!existsSync(destDir)) {
+            mkdirSync(destDir, { recursive: true });
+          }
+          cb(null, destDir);
+        },
+        filename: (_req, file, cb) => {
+          cb(null, LocalStorageProvider.buildUuidFilename(file.originalname));
+        },
+      }),
+      profile,
+    ),
     limits: { fileSize: maxBytes },
     fileFilter: (
       _req: unknown,

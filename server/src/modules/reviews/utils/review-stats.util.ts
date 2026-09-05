@@ -1,6 +1,9 @@
+import { Prisma } from 'src/generated/prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { OrderStatus } from 'src/common/enums/order-status.enum';
 import { PaymentStatus } from 'src/common/enums/payment-status.enum';
+
+type ReviewStatsClient = PrismaService | Prisma.TransactionClient;
 
 type RatingDistribution = {
   1: number;
@@ -36,8 +39,35 @@ const EMPTY_DISTRIBUTION: RatingDistribution = {
   5: 0,
 };
 
-function roundRating(value: number): number {
-  return Math.round(value * 10) / 10;
+export function calculateAverageRating(sum: number, count: number): number {
+  if (count <= 0) {
+    return 0;
+  }
+  return Math.round((sum * 10) / count) / 10;
+}
+
+export async function syncProductReviewStats(
+  tx: ReviewStatsClient,
+  productId: number,
+): Promise<{ averageRating: number; reviewCount: number }> {
+  const aggregate = await tx.review.aggregate({
+    where: { productId },
+    _sum: { rating: true },
+    _count: { _all: true },
+  });
+
+  const reviewCount = aggregate._count._all;
+  const averageRating = calculateAverageRating(
+    aggregate._sum.rating ?? 0,
+    reviewCount,
+  );
+
+  await tx.product.update({
+    where: { id: productId },
+    data: { averageRating, reviewCount },
+  });
+
+  return { averageRating, reviewCount };
 }
 
 export async function getProductReviewStats(
@@ -47,7 +77,7 @@ export async function getProductReviewStats(
   const [aggregate, groups] = await Promise.all([
     prisma.review.aggregate({
       where: { productId },
-      _avg: { rating: true },
+      _sum: { rating: true },
       _count: { _all: true },
     }),
     prisma.review.groupBy({
@@ -68,8 +98,10 @@ export async function getProductReviewStats(
   const totalReviews = aggregate._count._all;
   return {
     totalReviews,
-    averageRating:
-      totalReviews > 0 ? roundRating(Number(aggregate._avg.rating ?? 0)) : 0,
+    averageRating: calculateAverageRating(
+      aggregate._sum.rating ?? 0,
+      totalReviews,
+    ),
     distribution,
   };
 }
@@ -84,7 +116,7 @@ export async function getReviewStatsForProducts(
   const rows = await prisma.review.groupBy({
     by: ['productId'],
     where: { productId: { in: productIds } },
-    _avg: { rating: true },
+    _sum: { rating: true },
     _count: { _all: true },
   });
 
@@ -96,7 +128,10 @@ export async function getReviewStatsForProducts(
     map.set(row.productId, {
       productId: row.productId,
       totalReviews: row._count._all,
-      averageRating: roundRating(Number(row._avg.rating ?? 0)),
+      averageRating: calculateAverageRating(
+        row._sum.rating ?? 0,
+        row._count._all,
+      ),
     });
   }
 
@@ -110,7 +145,7 @@ export async function getStoreReviewStats(
   const [aggregate, productsSold] = await Promise.all([
     prisma.review.aggregate({
       where: { product: { storeId } },
-      _avg: { rating: true },
+      _sum: { rating: true },
       _count: { _all: true },
     }),
     prisma.orderItem.count({
@@ -128,8 +163,10 @@ export async function getStoreReviewStats(
   return {
     totalReviews,
     productsSold,
-    averageRating:
-      totalReviews > 0 ? roundRating(Number(aggregate._avg.rating ?? 0)) : 0,
+    averageRating: calculateAverageRating(
+      aggregate._sum.rating ?? 0,
+      totalReviews,
+    ),
   };
 }
 

@@ -1,10 +1,11 @@
 import { JwtService } from '@nestjs/jwt';
 import jwtConfig from 'src/config/jwt.config';
 import type { ConfigType } from '@nestjs/config';
-import { UsersService } from 'src/modules/users/users.service';
 import { RefreshTokenDto } from '../dto/refresh-token.dto';
+import { UsersService } from 'src/modules/users/users.service';
 import { JwtTokenType } from '../constants/jwt-token-type.enum';
 import { GenerateTokensProvider } from './generate-tokens.provider';
+import { jwtVerifyOptions } from '../constants/jwt-algorithm.constants';
 import { JwtRefreshTokenPayload } from 'src/common/types/jwt-payload.type';
 import { RefreshTokenStoreProvider } from './refresh-token-store.provider';
 import { ACCOUNT_BLOCKED_MESSAGE } from '../constants/auth-messages.constants';
@@ -32,7 +33,7 @@ export class RefreshTokensProvider {
     try {
       payload = await this.jwtService.verifyAsync<JwtRefreshTokenPayload>(
         dto.refreshToken,
-        { secret: this.jwtConfiguration.secret },
+        jwtVerifyOptions(this.jwtConfiguration.refreshSecret),
       );
     } catch {
       throw new UnauthorizedException('Invalid refresh token');

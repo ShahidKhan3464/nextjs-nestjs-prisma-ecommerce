@@ -3,6 +3,7 @@ import { Reflector } from '@nestjs/core';
 import { UserRole } from 'src/common/enums/user-role.enum';
 import { hasAnyRole } from 'src/common/utils/authorization.util';
 import { ROLES_KEY } from 'src/common/decorators/roles.decorator';
+import { JwtAccessTokenPayload } from 'src/common/types/jwt-payload.type';
 import { REQUEST_USER_KEY } from 'src/common/constants/request-user.constants';
 import {
   Injectable,
@@ -25,11 +26,11 @@ export class RolesGuard implements CanActivate {
       return true;
     }
 
-    const request = context.switchToHttp().getRequest<Request>();
+    const request = context
+      .switchToHttp()
+      .getRequest<Request & { [REQUEST_USER_KEY]?: JwtAccessTokenPayload }>();
 
-    const user = request[REQUEST_USER_KEY] as {
-      roles?: UserRole[];
-    };
+    const user = request[REQUEST_USER_KEY];
 
     const userRoles = user?.roles ?? [];
     const hasRole = hasAnyRole(userRoles, requiredRoles);

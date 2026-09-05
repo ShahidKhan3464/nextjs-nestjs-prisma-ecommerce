@@ -21,7 +21,10 @@ export class BlockUserProvider {
     try {
       const saved = await this.prisma.user.update({
         where: { id },
-        data: { isBlocked },
+        data: {
+          isBlocked,
+          ...(isBlocked ? { tokenVersion: { increment: 1 } } : {}),
+        },
         include: USER_ROLES_INCLUDE,
       });
 

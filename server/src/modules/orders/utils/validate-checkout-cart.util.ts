@@ -4,6 +4,11 @@ import { NotFoundException, BadRequestException } from '@nestjs/common';
 import { StoreStatus } from 'src/modules/stores/constants/store.constants';
 import { SellerProfileStatus } from 'src/modules/sellers/constants/seller.constants';
 import { assertNotOwnStorePurchase } from 'src/common/utils/assert-not-own-store-purchase.util';
+import {
+  toCents,
+  centsToDecimalString,
+  centsToDollarNumber,
+} from 'src/common/utils/money.util';
 
 type ValidatedCheckoutLine = {
   cartItemId: number;
@@ -12,6 +17,8 @@ type ValidatedCheckoutLine = {
   productId: number;
   quantity: number;
   unitPrice: number;
+  unitPriceCents: number;
+  priceAtPurchase: string;
   productName: string;
   variantSku: string;
   variantColor: string;
@@ -25,6 +32,8 @@ export type StoreCheckoutGroup = {
   lines: ValidatedCheckoutLine[];
   subtotal: number;
   total: number;
+  subtotalCents: number;
+  totalCents: number;
 };
 
 /**
@@ -49,17 +58,18 @@ export function validateAndGroupCheckoutCart(
   }
 
   return Array.from(groups.entries()).map(([storeId, lines]) => {
-    const subtotal =
-      Math.round(
-        lines.reduce((sum, line) => sum + line.unitPrice * line.quantity, 0) *
-          100,
-      ) / 100;
+    const subtotalCents = lines.reduce(
+      (sum, line) => sum + line.unitPriceCents * line.quantity,
+      0,
+    );
 
     return {
       storeId,
       lines,
-      subtotal,
-      total: subtotal,
+      subtotalCents,
+      totalCents: subtotalCents,
+      subtotal: centsToDollarNumber(subtotalCents),
+      total: centsToDollarNumber(subtotalCents),
     };
   });
 }
@@ -129,6 +139,7 @@ function validateCheckoutCartItem(
   const productImageUrl =
     product.images?.[0]?.urlPath ??
     (product.images?.length ? product.images[0].urlPath : null);
+  const unitPriceCents = toCents(variant.price);
 
   return {
     productImageUrl,
@@ -141,7 +152,9 @@ function validateCheckoutCartItem(
     productName: product.name,
     variantSize: variant.size,
     variantColor: variant.color,
-    unitPrice: Number(variant.price),
+    unitPriceCents,
+    unitPrice: centsToDollarNumber(unitPriceCents),
+    priceAtPurchase: centsToDecimalString(unitPriceCents),
     stockQuantity: variant.stockQuantity,
   };
 }

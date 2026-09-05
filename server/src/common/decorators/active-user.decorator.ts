@@ -17,10 +17,11 @@ export const ActiveUser = createParamDecorator(
     | number
     | JwtAccessTokenPayload[keyof JwtAccessTokenPayload]
     | JwtAccessTokenPayload['roles'] => {
-    const request = ctx.switchToHttp().getRequest<Request>();
-    const payload = request[
-      REQUEST_USER_KEY
-    ] as Partial<JwtAccessTokenPayload> & {
+    const request = ctx
+      .switchToHttp()
+      .getRequest<Request & { [REQUEST_USER_KEY]?: JwtAccessTokenPayload }>();
+    const payload = (request[REQUEST_USER_KEY] ??
+      {}) as Partial<JwtAccessTokenPayload> & {
       sub?: number | string;
     };
 

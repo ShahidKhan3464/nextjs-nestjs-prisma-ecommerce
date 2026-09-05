@@ -129,7 +129,7 @@ export class UsersService {
   public async updatePassword(id: number, password: string): Promise<void> {
     const result = await this.prisma.user.updateMany({
       where: { id, deletedAt: null },
-      data: { password },
+      data: { password, tokenVersion: { increment: 1 } },
     });
     if (result.count === 0) {
       throw new NotFoundException('User not found');

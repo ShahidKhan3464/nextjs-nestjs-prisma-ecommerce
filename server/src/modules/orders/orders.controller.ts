@@ -21,6 +21,7 @@ import {
 } from './dto/order-response.dto';
 import {
   ApiTags,
+  ApiHeader,
   ApiBearerAuth,
   ApiOkResponse,
   ApiCreatedResponse,
@@ -84,6 +85,12 @@ export class OrdersController {
   }
 
   @Post('checkout')
+  @ApiHeader({
+    name: 'Idempotency-Key',
+    required: false,
+    description:
+      'Required unless idempotencyKey is sent in the body. At least one must be present.',
+  })
   @ApiCreatedResponse({ type: CheckoutSessionResponseDto })
   createCheckout(
     @ActiveUser() userId: number,

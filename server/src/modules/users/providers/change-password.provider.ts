@@ -39,7 +39,7 @@ export class ChangePasswordProvider {
     const hashed = await this.hashingProvider.hash(dto.newPassword);
     await this.prisma.user.update({
       where: { id: userId },
-      data: { password: hashed },
+      data: { password: hashed, tokenVersion: { increment: 1 } },
     });
 
     await this.refreshTokenStore.revokeAllForUser(userId);

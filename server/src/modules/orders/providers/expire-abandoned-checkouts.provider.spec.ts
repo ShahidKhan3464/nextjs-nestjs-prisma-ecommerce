@@ -35,8 +35,8 @@ describe('ExpireAbandonedCheckoutsProvider', () => {
 
   const provider = new ExpireAbandonedCheckoutsProvider(
     prisma as never,
-    stripeService as never,
     jobLock as never,
+    stripeService as never,
   );
 
   const staleSession = {

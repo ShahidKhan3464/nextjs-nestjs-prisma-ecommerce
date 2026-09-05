@@ -2,12 +2,13 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { generateOrderNumber } from '../utils/map-order.util';
 import { CreateCheckoutDto } from '../dto/create-checkout.dto';
 import { Injectable, BadRequestException } from '@nestjs/common';
-import { calculateOrderPricing } from '../utils/order-pricing.util';
+import { centsToDecimalString } from 'src/common/utils/money.util';
 import type { CheckoutSessionResponse } from '../types/order.types';
 import { lockProductVariants } from '../utils/lock-product-variants.util';
 import { StoreStatus } from 'src/modules/stores/constants/store.constants';
 import { findCartItemsWithImages } from 'src/common/prisma/file-query.util';
 import { normalizeIdempotencyKey } from '../utils/checkout-idempotency.util';
+import { calculateOrderPricingFromCents } from '../utils/order-pricing.util';
 import { CheckoutIdempotencyProvider } from './checkout-idempotency.provider';
 import { ProductStatus } from 'src/modules/products/constants/product.constants';
 import { validateAndGroupCheckoutCart } from '../utils/validate-checkout-cart.util';
@@ -47,8 +48,10 @@ export class CreateCheckoutProvider {
       dto.idempotencyKey ?? idempotencyKeyHeader,
     );
 
-    if (!key) {
-      return this.createOnce(userId, dto);
+    if (!key || key.length < 8) {
+      throw new BadRequestException(
+        'An Idempotency-Key header or idempotencyKey is required',
+      );
     }
 
     const requestHash = this.checkoutIdempotency.hashRequest(
@@ -80,19 +83,19 @@ export class CreateCheckoutProvider {
   private async createOnce(
     userId: number,
     dto: CreateCheckoutDto,
-    idempotencyKey?: string,
+    idempotencyKey: string,
   ): Promise<CheckoutSessionResponse> {
     await this.expireAbandonedCheckouts.clearForUser(userId);
 
     const cartItems = await findCartItemsWithImages(this.prisma, { userId });
     const storeGroups = validateAndGroupCheckoutCart(cartItems, userId);
 
-    const checkoutSubtotal = storeGroups.reduce(
-      (sum, group) => sum + group.subtotal,
+    const checkoutSubtotalCents = storeGroups.reduce(
+      (sum, group) => sum + group.subtotalCents,
       0,
     );
-    const pricing = calculateOrderPricing(checkoutSubtotal);
-    const amountCents = Math.round(pricing.total * 100);
+    const pricing = calculateOrderPricingFromCents(checkoutSubtotalCents);
+    const amountCents = pricing.totalCents;
 
     if (amountCents < 50) {
       throw new BadRequestException(
@@ -178,9 +181,9 @@ export class CreateCheckoutProvider {
         const createdSession = await tx.checkoutSession.create({
           data: {
             userId,
-            tax: pricing.tax,
-            totalAmount: pricing.total,
-            subtotal: pricing.subtotal,
+            tax: centsToDecimalString(pricing.taxCents),
+            totalAmount: centsToDecimalString(pricing.totalCents),
+            subtotal: centsToDecimalString(pricing.subtotalCents),
             stripePaymentIntentId: 'pending',
             shippingAddress: shippingAddressJson,
             status: CheckoutSessionStatus.PENDING,
@@ -192,25 +195,27 @@ export class CreateCheckoutProvider {
             checkoutSessionId: createdSession.id,
             variantId: line.variantId,
             quantity: line.quantity,
-            priceAtPurchase: line.unitPrice,
+            priceAtPurchase: line.priceAtPurchase,
           })),
         });
 
         const createdOrderIds: number[] = [];
 
         for (const group of storeGroups) {
-          const orderPricing = calculateOrderPricing(group.subtotal);
+          const orderPricing = calculateOrderPricingFromCents(
+            group.subtotalCents,
+          );
           const orderNumber = generateOrderNumber();
 
           const order = await tx.order.create({
             data: {
               userId,
               orderNumber,
-              tax: orderPricing.tax,
+              tax: centsToDecimalString(orderPricing.taxCents),
               storeId: group.storeId,
               status: OrderStatus.PENDING,
-              subtotal: orderPricing.subtotal,
-              totalAmount: orderPricing.total,
+              subtotal: centsToDecimalString(orderPricing.subtotalCents),
+              totalAmount: centsToDecimalString(orderPricing.totalCents),
               checkoutSessionId: createdSession.id,
               shippingAddress: shippingAddressJson,
               items: {
@@ -221,14 +226,14 @@ export class CreateCheckoutProvider {
                   variantSku: line.variantSku,
                   variantColor: line.variantColor,
                   variantSize: line.variantSize,
-                  priceAtPurchase: line.unitPrice,
+                  priceAtPurchase: line.priceAtPurchase,
                   productImageUrl: line.productImageUrl,
                 })),
               },
               payment: {
                 create: {
                   provider: PaymentProvider.STRIPE,
-                  amount: orderPricing.total,
+                  amount: centsToDecimalString(orderPricing.totalCents),
                   currency: CHECKOUT_CURRENCY,
                   status: PaymentStatus.PENDING,
                   transactionId: 'pending',
@@ -247,9 +252,7 @@ export class CreateCheckoutProvider {
       },
     );
 
-    const stripeIdempotencyKey = idempotencyKey
-      ? `checkout:${userId}:${idempotencyKey}`
-      : `checkout-session:${sessionId}`;
+    const stripeIdempotencyKey = `checkout:${userId}:${idempotencyKey}`;
 
     let paymentIntent: StripePaymentIntent;
     try {

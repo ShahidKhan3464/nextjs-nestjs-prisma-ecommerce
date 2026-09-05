@@ -5,6 +5,7 @@ export const AUTH_USER_SELECT = {
   email: true,
   isBlocked: true,
   deletedAt: true,
+  tokenVersion: true,
   userRoles: { select: { role: true } },
 } satisfies Prisma.UserSelect;
 

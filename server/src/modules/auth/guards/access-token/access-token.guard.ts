@@ -8,6 +8,7 @@ import { JwtAccessTokenPayload } from 'src/common/types/jwt-payload.type';
 import { JwtTokenType } from 'src/modules/auth/constants/jwt-token-type.enum';
 import { REQUEST_USER_KEY } from 'src/common/constants/request-user.constants';
 import { patchRequestContext } from 'src/common/request-context/request-context';
+import { jwtVerifyOptions } from 'src/modules/auth/constants/jwt-algorithm.constants';
 import { ACCOUNT_BLOCKED_MESSAGE } from 'src/modules/auth/constants/auth-messages.constants';
 import {
   Inject,
@@ -37,9 +38,7 @@ export class AccessTokenGuard implements CanActivate {
     try {
       const payload = await this.jwtService.verifyAsync<
         Record<string, unknown>
-      >(token, {
-        secret: this.jwtConfiguration.secret,
-      });
+      >(token, jwtVerifyOptions(this.jwtConfiguration.accessSecret));
 
       if (payload.typ !== JwtTokenType.ACCESS) {
         throw new UnauthorizedException();
@@ -59,9 +58,18 @@ export class AccessTokenGuard implements CanActivate {
         throw new ForbiddenException(ACCOUNT_BLOCKED_MESSAGE);
       }
 
+      const tokenVersion = Number(payload.tokenVersion);
+      if (
+        !Number.isInteger(tokenVersion) ||
+        tokenVersion !== user.tokenVersion
+      ) {
+        throw new UnauthorizedException();
+      }
+
       const authenticatedUser: JwtAccessTokenPayload = {
         sub: userId,
         email: user.email,
+        tokenVersion: user.tokenVersion,
         typ: JwtTokenType.ACCESS,
         roles: extractUserRoles(user),
       };

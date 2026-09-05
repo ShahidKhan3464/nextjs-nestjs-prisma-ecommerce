@@ -5,6 +5,7 @@ export type JwtAccessTokenPayload = {
   sub: number;
   email: string;
   roles: UserRole[];
+  tokenVersion: number;
   typ: JwtTokenType.ACCESS;
 };
 

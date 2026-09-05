@@ -7,6 +7,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { UserRole } from 'src/common/enums/user-role.enum';
 import { JwtTokenType } from '../constants/jwt-token-type.enum';
 import { UserWithRoles } from 'src/common/types/user-with-roles.type';
+import { jwtSignOptions } from '../constants/jwt-algorithm.constants';
 import { extractUserRoles } from 'src/common/utils/authorization.util';
 import { RefreshTokenStoreProvider } from './refresh-token-store.provider';
 
@@ -32,13 +33,25 @@ export class GenerateTokensProvider {
     expiresIn: string,
     payload: T & { typ: JwtTokenType },
   ) {
+    const options = jwtSignOptions(this.secretFor(payload.typ), expiresIn);
     return await this.jwtService.signAsync(
       { ...payload, sub: userId },
       {
+        ...options,
         expiresIn: expiresIn as SignOptions['expiresIn'],
-        secret: this.jwtConfiguration.secret,
       },
     );
+  }
+
+  private secretFor(typ: JwtTokenType): string {
+    switch (typ) {
+      case JwtTokenType.ACCESS:
+        return this.jwtConfiguration.accessSecret;
+      case JwtTokenType.REFRESH:
+        return this.jwtConfiguration.refreshSecret;
+      case JwtTokenType.PASSWORD_RESET:
+        return this.jwtConfiguration.resetSecret;
+    }
   }
 
   public async generateTokens(user: UserWithRoles) {
@@ -48,6 +61,7 @@ export class GenerateTokensProvider {
       this.signToken(user.id, this.jwtConfiguration.accessTokenTtl, {
         email: user.email,
         roles,
+        tokenVersion: user.tokenVersion,
         typ: JwtTokenType.ACCESS,
       }),
       this.signToken(user.id, this.jwtConfiguration.refreshTokenTtl, {
@@ -89,6 +103,7 @@ export class GenerateTokensProvider {
       this.signToken(user.id, this.jwtConfiguration.accessTokenTtl, {
         email: user.email,
         roles,
+        tokenVersion: user.tokenVersion,
         typ: JwtTokenType.ACCESS,
       }),
       this.signToken(user.id, this.jwtConfiguration.refreshTokenTtl, {

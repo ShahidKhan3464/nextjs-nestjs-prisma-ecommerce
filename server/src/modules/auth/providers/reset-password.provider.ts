@@ -4,6 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { ResetPasswordDto } from '../dto/reset-password.dto';
 import { UsersService } from 'src/modules/users/users.service';
 import { JwtTokenType } from '../constants/jwt-token-type.enum';
+import { jwtVerifyOptions } from '../constants/jwt-algorithm.constants';
 import { RefreshTokenStoreProvider } from './refresh-token-store.provider';
 import { JwtPasswordResetPayload } from 'src/common/types/jwt-payload.type';
 import { HashingProvider } from 'src/common/crypto/providers/hashing.provider';
@@ -33,13 +34,13 @@ export class ResetPasswordProvider {
       throw new BadRequestException('Passwords do not match');
     }
 
-    const secret = this.configService.getOrThrow<string>('jwt.secret');
+    const secret = this.configService.getOrThrow<string>('jwt.resetSecret');
     let payload: JwtPasswordResetPayload;
 
     try {
       payload = await this.jwtService.verifyAsync<JwtPasswordResetPayload>(
         dto.token,
-        { secret },
+        jwtVerifyOptions(secret),
       );
     } catch (err) {
       const detail = err instanceof Error ? err.message : String(err);

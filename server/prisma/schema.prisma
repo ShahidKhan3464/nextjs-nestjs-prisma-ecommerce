@@ -15,6 +15,7 @@ model User {
   email            String            @unique(map: "UQ_97672ac88f789774dd47f7c8be3") @db.VarChar
   password         String            @db.VarChar
   isBlocked        Boolean           @default(false)
+  tokenVersion     Int               @default(1)
   createdAt        DateTime          @default(now()) @db.Timestamp(6)
   updatedAt        DateTime          @default(now()) @updatedAt @db.Timestamp(6)
   deletedAt        DateTime?         @db.Timestamp(6)
@@ -165,6 +166,8 @@ model Product {
   deletedAt     DateTime?            @db.Timestamp(6)
   categoryId    Int
   storeId       Int
+  averageRating Decimal              @default(0) @db.Decimal(3, 1)
+  reviewCount   Int                  @default(0)
   reviews       Review[]
   files         ProductFile[]
   wishlistItems WishlistItem[]
@@ -178,6 +181,7 @@ model Product {
   @@index([categoryId], map: "IDX_ff56834e735fa78a15d0cf2192")
   @@index([storeId], map: "IDX_products_store_id")
   @@index([publishedAt], map: "IDX_products_published_at")
+  @@index([averageRating, id], map: "IDX_products_average_rating_id")
   @@map("products")
 }
 

@@ -121,7 +121,7 @@ Domain modules own business rules; integrations stay thin adapters.
 
 | Token | Payload highlights | TTL env | Storage |
 |-------|--------------------|---------|---------|
-| Access | `typ: ACCESS`, `sub`, `email`, `roles` | `JWT_ACCESS_TOKEN_TTL` (default `15m`) | Client / BFF |
+| Access | `typ: ACCESS`, `sub`, `email`, `roles`, `tokenVersion` | `JWT_ACCESS_TOKEN_TTL` (default `15m`) | Client / BFF |
 | Refresh | `typ: REFRESH`, `familyId` | `JWT_REFRESH_TOKEN_TTL` (default `7d`) | Hashed in `RefreshToken` |
 
 **Guards / decorators**
@@ -474,10 +474,10 @@ Template: `.env.example`. Validated via Joi in `config/`.
 | `NODE_ENV` | `development` / `production` / `test` |
 | `PORT` | Default `3001` |
 | `API_VERSION` | Response `version` only (default `v1`) |
-| `FRONTEND_URL` | CORS; required URI in production (comma-separated OK) |
+| `FRONTEND_URL` | CORS allow-list in every environment; required URI in production (comma-separated OK). Defaults to `http://localhost:3000` |
 | `DATABASE_URL` | PostgreSQL |
 | `UPLOADS_ROOT` | Optional local root (default `{cwd}/uploads`) |
-| `JWT_SECRET` | Min 16; rejects common weak values |
+| `JWT_ACCESS_SECRET` / `JWT_REFRESH_SECRET` / `JWT_RESET_SECRET` | Separate HS256 secrets; min 32; rejects weak/example values |
 | `JWT_ACCESS_TOKEN_TTL` / `JWT_REFRESH_TOKEN_TTL` | Defaults `15m` / `7d` |
 | `STRIPE_SECRET_KEY` | Required |
 | `STRIPE_WEBHOOK_SECRET` | Required in production |

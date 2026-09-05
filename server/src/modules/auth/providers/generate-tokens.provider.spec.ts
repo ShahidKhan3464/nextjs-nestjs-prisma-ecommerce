@@ -10,9 +10,14 @@ describe('GenerateTokensProvider password-reset binding', () => {
     rotate: jest.fn(),
   };
   const jwtConfiguration = {
-    secret: 'secret',
+    secret: 'access-secret-value-for-tests-32ch',
+    accessSecret: 'access-secret-value-for-tests-32ch',
+    refreshSecret: 'refresh-secret-value-for-tests-32ch',
+    resetSecret: 'reset-secret-value-for-tests-32chhh',
     accessTokenTtl: '15m',
     refreshTokenTtl: '7d',
+    signOptions: { algorithm: 'HS256' as const },
+    verifyOptions: { algorithms: ['HS256'] as ['HS256'] },
   };
 
   const provider = new GenerateTokensProvider(
@@ -32,7 +37,10 @@ describe('GenerateTokensProvider password-reset binding', () => {
         typ: JwtTokenType.PASSWORD_RESET,
         pwd: createHash('sha256').update(passwordHash).digest('hex'),
       }),
-      expect.any(Object),
+      expect.objectContaining({
+        secret: jwtConfiguration.resetSecret,
+        algorithm: 'HS256',
+      }),
     );
   });
 

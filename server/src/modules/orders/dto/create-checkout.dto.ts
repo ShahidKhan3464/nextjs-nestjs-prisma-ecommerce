@@ -77,7 +77,7 @@ export class CreateCheckoutDto {
 
   @ApiPropertyOptional({
     description:
-      'Client-generated key so retries/double-clicks reuse the same checkout. Also accepted via the Idempotency-Key header.',
+      'Required unless the Idempotency-Key header is sent. Retries/double-clicks with the same key reuse the same checkout.',
     maxLength: 128,
   })
   @IsOptional()

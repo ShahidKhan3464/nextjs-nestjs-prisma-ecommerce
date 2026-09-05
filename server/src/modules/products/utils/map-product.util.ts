@@ -45,6 +45,8 @@ type ProductRow = {
   store?: StoreRow | null;
   publishedAt: Date | null;
   description: string | null;
+  reviewCount?: number;
+  averageRating?: { toNumber?: () => number } | number | string;
   basePrice: { toNumber?: () => number } | number | string;
   variants?: Array<{
     id: number;
@@ -106,6 +108,9 @@ export function mapProductToResponse(
     publishedAt: product.publishedAt,
     description: product.description,
     basePrice: Number(product.basePrice),
+    reviewCount: product.reviewCount ?? 0,
+    averageRating:
+      product.averageRating !== undefined ? Number(product.averageRating) : 0,
     store: mapStoreSummary(product.store),
     status: product.status as ProductStatus,
     category: product.category as ProductWithRelations['category'],

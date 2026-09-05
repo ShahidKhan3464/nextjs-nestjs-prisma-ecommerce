@@ -2,7 +2,16 @@ import { Prisma } from 'src/generated/prisma/client';
 import { PaymentStatus } from '../constants/payment.constants';
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { OrderStatus } from 'src/modules/orders/constants/order.constants';
+import { toCents, centsToDecimalString } from 'src/common/utils/money.util';
 import { assertPaymentStatusTransition } from '../utils/payment-status-transitions.util';
+
+type LockedPaymentRow = {
+  id: number;
+  amount: unknown;
+  refundedAmount: unknown;
+  status: string;
+  externalRefundId: string | null;
+};
 
 type TxClient = Prisma.TransactionClient;
 
@@ -186,32 +195,36 @@ export class PaymentLifecycleProvider {
   }
 
   async applyRefund(tx: TxClient, input: ApplyRefundInput): Promise<void> {
-    const payment = await tx.payment.findUnique({
-      where: { id: input.paymentId },
-    });
+    const rows = await tx.$queryRaw<LockedPaymentRow[]>`
+      SELECT id, amount, "refundedAmount", status, "externalRefundId"
+      FROM payments
+      WHERE id = ${input.paymentId}
+      FOR UPDATE
+    `;
+    const payment = rows[0];
 
     if (!payment) {
       throw new BadRequestException('Payment not found');
     }
 
-    const amount = Number(payment.amount);
-    const alreadyRefunded = Number(payment.refundedAmount);
-    const remaining = amount - alreadyRefunded;
+    const amountCents = toCents(payment.amount);
+    const alreadyRefundedCents = toCents(payment.refundedAmount);
+    const refundCents = toCents(input.amount);
+    const remainingCents = amountCents - alreadyRefundedCents;
 
-    if (input.amount <= 0) {
+    if (refundCents <= 0) {
       throw new BadRequestException('Refund amount must be greater than zero');
     }
 
-    if (input.amount > remaining + 1e-9) {
+    if (refundCents > remainingCents) {
       throw new BadRequestException(
         'Refund amount exceeds the remaining refundable balance',
       );
     }
 
-    const nextRefunded =
-      Math.round((alreadyRefunded + input.amount) * 100) / 100;
+    const nextRefundedCents = alreadyRefundedCents + refundCents;
     const nextStatus =
-      nextRefunded >= amount - 1e-9
+      nextRefundedCents >= amountCents
         ? PaymentStatus.REFUNDED
         : PaymentStatus.PARTIALLY_REFUNDED;
 
@@ -221,7 +234,7 @@ export class PaymentLifecycleProvider {
       where: { id: payment.id },
       data: {
         status: nextStatus,
-        refundedAmount: nextRefunded,
+        refundedAmount: centsToDecimalString(nextRefundedCents),
         refundReason: input.reason,
         refundedAt: input.refundedAt ?? new Date(),
         externalRefundId: input.externalRefundId ?? payment.externalRefundId,

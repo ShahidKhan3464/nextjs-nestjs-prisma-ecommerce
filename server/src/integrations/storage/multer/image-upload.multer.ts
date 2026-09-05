@@ -3,6 +3,7 @@ import { randomUUID } from 'crypto';
 import { diskStorage } from 'multer';
 import { existsSync, mkdirSync } from 'fs';
 import { BadRequestException } from '@nestjs/common';
+import { wrapDiskStorageWithSignatureCheck } from '../file-signature';
 import {
   IMAGE_MAX_BYTES,
   IMAGE_MIME_REGEX,
@@ -18,20 +19,24 @@ export function createImageDiskMulterOptions(
 ) {
   const destDir = join(uploadsRoot, subdir);
   return {
-    storage: diskStorage({
-      destination: (_req, _file, cb) => {
-        if (!existsSync(destDir)) {
-          mkdirSync(destDir, { recursive: true });
-        }
-        cb(null, destDir);
-      },
-      filename: (_req, file, cb) => {
-        const safeExt =
-          file.originalname.match(/\.[a-zA-Z0-9]{1,8}$/)?.[0]?.toLowerCase() ??
-          '';
-        cb(null, `${randomUUID()}${safeExt}`);
-      },
-    }),
+    storage: wrapDiskStorageWithSignatureCheck(
+      diskStorage({
+        destination: (_req, _file, cb) => {
+          if (!existsSync(destDir)) {
+            mkdirSync(destDir, { recursive: true });
+          }
+          cb(null, destDir);
+        },
+        filename: (_req, file, cb) => {
+          const safeExt =
+            file.originalname
+              .match(/\.[a-zA-Z0-9]{1,8}$/)?.[0]
+              ?.toLowerCase() ?? '';
+          cb(null, `${randomUUID()}${safeExt}`);
+        },
+      }),
+      'image',
+    ),
     limits: { fileSize: IMAGE_MAX_BYTES },
     fileFilter: (
       _req: unknown,

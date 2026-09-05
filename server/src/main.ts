@@ -38,11 +38,7 @@ async function bootstrap() {
     .filter(Boolean);
 
   app.enableCors({
-    origin: isProduction
-      ? corsOrigins.length === 1
-        ? corsOrigins[0]
-        : corsOrigins
-      : true,
+    origin: corsOrigins.length === 1 ? corsOrigins[0] : corsOrigins,
     credentials: true,
   });
 

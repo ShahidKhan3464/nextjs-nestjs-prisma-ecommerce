@@ -82,8 +82,9 @@ export class CreateProductDto {
   @ApiProperty({
     type: 'array',
     items: { type: 'string', format: 'binary' },
-    description: 'Product images',
+    required: false,
+    description: 'Product images (multipart files; not JSON)',
   })
   @IsOptional()
-  images?: any[];
+  images?: Express.Multer.File[];
 }

@@ -8,10 +8,6 @@ import { ProductOwnershipProvider } from './product-ownership.provider';
 import { PaginationProviders } from 'src/common/pagination/providers/pagination.providers';
 import { PaginateQueryResult } from 'src/common/pagination/interfaces/paginated.interfaces';
 import {
-  findProductIdsByMinRating,
-  getReviewStatsForProducts,
-} from 'src/modules/reviews/utils/review-stats.util';
-import {
   ProductStatus,
   PRODUCT_INCLUDE,
   PRODUCT_LIST_INCLUDE,
@@ -25,10 +21,10 @@ export class GetProductsProvider {
     private readonly productOwnershipProvider: ProductOwnershipProvider,
   ) {}
 
-  private async buildWhere(
+  private buildWhere(
     query: QueryProductDto,
     scope?: { storeId?: number; allowLifeCycle?: boolean },
-  ): Promise<Prisma.ProductWhereInput> {
+  ): Prisma.ProductWhereInput {
     const where: Prisma.ProductWhereInput = {};
     const allowLifeCycle = scope?.allowLifeCycle === true;
 
@@ -100,12 +96,7 @@ export class GetProductsProvider {
     }
 
     if (query.minRating !== undefined) {
-      const ratedIds = await findProductIdsByMinRating(
-        this.prisma,
-        query.minRating,
-        scope?.storeId ?? query.storeId,
-      );
-      where.id = { in: ratedIds.length > 0 ? ratedIds : [-1] };
+      where.averageRating = { gte: query.minRating };
     }
 
     return where;
@@ -129,7 +120,9 @@ export class GetProductsProvider {
 
   private resolveOrderBy(
     sort: QueryProductDto['sort'],
-  ): Prisma.ProductOrderByWithRelationInput {
+  ):
+    | Prisma.ProductOrderByWithRelationInput
+    | Prisma.ProductOrderByWithRelationInput[] {
     switch (sort) {
       case 'oldest':
         return { createdAt: 'asc' };
@@ -140,28 +133,21 @@ export class GetProductsProvider {
       case 'name_asc':
         return { name: 'asc' };
       case 'rating_desc':
+        return [{ averageRating: 'desc' }, { id: 'desc' }];
       case 'newest':
       default:
         return { createdAt: 'desc' };
     }
   }
 
-  private async attachReviewStats(
+  private attachReviewStats(
     products: ProductWithRelations[],
-  ): Promise<ProductWithRelations[]> {
-    const stats = await getReviewStatsForProducts(
-      this.prisma,
-      products.map((p) => p.id),
-    );
-
-    return products.map((product) => {
-      const row = stats.get(product.id);
-      return {
-        ...product,
-        averageRating: row?.averageRating ?? 0,
-        reviewCount: row?.totalReviews ?? 0,
-      };
-    });
+  ): ProductWithRelations[] {
+    return products.map((product) => ({
+      ...product,
+      averageRating: product.averageRating ?? 0,
+      reviewCount: product.reviewCount ?? 0,
+    }));
   }
 
   private async paginate(
@@ -169,41 +155,7 @@ export class GetProductsProvider {
     scope?: { storeId?: number; allowLifeCycle?: boolean },
   ): Promise<PaginateQueryResult<ProductWithRelations>> {
     const { page, limit, skip } = this.paginationProviders.resolvePaging(query);
-    const where = await this.buildWhere(query, scope);
-
-    if (query.sort === 'rating_desc') {
-      const allMatching = await this.prisma.product.findMany({
-        where,
-        select: { id: true },
-      });
-      const ids = allMatching.map((p) => p.id);
-      const stats = await getReviewStatsForProducts(this.prisma, ids);
-      const sortedIds = [...ids].sort((a, b) => {
-        const ra = stats.get(a)?.averageRating ?? 0;
-        const rb = stats.get(b)?.averageRating ?? 0;
-        if (rb !== ra) return rb - ra;
-        return b - a;
-      });
-      const pageIds = sortedIds.slice(skip, skip + limit);
-      const products = await this.prisma.product.findMany({
-        where: { id: { in: pageIds } },
-        include: PRODUCT_LIST_INCLUDE,
-      });
-      const byId = new Map(
-        products.map((p) => [p.id, mapProductToResponse(p)]),
-      );
-      const ordered = pageIds
-        .map((id) => byId.get(id))
-        .filter((p): p is ProductWithRelations => p != null);
-      const withStats = await this.attachReviewStats(ordered);
-
-      return {
-        data: withStats,
-        page,
-        limit,
-        total: ids.length,
-      };
-    }
+    const where = this.buildWhere(query, scope);
 
     const total = await this.prisma.product.count({ where });
     const products = await this.prisma.product.findMany({
@@ -215,7 +167,7 @@ export class GetProductsProvider {
     });
 
     const mapped = products.map((product) => mapProductToResponse(product));
-    const withStats = await this.attachReviewStats(mapped);
+    const withStats = this.attachReviewStats(mapped);
 
     return {
       data: withStats,
@@ -239,9 +191,7 @@ export class GetProductsProvider {
       throw new NotFoundException('Product not found');
     }
 
-    const [mapped] = await this.attachReviewStats([
-      mapProductToResponse(product),
-    ]);
+    const [mapped] = this.attachReviewStats([mapProductToResponse(product)]);
     return mapped;
   }
 
@@ -259,9 +209,7 @@ export class GetProductsProvider {
       throw new NotFoundException('Product not found');
     }
 
-    const [mapped] = await this.attachReviewStats([
-      mapProductToResponse(product),
-    ]);
+    const [mapped] = this.attachReviewStats([mapProductToResponse(product)]);
     return mapped;
   }
 }
