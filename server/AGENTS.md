@@ -7,7 +7,7 @@ Backend-only rules for the NestJS API. Global rules: [../AGENTS.md](../AGENTS.md
 ## Stack
 
 - NestJS 11, TypeScript, Prisma 7, PostgreSQL
-<!-- - Auth: `@nestjs/jwt` + bcrypt — **not** Clerk -->
+- Auth: `@nestjs/jwt` + bcrypt — **not** Clerk
 - Validation: `class-validator` + global `ValidationPipe` (whitelist, transform, forbidNonWhitelisted)
 - Responses: `DataResponseInterceptor` → `{ data, version }` (`API_VERSION` is envelope version only)
 - No global URL prefix — controllers mount at root (`/auth`, `/products`, …); Next BFF remaps under `/api/v1/{role}/…`
