@@ -28,7 +28,7 @@ Agents MUST:
 
 Agents MUST NOT:
 
-- Introduce repository / CQRS / hexagonal / Clean Architecture layerssss
+- Introduce repository / CQRS / hexagonal / Clean Architecture layerssssss
 - Call Nest **business APIs** from the browser (JSON/auth traffic goes through the Next BFF under `/api/v1/*`)
 - Casually change ownership, authz, payments, inventory, or file privacy
 - Blindly trust documentation when it conflicts with source code
