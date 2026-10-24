@@ -17,7 +17,7 @@ Brand: **Atelier Commerce**. Roles: `BUYER` \| `SELLER` \| `SUPER_ADMIN`.
 
 Agents MUST:
 
-<!-- - Inspect existing code before modifying it -->
+- Inspect existing code before modifying it
 - Follow the existing architecture (do not redesign)
 - Reuse existing patterns, modules, utilities, and mappers
 - Prefer minimal, focused changes; avoid unrelated refactors
